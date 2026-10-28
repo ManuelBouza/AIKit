@@ -33,13 +33,14 @@ Activa `$delegating-to-opencode` explícitamente o por descripción.
 No intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
 Permite modelos conectados gratuitos o de pago, salvo el proveedor directo
 `openai`. GPT de `opencode`, `opencode-go` u otros proveedores siguen permitidos;
-prioriza gratuitos suficientes.
+prioriza gratuitos suficientes, después OpenCode Go.
 Escoge modelo y esfuerzo según la tarea. La variante debe existir en los
 metadatos; sin variante se registra el ajuste predeterminado.
 
-Si OpenCode agota el uso gratuito (`free_limit_reached`), informa y continúa con Codex y sus subagentes
-nativos sin nueva confirmación; no uses OpenAI directo en OpenCode ni cambies
-automáticamente a pago. Para otros fallos, informa el bloqueo sin eludir permisos.
+Si se agota el gratuito (`free_limit_reached`, `fallback: reselect`), evalúa Go y
+alternativas adecuadas sin nueva confirmación. Sin opciones adecuadas disponibles
+en OpenCode, informa y continúa con Codex nativo. Revisa cambios parciales antes
+de reintentar. No eludas permisos, autenticación o privacidad.
 
 ## Comandos
 

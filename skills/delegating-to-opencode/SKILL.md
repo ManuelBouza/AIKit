@@ -32,8 +32,10 @@ Antes de ejecutar:
 1. Clasifica la tarea: mecánica, integración o compleja.
 2. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
    variantes con `doctor`.
-3. Prefiere un gratuito suficiente. Un pago está permitido si aporta capacidad o
-   fiabilidad; el usuario autorizó ese alcance y no se confirma cada uso.
+3. Entre opciones suficientes para la tarea y su esfuerzo, prioriza gratuitos de
+   OpenCode (también los servidos por Go), después OpenCode Go. Otros proveedores
+   conectados siguen permitidos si aportan una alternativa adecuada. No se
+   confirma cada uso de Go o pago dentro del alcance autorizado.
 4. Elige una variante acorde con la complejidad solo si su ID aparece en
    metadatos; sin variante, registra el ajuste predeterminado.
 5. Registra en `--reason` por qué modelo y variante bastan.
@@ -63,18 +65,21 @@ pasan `--variant`, `--effort` ni `--auto` a OpenCode.
 
 La salida es una línea JSON. En éxito incluye modelo base, variante, esfuerzo,
 motivo, sesión, resumen <=4000 caracteres y coste informado o `null`. Errores y
-eventos fallidos vuelven al invocador. No hay reintento ni fallback automático de
-pago: revisa cambios parciales antes de otro intento.
+eventos fallidos vuelven al invocador. El adaptador no reintenta automáticamente;
+revisa cambios parciales antes de otro intento seleccionado por el coordinador.
 
 ## Orquestación y verificación
 
 Codex conserva orquestación y verificación, incluidas comprobaciones de shell.
-Si OpenCode agota el uso gratuito (`provider.free-limit` o `free_limit_reached`
-con `fallback: codex`), informa y continúa normalmente con Codex y sus subagentes
-nativos, sin pedir otra confirmación. No uses `openai/*` a través de OpenCode ni
-cambies automáticamente a pago. El adaptador devuelve la señal; no lanza Codex.
-Para otros fallos, informa el bloqueo real sin eludir permisos ni presentar
-trabajo no ejecutado como completado.
+Si OpenCode agota el uso gratuito, `free_limit_reached` con `fallback: reselect`
+devuelve la elección al coordinador. Evalúa Go y otras alternativas conectadas
+adecuadas, con modelo y variante razonados, sin nueva confirmación. Si no queda
+una opción adecuada disponible en OpenCode, informa y continúa normalmente con
+Codex y sus subagentes nativos. El catálogo no garantiza cuota ni disponibilidad
+de inferencia; un fallo aislado tampoco demuestra que todo OpenCode esté agotado.
+No uses `openai/*` ni eludas controles de permisos, autenticación o privacidad.
+El helper no cambia cuentas, reintenta ni lanza Codex. Informa los bloqueos reales
+sin presentar trabajo no ejecutado como completado.
 
 ## Instalación
 

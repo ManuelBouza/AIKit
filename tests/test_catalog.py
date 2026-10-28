@@ -239,3 +239,24 @@ def test_doctor_sort_count_and_filter(harness: Harness) -> None:
     filtered = harness.doctor(model="opencode/alfa-free")
     assert filtered["catalog_count"] == 3
     assert [entry["model"] for entry in filtered["catalog"]] == ["opencode/alfa-free"]
+
+
+def test_catalog_prefers_free_then_go_without_hiding_other_providers(
+    harness: Harness,
+) -> None:
+    harness.fake(
+        models=[
+            api_model("paid", provider="opencode", cost={"input": 1, "output": 2}),
+            api_model("unknown", provider="other", cost=None),
+            api_model("paid", provider="opencode-go", cost={"input": 1, "output": 2}),
+            api_model("free", provider="opencode-go", cost=FREE_COST),
+            api_model("free", provider="opencode", cost=FREE_COST),
+        ]
+    )
+    assert [item["model"] for item in harness.doctor()["catalog"]] == [
+        "opencode-go/free",
+        "opencode/free",
+        "opencode-go/paid",
+        "other/unknown",
+        "opencode/paid",
+    ]

@@ -66,7 +66,8 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd . --model 
 `doctor` muestra `version`, `catalog_count` y `catalog`. Cada entrada incluye
 modelo, nombre, `pricing`, `pricing_tiers`, variantes, herramientas, modalidades
 de entrada/salida, límites, `free_candidate` y `may_use_openai_quota`. El
-catálogo se ordena con los candidatos gratuitos primero y excluye las entradas
+catálogo se ordena con los candidatos gratuitos primero, después OpenCode Go y
+finalmente otros proveedores (coste desconocido antes de pago). Excluye entradas
 cuyo `providerID` sea `openai`. `--model` filtra por el ID base; un filtro
 `openai/...` devuelve `provider_not_allowed` antes de consultar el catálogo.
 
@@ -114,9 +115,11 @@ timeout ocurren antes de ejecutar la inferencia.
 
 Antes de ejecutar, clasifica la tarea como mecánica, integración o compleja y
 consulta capacidades, herramientas, modalidades, límites, tarifas y variantes.
-Elige primero un modelo gratuito suficiente. Un modelo de pago está permitido si
-aporta capacidad o fiabilidad necesaria; el usuario ya autorizó considerar pagos
-dentro de este alcance. El proveedor directo `openai` está bloqueado; los GPT de
+Determina primero las capacidades y el esfuerzo necesarios. Entre opciones
+suficientes, prioriza gratuitos de OpenCode (incluidos los de Go), después
+OpenCode Go. Otros proveedores conectados siguen permitidos si ofrecen una
+alternativa adecuada; no se confirma cada uso dentro del alcance autorizado.
+El proveedor directo `openai` está bloqueado; los GPT de
 otros proveedores siguen disponibles según su conexión y tarifas.
 
 La variante debe existir en los metadatos. Si no hay variantes o conviene el
@@ -156,14 +159,20 @@ son obligatorias; el uso de `Any` se reserva para los datos JSON externos. Los
 módulos de pruebas se organizan por comportamiento y comparten solo fixtures
 y constructores de datos.
 
-## Cuando se agota la cuota gratuita
+## Disponibilidad y paso a Codex
 
 Si OpenCode informa `provider.free-limit`, el adaptador devuelve
-`code: free_limit_reached` y `fallback: codex`. El coordinador informa del cambio
-y continúa normalmente en Codex, con sus subagentes nativos y el flujo de
-Superpowers, sin otra confirmación. El helper no lanza Codex automáticamente,
-no habilita el proveedor directo `openai` y no pasa a pago por iniciativa propia.
-Esta autorización no permite eludir errores de permisos o autenticación.
+`code: free_limit_reached` y `fallback: reselect`. El coordinador evalúa OpenCode
+Go y otras alternativas conectadas adecuadas, elige modelo y variante y revisa
+los cambios parciales antes de otro intento. Go está autorizado sin nueva
+confirmación. Si no queda una opción adecuada disponible en OpenCode, informa
+y continúa con Codex nativo, conservando el flujo de Superpowers.
+
+El catálogo no garantiza cuota ni inferencia disponible. Un fallo aislado no
+demuestra agotamiento de todos los modelos. El helper ejecuta un único intento:
+no reintenta ni lanza Codex automáticamente. No habilita `openai` directo ni
+elude restricciones de permisos, autenticación o privacidad. Consulta el
+[escenario de Go](docs/prioridad-opencode-go.md) para los resultados observados.
 
 ## Instalación personal
 

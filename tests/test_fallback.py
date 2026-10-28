@@ -1,4 +1,4 @@
-"""La cuota gratuita agotada permite volver a Codex, no saltar otros controles."""
+"""La cuota gratuita devuelve la elección al coordinador sin saltar controles."""
 
 import json
 
@@ -9,7 +9,7 @@ from tests.fakes import FakeTransport, text_event
 
 
 @pytest.mark.parametrize("returncode", [0, 1, 7], ids=["event", "failure", "nonzero"])
-def test_free_limit_returns_native_fallback(harness: Harness, returncode: int) -> None:
+def test_free_limit_requests_reselection(harness: Harness, returncode: int) -> None:
     output = json.dumps(
         {
             "type": "error",
@@ -21,7 +21,8 @@ def test_free_limit_returns_native_fallback(harness: Harness, returncode: int) -
     result = harness.run()
     assert result["status"] == "error"
     assert result["code"] == "free_limit_reached"
-    assert result["fallback"] == "codex"
+    assert result["fallback"] == "reselect"
+    assert "Go" in result["message"]
     assert "private" not in json.dumps(result)
     assert len(transport.run_calls) == 1
 

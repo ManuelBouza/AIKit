@@ -730,10 +730,10 @@ def run_task(
         return {
             **_error(
                 "free_limit_reached",
-                "OpenCode ha agotado el uso gratuito; continúa con Codex "
-                "y sus subagentes nativos.",
+                "OpenCode ha agotado el uso gratuito; el coordinador debe evaluar "
+                "OpenCode Go y las alternativas adecuadas antes de recurrir a Codex.",
             ),
-            "fallback": "codex",
+            "fallback": "reselect",
         }
     if result.returncode != 0:
         return _error(
@@ -802,8 +802,10 @@ def doctor(
                     0
                     if item["free_candidate"] is True
                     else 1
+                    if item["model"].partition("/")[0] == "opencode-go"
+                    else 2
                     if item["free_candidate"] is None
-                    else 2,
+                    else 3,
                     item["model"].lower(),
                 )
             )

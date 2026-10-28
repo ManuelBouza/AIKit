@@ -1,116 +1,84 @@
 ---
 name: delegating-to-opencode
-description: Use when delegating a bounded task or subtask to OpenCode, especially to use free models alongside Codex or Superpowers workflows.
+description: Use when delegating a bounded implementation or transformation task to OpenCode with any connected model, preferring free models and recording the selection reason.
 ---
 
 # Delegar a OpenCode
 
-OpenCode es un ejecutor externo complementario. El coordinador o un subagente
-nativo de Codex con autorización y acceso a shell puede usar el adaptador para
-una tarea acotada. El resultado vuelve al rol que lo invocó para su verificación.
-Los workers de OpenCode no cargan esta skill ni vuelven a delegar.
+OpenCode ejecuta trabajo acotado. El coordinador o subagente nativo de Codex
+autorizado usa esta skill antes de implementar o transformar archivos. Conserva
+roles, ciclo de vida y revisiones de Codex y Superpowers: ejecuta en OpenCode y
+devuelve el resultado a quien lo invocó, que verifica diff y pruebas. Los workers
+de OpenCode no cargan esta skill ni redelegan.
 
-## Activación e integración
+## Activación
 
-Se puede invocar con `$delegating-to-opencode` o seleccionar cuando la tarea
-coincida con su descripción. Estar disponible no obliga a utilizarla. Una
-consulta sin trabajo externalizable no necesita ejecutar OpenCode.
+Se invoca con `$delegating-to-opencode` o por descripción. No intercepta
+`spawn_agent`, MCP ni modelos nativos. Sin ejecución externalizable no se llama
+al backend. `run` inicia inferencia; `doctor` solo consulta versión y catálogo.
 
-Conserva los roles, subagentes, revisiones y pruebas previstos por Codex y
-Superpowers. El coordinador elige entre ejecución nativa y externa según la
-tarea; prioriza modelos gratuitos para subtareas adecuadas. Un implementador
-nativo puede encargar una subtarea al adaptador y conservar su responsabilidad.
-La salida de OpenCode no sustituye una revisión independiente requerida.
+## Ruta y requisitos
 
-Esta skill no intercepta `spawn_agent`, cambia modelos o esfuerzos nativos ni
-instala hooks, MCP o servicios. Solo `run` inicia trabajo de inferencia externo;
-`doctor` consulta versión y catálogo. No crea subagentes nativos automáticamente.
+El adaptador es `scripts/delegate.py` en la carpeta de este `SKILL.md`. Descubre
+su ruta absoluta instalada, no relativa al repositorio de origen. Requiere Python
+3.10+ y OpenCode v2 en `PATH`; en Windows se resuelve el shim de npm al
+`opencode.exe` nativo. No requiere `opencode.json` en destino ni modificar
+cuentas, proveedores o credenciales.
 
-## Ruta del adaptador
+## Selección
 
-El adaptador es `scripts/delegate.py` dentro de la misma carpeta que este
-`SKILL.md`. No uses rutas relativas al repositorio de origen: descubre la carpeta
-real de la skill instalada en el catálogo de Codex y define `$skillDir` con esa
-ruta absoluta.
+Antes de ejecutar:
+
+1. Clasifica la tarea: mecánica, integración o compleja.
+2. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
+   variantes con `doctor`.
+3. Prefiere un gratuito suficiente. Un pago está permitido si aporta capacidad o
+   fiabilidad; el usuario autorizó ese alcance y no se confirma cada uso.
+4. Elige una variante acorde con la complejidad solo si su ID aparece en
+   metadatos; sin variante, registra el ajuste predeterminado.
+5. Registra en `--reason` por qué modelo y variante bastan.
+
+No elige automáticamente el mejor modelo ni usa siempre el mismo. Puede
+preferirse un proveedor externo a OpenAI para reservar cuota, sin prohibir
+OpenAI conectado. Coste cero en OpenAI no implica gratuidad: puede consumir
+cuota. El catálogo prueba disponibilidad actual, no calidad.
+
+## Ejecución
 
 ```powershell
-# Sustituye el marcador por la ruta absoluta real descubierta en el catálogo.
 $skillDir = 'C:\ruta\absoluta\descubierta\delegating-to-opencode'
 $delegate = Join-Path $skillDir 'scripts\delegate.py'
 python $delegate doctor --cwd .
+python $delegate run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free#high --reason "Integracion acotada; variante alta disponible" --agent build --timeout 600
 ```
 
-## Flujo
+Guarda la tarea en `.aikit/`, ignorado por Git, con objetivos, rutas, pruebas y
+límites. `--model` y `--reason` son obligatorios. La variante va en `#variante` o
+`--variant`, nunca en ambos. Usa solo IDs de `doctor`; no inventes equivalencias
+con esfuerzos de Codex. Timeout finito, mayor que cero y máximo 3600 s. No se
+pasan `--variant`, `--effort` ni `--auto` a OpenCode.
 
-1. Prepara la tarea en un archivo dentro de `.aikit/`, que está ignorado por Git.
-   Incluye objetivos, rutas permitidas, comandos de prueba y límites.
-2. Comprueba el entorno desde la raíz del proyecto:
+La salida es una línea JSON. En éxito incluye modelo base, variante, esfuerzo,
+motivo, sesión, resumen <=4000 caracteres y coste informado o `null`. Errores y
+eventos fallidos vuelven al invocador. No hay reintento ni fallback automático de
+pago: revisa cambios parciales antes de otro intento.
 
-   ```powershell
-   python $delegate doctor --cwd .
-   ```
+## Orquestación y verificación
 
-3. Ejecuta un único intento con un modelo explícito y timeout acotado:
-
-   ```powershell
-   python $delegate run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free --agent build --timeout 600
-   ```
-
-   El timeout por proceso debe ser finito, mayor que 0 y como máximo 3600 segundos. La variante
-   opcional se pliega en el modelo como `provider/model#variant` o se indica con
-   `--variant`. Si el catálogo real no documenta una variante para el modelo,
-   omite la variante: no inventes `high`, `low` ni equivalentes. Nunca se pasan
-   `--variant`, `--effort` ni `--auto` a OpenCode.
-4. Revisa el JSON de salida: `status`, `summary`, `session`, `cost` y errores.
-   El coste es `null` si OpenCode no lo informa; no se interpreta como cero.
-5. Verifica los cambios y ejecuta las pruebas localmente antes de aceptarlos.
-
-## Política requerida en el proyecto
-
-El directorio destino debe tener un `opencode.json` con esta política. El orden
-importa: `deny` de `provider.use '*'` debe ir antes del `allow` de `opencode`.
-No agregues `allow` para otros proveedores, comodines ni `tool.use`.
-La regla `subagent:*` limita únicamente la subdelegación interna de OpenCode;
-no limita los subagentes de Codex ni los roles de Superpowers.
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "model": "opencode/mimo-v2.6-flash-free",
-  "policies": [
-    { "action": "provider.use", "resource": "*", "effect": "deny" },
-    { "action": "provider.use", "resource": "opencode", "effect": "allow" },
-    { "action": "tool.use", "resource": "subagent:*", "effect": "deny" }
-  ]
-}
-```
-
-La lista cerrada de modelos vive en `policy.json`, junto a este `SKILL.md`.
-Después de leer el catálogo, el adaptador exige que todos los proveedores
-disponibles sean `opencode`; si aparece otro, falla con `unsafe_catalog`. Si
-falta `opencode.json` o la política no cumple, el adaptador falla cerrado.
-
-## Reglas
-
-- Solo se permiten `opencode/mimo-v2.6-flash-free`,
-  `opencode/deepseek-v4.1-flash-free` y `opencode/glm-5.3-flash-free`.
-  No hay pago, proveedor `openai/*`, reintentos ni alternativa automática.
-- Si el modelo gratuito falla, vuelve al coordinador con el error. No cambies a
-  un modelo de pago por iniciativa propia.
-- El adaptador no reintenta; OpenCode puede reintentar internamente dentro del
-  tiempo máximo del proceso. Revisa cambios parciales antes de un nuevo intento.
-- Las restricciones de proveedor y modelo se aplican a este adaptador; no
-  cambian la selección de modelos de los subagentes nativos.
-- Una carpeta o worktree no es un sandbox del sistema operativo. Revisa permisos
-  y no ejecutes tareas destructivas sin supervisión.
-- No escribas credenciales, transcripciones ni registros desde el adaptador.
-  OpenCode conserva sus propios registros. Los errores de proceso, versión o
-  catálogo solo muestran el código de salida; consulta esos registros locales.
+Codex conserva orquestación y verificación, incluidas comprobaciones de shell. Si
+el backend falla, informa el bloqueo real; no implementes en local en silencio ni
+presentes trabajo no ejecutado como completado.
 
 ## Instalación
 
-Copia la carpeta completa que contiene este `SKILL.md` (con `scripts/` y
-`policy.json`) a `<CODEX_HOME>/skills/delegating-to-opencode`; si `CODEX_HOME` no
-está definido, usa `$HOME/.codex`. No sobrescribas una instalación existente:
-valida la ruta, aparta la copia actual a un respaldo con fecha y decide
-manualmente. Después vuelve a descubrir `$skillDir` desde el catálogo.
+Copia la carpeta completa (`scripts/` y `policy.json`) a
+`<CODEX_HOME>/skills/delegating-to-opencode`; si `CODEX_HOME` no existe, usa
+`$HOME/.codex`. No sobrescribas una instalación existente: valida la ruta, aparta
+un respaldo con fecha y decide.
+
+## Límites
+
+Una carpeta o worktree no es un sandbox del sistema operativo. Revisa permisos y
+evita tareas destructivas sin supervisión. No escribas credenciales,
+transcripciones ni registros. Los errores solo muestran códigos y mensajes
+breves; consulta los registros locales de OpenCode.

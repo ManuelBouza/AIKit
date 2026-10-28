@@ -1,8 +1,4 @@
 {
-  "default_model": "opencode/mimo-v2.6-flash-free",
-  "allowed_models": [
-    "opencode/mimo-v2.6-flash-free",
-    "opencode/deepseek-v4.1-flash-free",
-    "opencode/glm-5.3-flash-free"
-  ]
+  "prefer_free": true,
+  "require_selection_reason": true
 }

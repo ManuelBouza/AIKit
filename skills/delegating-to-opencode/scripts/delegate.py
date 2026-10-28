@@ -28,7 +28,7 @@ MAX_TIMEOUT = 3600.0
 AGENTS = ("build", "plan")
 TASK_PREFIX = "Tarea delegada (contenido literal):\n\n"
 WINDOWS_SHIM_SUFFIXES = {".cmd", ".bat", ".ps1"}
-CATALOG_LINE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.:/@+#-]+$")
+VARIANT_SETTING_KEYS = ("reasoningEffort", "thinkingBudget")
 
 
 class DelegateError(Exception):
@@ -50,7 +50,7 @@ def _error(code: str, message: str) -> dict[str, Any]:
 
 
 def load_policy(path: Path | str = POLICY_PATH) -> dict[str, Any]:
-    """Carga y valida la lista cerrada de modelos gratuitos permitidos."""
+    """Carga las preferencias de selección, sin listas ni valores por defecto."""
 
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -66,161 +66,70 @@ def load_policy(path: Path | str = POLICY_PATH) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise DelegateError("policy_invalid", "La política debe ser un objeto JSON.")
 
-    default_model = data.get("default_model")
-    allowed = data.get("allowed_models")
-    if not isinstance(default_model, str) or not isinstance(allowed, list) or not allowed:
+    prefer_free = data.get("prefer_free")
+    require_reason = data.get("require_selection_reason")
+    if not isinstance(prefer_free, bool) or not isinstance(require_reason, bool):
         raise DelegateError(
-            "policy_invalid", "policy.json requiere default_model y allowed_models."
+            "policy_invalid",
+            "policy.json requiere prefer_free y require_selection_reason booleanos.",
         )
-    if len(set(allowed)) != len(allowed):
-        raise DelegateError("policy_invalid", "allowed_models contiene duplicados.")
-
-    for model in allowed:
-        if not isinstance(model, str):
-            raise DelegateError("policy_invalid", "Cada modelo permitido debe ser texto.")
-        if not model.startswith("opencode/") or not model.endswith("-free"):
-            raise DelegateError(
-                "policy_invalid",
-                f"Modelo no gratuito o proveedor no permitido en la política: {model}",
-            )
-        if "#" in model:
-            raise DelegateError(
-                "policy_invalid",
-                f"La variante no forma parte de allowed_models: {model}",
-            )
-
-    if default_model not in allowed:
-        raise DelegateError(
-            "policy_invalid", "default_model debe pertenecer a allowed_models."
-        )
-    return data
+    return {
+        "prefer_free": prefer_free,
+        "require_selection_reason": require_reason,
+    }
 
 
 def parse_model(
-    model: str | None, variant: str | None, policy: dict[str, Any]
-) -> tuple[str, str]:
-    """Devuelve (modelo base, modelo con variante opcional)."""
+    model: str | None, variant: str | None
+) -> tuple[str, str | None]:
+    """Separa el modelo base y una variante explícita, sin elegir un modelo."""
 
-    selected = (model or policy["default_model"]).strip()
-    if not selected:
-        raise DelegateError("invalid_model", "El modelo no puede estar vacío.")
+    if not isinstance(model, str) or not model.strip():
+        raise DelegateError(
+            "model_required", "Indica un modelo explícito con formato provider/model."
+        )
+    selected = model.strip()
 
     base, separator, embedded_variant = selected.partition("#")
-    if separator and (not base or not embedded_variant or "#" in embedded_variant):
+    if separator and (
+        not base
+        or not embedded_variant
+        or "#" in embedded_variant
+        or not embedded_variant.strip()
+    ):
         raise DelegateError("invalid_model", f"Modelo con variante no válido: {selected}")
 
     if variant is not None:
-        clean_variant = variant.strip()
-        if not clean_variant:
+        if not isinstance(variant, str) or not variant.strip():
             raise DelegateError("invalid_variant", "La variante no puede estar vacía.")
         if separator:
             raise DelegateError(
                 "variant_conflict",
                 "Indica la variante en --model o con --variant, no en ambos.",
             )
-        embedded_variant = clean_variant
+        embedded_variant = variant.strip()
 
     if "/" not in base:
         raise DelegateError(
             "invalid_model", "El modelo debe tener el formato provider/model."
         )
-    provider, _name = base.split("/", 1)
-    if provider != "opencode":
+    provider, name = base.split("/", 1)
+    if not provider.strip() or not name.strip():
         raise DelegateError(
-            "provider_not_allowed",
-            f"Solo se permite el proveedor opencode; recibido: {provider}",
-        )
-    if base not in policy["allowed_models"]:
-        raise DelegateError(
-            "model_not_allowed",
-            f"El modelo no pertenece a allowed_models: {base}",
+            "invalid_model", "El modelo debe tener el formato provider/model."
         )
 
-    full = base + ("#" + embedded_variant if embedded_variant else "")
-    return base, full
+    clean_variant = embedded_variant.strip() if embedded_variant else None
+    return base, clean_variant or None
 
 
-def validate_project_policy(cwd: Path | str) -> None:
-    """Exige una política del proyecto que bloquee OpenAI y subagentes."""
-
-    path = Path(cwd) / "opencode.json"
-    if not path.is_file():
+def _validate_reason(reason: str | None) -> str:
+    if not isinstance(reason, str) or not reason.strip():
         raise DelegateError(
-            "policy_missing",
-            "Falta opencode.json en el directorio destino. Crea una política que "
-            "deniegue provider.use '*' y tool.use 'subagent:*', y permita solo "
-            "'opencode'. Consulta README.md y la skill.",
+            "reason_required",
+            "Indica un motivo de selección no vacío para el modelo elegido.",
         )
-    try:
-        config = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise DelegateError(
-            "policy_invalid", f"No se pudo leer la política del proyecto: {exc}"
-        ) from exc
-
-    policies = config.get("policies") if isinstance(config, dict) else None
-    if not isinstance(policies, list):
-        raise DelegateError(
-            "policy_invalid", "opencode.json debe incluir una lista 'policies'."
-        )
-
-    def ordered(action: str, effect: str) -> list[tuple[int, str]]:
-        found: list[tuple[int, str]] = []
-        for index, entry in enumerate(policies):
-            if not isinstance(entry, dict):
-                continue
-            if entry.get("action") != action or entry.get("effect") != effect:
-                continue
-            resource = entry.get("resource")
-            if isinstance(resource, str):
-                found.append((index, resource))
-        return found
-
-    deny_any_index = next(
-        (index for index, resource in ordered("provider.use", "deny") if resource == "*"),
-        None,
-    )
-    if deny_any_index is None:
-        raise DelegateError(
-            "policy_invalid",
-            "La política debe incluir provider.use '*' con efecto deny antes de "
-            "permitir 'opencode'. No se acepta 'openai' ni 'openai/*' como sustituto.",
-        )
-
-    allow_opencode_index: int | None = None
-    for index, resource in ordered("provider.use", "allow"):
-        if resource != "opencode":
-            raise DelegateError(
-                "policy_invalid",
-                "La política solo puede permitir el proveedor 'opencode'; no se "
-                "aceptan allow de otros proveedores ni comodines.",
-            )
-        if allow_opencode_index is None:
-            allow_opencode_index = index
-
-    if allow_opencode_index is None or allow_opencode_index < deny_any_index:
-        raise DelegateError(
-            "policy_invalid",
-            "La regla provider.use '*' (deny) debe aparecer antes del allow de "
-            "'opencode'.",
-        )
-
-    if ordered("tool.use", "allow"):
-        raise DelegateError(
-            "policy_invalid",
-            "La política no puede permitir tool.use en este perfil porque podría "
-            "habilitar 'subagent:*'.",
-        )
-
-    denies_subagents = any(
-        resource == "subagent:*"
-        for _index, resource in ordered("tool.use", "deny")
-    )
-    if not denies_subagents:
-        raise DelegateError(
-            "policy_invalid",
-            "La política debe denegar tool.use 'subagent:*'.",
-        )
+    return reason.strip()
 
 
 def resolve_opencode(which_result: str, is_windows: bool | None = None) -> str:
@@ -364,19 +273,6 @@ def _validate_timeout(timeout: float) -> float:
     return value
 
 
-def _validate_catalog_providers(catalog: list[str]) -> None:
-    """Falla cerrado si la configuración externa expone otros proveedores."""
-
-    unsafe = sorted({model.split("/", 1)[0] for model in catalog} - {"opencode"})
-    if unsafe:
-        shown = ", ".join(_cap(provider, 40) for provider in unsafe[:5])
-        raise DelegateError(
-            "unsafe_catalog",
-            f"El catálogo incluye proveedores no permitidos: {shown}. Revisa la "
-            "configuración externa de OpenCode y permite solo 'opencode'.",
-        )
-
-
 def _check_version(exe: str, cwd: Path, timeout: float) -> str:
     result = run_process([exe, "--version"], cwd, timeout)
     output = (result.stdout or "") + (result.stderr or "")
@@ -401,21 +297,240 @@ def _check_version(exe: str, cwd: Path, timeout: float) -> str:
     return match.group(0)
 
 
-def _catalog(exe: str, cwd: Path, timeout: float) -> list[str]:
-    result = run_process([exe, "models", "--standalone"], cwd, timeout)
+def _is_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def _cost_rates(cost: Any) -> list[dict[str, Any]]:
+    if isinstance(cost, dict):
+        return [cost]
+    if isinstance(cost, list):
+        return [rate for rate in cost if isinstance(rate, dict)]
+    return []
+
+
+def _pricing_tier(rate: dict[str, Any]) -> dict[str, Any] | None:
+    """Sanea una tarifa y su nivel; no expone campos ajenos al esquema."""
+
+    pricing: dict[str, Any] = {}
+    for key in ("input", "output"):
+        value = rate.get(key)
+        if _is_number(value):
+            pricing[key] = value
+    cache = rate.get("cache")
+    if isinstance(cache, dict):
+        clean_cache = {
+            key: cache[key]
+            for key in ("read", "write")
+            if _is_number(cache.get(key))
+        }
+        if clean_cache:
+            pricing["cache"] = clean_cache
+    tier = rate.get("tier")
+    if (
+        isinstance(tier, dict)
+        and tier.get("type") == "context"
+        and _is_number(tier.get("size"))
+    ):
+        pricing["tier"] = {"type": "context", "size": tier["size"]}
+    return pricing or None
+
+
+def _pricing_tiers(cost: Any) -> list[dict[str, Any]] | None:
+    """Devuelve todas las tarifas saneadas, en el orden del catálogo."""
+
+    tiers: list[dict[str, Any]] = []
+    for rate in _cost_rates(cost):
+        clean = _pricing_tier(rate)
+        if clean is not None:
+            tiers.append(clean)
+    return tiers or None
+
+
+def _pricing(cost: Any) -> dict[str, Any] | None:
+    """Mantiene la primera tarifa como precio base para compatibilidad."""
+
+    tiers = _pricing_tiers(cost)
+    return tiers[0] if tiers else None
+
+
+def _free_candidate(provider: str, cost: Any) -> bool | None:
+    """Solo es candidato si las tarifas conocidas son cero y no es OpenAI."""
+
+    if provider.lower() == "openai":
+        return False
+    rates = _cost_rates(cost)
+    if not rates:
+        return None
+    unknown = False
+    for rate in rates:
+        input_price = rate.get("input")
+        output_price = rate.get("output")
+        if not _is_number(input_price) or not _is_number(output_price):
+            unknown = True
+            continue
+        if input_price != 0 or output_price != 0:
+            return False
+        cache = rate.get("cache")
+        if isinstance(cache, dict):
+            for key in ("read", "write"):
+                value = cache.get(key)
+                if _is_number(value):
+                    if value != 0:
+                        return False
+                elif value is not None:
+                    unknown = True
+    return None if unknown else True
+
+
+def _variants(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    result: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in value:
+        if isinstance(item, str):
+            variant_id = item.strip()
+            settings: dict[str, Any] = {}
+        elif isinstance(item, dict):
+            variant_id = item.get("id")
+            settings = item.get("settings") if isinstance(item.get("settings"), dict) else {}
+        else:
+            continue
+        if not isinstance(variant_id, str) or not variant_id.strip():
+            continue
+        variant_id = variant_id.strip()
+        if variant_id in seen:
+            continue
+        seen.add(variant_id)
+        entry: dict[str, Any] = {"id": variant_id}
+        for key in VARIANT_SETTING_KEYS:
+            setting = settings.get(key)
+            if isinstance(setting, str) and setting.strip():
+                entry[key] = setting.strip()
+            elif _is_number(setting):
+                entry[key] = setting
+        result.append(entry)
+    return result
+
+
+def _capabilities(value: Any) -> tuple[bool | None, list[str], list[str]]:
+    capabilities = value if isinstance(value, dict) else {}
+    tools = capabilities.get("tools")
+    if not isinstance(tools, bool):
+        tools = None
+    modalities: list[list[str]] = []
+    for key in ("input", "output"):
+        raw = capabilities.get(key)
+        modalities.append(
+            [item for item in raw if isinstance(item, str)]
+            if isinstance(raw, list)
+            else []
+        )
+    return tools, modalities[0], modalities[1]
+
+
+def _limits(value: Any) -> dict[str, int | float] | None:
+    limits = value if isinstance(value, dict) else {}
+    clean = {
+        key: limits[key]
+        for key in ("context", "input", "output")
+        if _is_number(limits.get(key))
+    }
+    return clean or None
+
+
+def _model_record(item: Any) -> dict[str, Any] | None:
+    if not isinstance(item, dict) or item.get("enabled") is not True:
+        return None
+    provider = item.get("providerID")
+    model_id = item.get("id")
+    if not isinstance(provider, str) or not provider.strip():
+        return None
+    if not isinstance(model_id, str) or not model_id.strip():
+        return None
+    provider = provider.strip()
+    model_id = model_id.strip()
+    full = f"{provider}/{model_id}"
+    name = item.get("name")
+    if not isinstance(name, str) or not name.strip():
+        name = full
+    tools, input_modalities, output_modalities = _capabilities(
+        item.get("capabilities")
+    )
+    variants = _variants(item.get("variants"))
+    cost = item.get("cost")
+    return {
+        "model": full,
+        "name": name.strip(),
+        "pricing": _pricing(cost),
+        "pricing_tiers": _pricing_tiers(cost),
+        "variants": variants,
+        "variant_ids": [variant["id"] for variant in variants],
+        "tools": tools,
+        "input": input_modalities,
+        "output": output_modalities,
+        "limits": _limits(item.get("limit")),
+        "free_candidate": _free_candidate(provider, cost),
+        "may_use_openai_quota": (
+            provider.lower() == "openai" or full.lower().startswith("openai/")
+        ),
+    }
+
+
+def _public_model(model: dict[str, Any]) -> dict[str, Any]:
+    keys = (
+        "model",
+        "name",
+        "pricing",
+        "pricing_tiers",
+        "variants",
+        "tools",
+        "input",
+        "output",
+        "limits",
+        "free_candidate",
+        "may_use_openai_quota",
+    )
+    return {key: model[key] for key in keys}
+
+
+def _catalog(exe: str, cwd: Path, timeout: float) -> list[dict[str, Any]]:
+    result = run_process(
+        [exe, "api", "--standalone", "GET", "/api/model"], cwd, timeout
+    )
     if result.returncode != 0:
         raise DelegateError(
             "catalog_unavailable",
             f"No se pudo obtener el catálogo (código {result.returncode}). Revisa "
             "los registros locales de OpenCode.",
         )
-    models: list[str] = []
-    for line in (result.stdout or "").splitlines():
-        token = line.strip().split()[0] if line.strip() else ""
-        if token and CATALOG_LINE.match(token) and token not in models:
-            models.append(token)
-    if not models:
-        raise DelegateError("catalog_unavailable", "El catálogo de modelos está vacío.")
+    try:
+        payload = json.loads(result.stdout or "")
+    except json.JSONDecodeError as exc:
+        raise DelegateError(
+            "catalog_unavailable",
+            "OpenCode devolvió un catálogo que no es JSON válido.",
+        ) from exc
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, list):
+        raise DelegateError(
+            "catalog_unavailable",
+            "OpenCode devolvió un catálogo sin la lista 'data' esperada.",
+        )
+
+    models: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in data:
+        model = _model_record(item)
+        if model is None or model["model"] in seen:
+            continue
+        seen.add(model["model"])
+        models.append(model)
     return models
 
 
@@ -526,20 +641,21 @@ def run_task(
     task_file: Path | str,
     model: str | None = None,
     variant: str | None = None,
+    reason: str | None = None,
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
 ) -> dict[str, Any]:
     """Ejecuta un único intento, sin alternativas ni reintentos automáticos."""
 
     try:
+        base_model, selected_variant = parse_model(model, variant)
+        clean_reason = _validate_reason(reason)
         project = _validate_cwd(cwd)
         task = _read_task(task_file)
-        policy = load_policy()
+        load_policy()
         if agent not in AGENTS:
             raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
         seconds = _validate_timeout(timeout)
-        base_model, selected_model = parse_model(model, variant, policy)
-        validate_project_policy(project)
 
         exe = find_opencode()
         if not exe:
@@ -549,13 +665,28 @@ def run_task(
             )
         _check_version(exe, project, seconds)
         catalog = _catalog(exe, project, seconds)
-        _validate_catalog_providers(catalog)
-        if base_model not in catalog:
+        selected = next(
+            (item for item in catalog if item["model"] == base_model), None
+        )
+        if selected is None:
             raise DelegateError(
                 "model_unavailable",
-                f"El modelo no aparece en el catálogo actual: {base_model}",
+                f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
+            )
+        if (
+            selected_variant is not None
+            and selected_variant not in selected["variant_ids"]
+        ):
+            available = ", ".join(selected["variant_ids"]) or "ninguna"
+            raise DelegateError(
+                "invalid_variant",
+                f"La variante '{selected_variant}' no existe para {base_model}. "
+                f"Variantes disponibles: {available}.",
             )
 
+        selected_model = base_model + (
+            "#" + selected_variant if selected_variant else ""
+        )
         result = run_process(
             build_command(exe, selected_model, agent, task), project, seconds
         )
@@ -579,20 +710,39 @@ def run_task(
     return {
         "status": "ok",
         "session": session,
-        "model": selected_model,
+        "model": base_model,
+        "variant": selected_variant,
+        "effort": selected_variant or "provider_default",
+        "reason": clean_reason,
         "agent": agent,
         "summary": _cap(summary),
         "cost": cost,
     }
 
 
-def doctor(cwd: Path | str, timeout: float = DEFAULT_TIMEOUT) -> dict[str, Any]:
-    """Comprueba versión v2, catálogo y disponibilidad de los modelos permitidos."""
+def doctor(
+    cwd: Path | str,
+    timeout: float = DEFAULT_TIMEOUT,
+    model: str | None = None,
+) -> dict[str, Any]:
+    """Muestra versión y catálogo compacto, opcionalmente filtrado."""
 
     try:
         project = _validate_cwd(cwd)
         seconds = _validate_timeout(timeout)
         policy = load_policy()
+        filter_model: str | None = None
+        if model is not None:
+            if not isinstance(model, str) or not model.strip():
+                raise DelegateError(
+                    "invalid_model", "El filtro --model no puede estar vacío."
+                )
+            filter_model = model.strip().partition("#")[0].strip()
+            if not filter_model:
+                raise DelegateError(
+                    "invalid_model", "El filtro --model no puede estar vacío."
+                )
+
         exe = find_opencode()
         if not exe:
             raise DelegateError(
@@ -600,28 +750,31 @@ def doctor(cwd: Path | str, timeout: float = DEFAULT_TIMEOUT) -> dict[str, Any]:
                 "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
             )
         version = _check_version(exe, project, seconds)
-        catalog = _catalog(exe, project, seconds)
-        _validate_catalog_providers(catalog)
+        catalog = [_public_model(item) for item in _catalog(exe, project, seconds)]
+        total = len(catalog)
 
-        project_policy_ok = True
-        project_policy_message: str | None = None
-        try:
-            validate_project_policy(project)
-        except DelegateError as exc:
-            project_policy_ok = False
-            project_policy_message = _cap(exc.message)
+        if policy["prefer_free"]:
+            catalog.sort(
+                key=lambda item: (
+                    0
+                    if item["free_candidate"] is True
+                    else 1
+                    if item["free_candidate"] is None
+                    else 2,
+                    item["model"].lower(),
+                )
+            )
+        else:
+            catalog.sort(key=lambda item: item["model"].lower())
+
+        if filter_model is not None:
+            catalog = [item for item in catalog if item["model"] == filter_model]
 
         return {
             "status": "ok",
             "version": version,
-            "catalog_count": len(catalog),
+            "catalog_count": total,
             "catalog": catalog,
-            "allowed_models": [
-                {"model": item, "available": item in catalog}
-                for item in policy["allowed_models"]
-            ],
-            "project_policy_ok": project_policy_ok,
-            "project_policy_message": project_policy_message,
         }
     except DelegateError as exc:
         return _error(exc.code, exc.message)
@@ -641,14 +794,15 @@ def _positive_float(value: str) -> float:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Delega una tarea acotada a un modelo gratuito de OpenCode v2."
+        description="Delega una tarea acotada a un modelo conectado de OpenCode v2."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     doctor_parser = subparsers.add_parser(
-        "doctor", help="Comprueba versión, catálogo y modelos permitidos."
+        "doctor", help="Muestra versión y catálogo compacto."
     )
     doctor_parser.add_argument("--cwd", required=True)
+    doctor_parser.add_argument("--model", help="Filtra por modelo base provider/model.")
     doctor_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
 
     run_parser = subparsers.add_parser(
@@ -656,8 +810,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument("--cwd", required=True)
     run_parser.add_argument("--task-file", required=True)
-    run_parser.add_argument("--model")
-    run_parser.add_argument("--variant")
+    run_parser.add_argument("--model", help="Modelo explícito provider/model[#variant].")
+    run_parser.add_argument("--variant", help="Variante real del modelo, sin '#'.")
+    run_parser.add_argument("--reason", help="Motivo de selección no vacío.")
     run_parser.add_argument("--agent", choices=AGENTS, default="build")
     run_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
     return parser
@@ -667,13 +822,16 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "doctor":
-            payload = doctor(cwd=args.cwd, timeout=args.timeout)
+            payload = doctor(
+                cwd=args.cwd, timeout=args.timeout, model=args.model
+            )
         else:
             payload = run_task(
                 cwd=args.cwd,
                 task_file=args.task_file,
                 model=args.model,
                 variant=args.variant,
+                reason=args.reason,
                 agent=args.agent,
                 timeout=args.timeout,
             )

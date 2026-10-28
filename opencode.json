@@ -2,8 +2,6 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/mimo-v2.6-flash-free",
   "policies": [
-    { "action": "provider.use", "resource": "*", "effect": "deny" },
-    { "action": "provider.use", "resource": "opencode", "effect": "allow" },
     { "action": "tool.use", "resource": "subagent:*", "effect": "deny" }
   ]
 }

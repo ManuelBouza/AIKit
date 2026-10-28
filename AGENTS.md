@@ -12,8 +12,7 @@ Superpowers conservan coordinación, subagentes, revisiones y verificación.
   preferencias y `scripts/delegate.py`.
 - `tests/`: pruebas `unittest` con transporte falso, sin inferencia real.
 - `docs/`: investigación, validación, diseño y planes.
-- `opencode.json`: solo bloquea subagentes internos de OpenCode; no limita
-  proveedores ni subagentes nativos.
+- `opencode.json`: bloquea `openai` directo y subdelegación interna de OpenCode.
 - `.aikit/`: tareas locales ignoradas por Git.
 - `README.md`: requisitos, uso, instalación y restauración.
 
@@ -27,9 +26,10 @@ delegan.
 
 La skill se invoca con `$delegating-to-opencode` o se selecciona por descripción;
 no intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
-Puede usarse cualquier modelo habilitado en el catálogo, gratuito o de pago. Se
-prefiere un gratuito suficiente; un pago está autorizado si aporta capacidad o
-fiabilidad. La variante debe existir en los metadatos; sin variante se registra el
+Permite modelos conectados gratuitos o de pago, salvo el proveedor directo
+`openai`. GPT de `opencode`, `opencode-go` u otros proveedores siguen permitidos;
+el bloqueo no depende del fabricante. Prioriza gratuitos suficientes.
+La variante debe existir en los metadatos; sin variante se registra el
 ajuste predeterminado. No hay lista cerrada, modelo por defecto ni elección
 automática del mejor modelo.
 

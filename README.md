@@ -22,8 +22,9 @@ catálogo.
 El coordinador decide si ejecuta de forma nativa o delega. Un subagente nativo de
 Codex autorizado y con shell puede usar el adaptador, recibir el resultado y
 continuar su trabajo. Los revisores independientes conservan su función. El
-`opencode.json` del repositorio solo bloquea nuevas delegaciones dentro de
-OpenCode con `tool.use subagent:*`; no limita proveedores ni subagentes nativos.
+`opencode.json` del repositorio bloquea nuevas delegaciones dentro de OpenCode con
+`tool.use subagent:*` y el proveedor directo `openai` con `provider.use`; no
+limita otros proveedores ni subagentes nativos.
 
 ## Requisitos
 
@@ -36,9 +37,11 @@ OpenCode con `tool.use subagent:*`; no limita proveedores ni subagentes nativos.
 - No se exige `opencode.json` en el directorio de destino. Se respeta la
   configuración y las cuentas ya conectadas.
 
-Todos los modelos conectados y habilitados en el catálogo efectivo pueden usarse,
-sean gratuitos o de pago. El adaptador no mantiene una lista cerrada ni un modelo
-predeterminado.
+Los modelos conectados y habilitados en el catálogo efectivo pueden usarse, sean
+gratuitos o de pago, salvo el proveedor directo `openai`: comparte la cuenta de
+Codex y se rechaza. Los modelos GPT/OpenAI servidos por otros proveedores
+conectados (`opencode`, `opencode-go`, `openrouter`, etc.) siguen permitidos. El
+adaptador no mantiene una lista cerrada ni un modelo predeterminado.
 
 ## Uso
 
@@ -52,8 +55,9 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd . --model 
 `doctor` muestra `version`, `catalog_count` y `catalog`. Cada entrada incluye
 modelo, nombre, `pricing`, `pricing_tiers`, variantes, herramientas, modalidades
 de entrada/salida, límites, `free_candidate` y `may_use_openai_quota`. El
-catálogo se ordena con los candidatos gratuitos primero. `--model` filtra por el
-ID base.
+catálogo se ordena con los candidatos gratuitos primero y excluye las entradas
+cuyo `providerID` sea `openai`. `--model` filtra por el ID base; un filtro
+`openai/...` devuelve `provider_not_allowed` antes de consultar el catálogo.
 
 `pricing` es la primera tarifa, conservada como precio base. `pricing_tiers`
 contiene todos los niveles saneados, incluido el `tier` de contexto cuando
@@ -62,9 +66,10 @@ esquema `Model.Cost` en USD por millón de tokens. No se infiere un coste por
 llamada.
 
 `free_candidate` solo es `true` si las tarifas conocidas de entrada, salida y
-caché son cero y el proveedor no es OpenAI. No se deduce por el sufijo `-free`.
-Es `null` si el coste es desconocido. Un modelo OpenAI con coste cero puede
-consumir cuota de la cuenta conectada y no se clasifica como gratuito.
+caché son cero. No se deduce por el sufijo `-free`, por el nombre ni por metadatos
+de fabricante. Es `null` si el coste es desconocido. Los GPT/OpenAI de otros
+proveedores se clasifican por sus tarifas; el proveedor directo `openai` no
+aparece en el catálogo.
 
 Guardar la tarea en `.aikit/` (ignorado por Git) y ejecutar un único intento:
 
@@ -79,7 +84,8 @@ produce un error JSON antes de iniciar OpenCode; no hay modelo por defecto. La
 variante puede indicarse como `provider/model#variante` o con `--variant`, pero
 no en ambos formatos. Solo se aceptan IDs de variante presentes en los metadatos
 del modelo. Sin variante, la salida informa `variant: null` y
-`effort: "provider_default"`.
+`effort: "provider_default"`. Un `--model openai/...` se rechaza con
+`provider_not_allowed` antes de iniciar cualquier proceso, aunque uses variante.
 
 Opciones de `run`: `--model`, `--variant`, `--reason`, `--agent build|plan` y
 `--timeout SECONDS`. El timeout debe ser finito, mayor que cero y como máximo
@@ -99,8 +105,8 @@ Antes de ejecutar, clasifica la tarea como mecánica, integración o compleja y
 consulta capacidades, herramientas, modalidades, límites, tarifas y variantes.
 Elige primero un modelo gratuito suficiente. Un modelo de pago está permitido si
 aporta capacidad o fiabilidad necesaria; el usuario ya autorizó considerar pagos
-dentro de este alcance. Puede preferirse un proveedor externo a OpenAI para
-reservar cuota, sin prohibir un OpenAI conectado.
+dentro de este alcance. El proveedor directo `openai` está bloqueado; los GPT de
+otros proveedores siguen disponibles según su conexión y tarifas.
 
 La variante debe existir en los metadatos. Si no hay variantes o conviene el
 ajuste predeterminado, regístralo en `--reason`; no inventes equivalencias con

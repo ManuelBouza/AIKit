@@ -1,6 +1,6 @@
 ---
 name: delegating-to-opencode
-description: Use when delegating a bounded implementation or transformation task to OpenCode with any connected model, preferring free models and recording the selection reason.
+description: Use when delegating a bounded implementation or transformation task to OpenCode with a connected model other than the direct openai provider, preferring free models and recording the selection reason.
 ---
 
 # Delegar a OpenCode
@@ -38,10 +38,13 @@ Antes de ejecutar:
    metadatos; sin variante, registra el ajuste predeterminado.
 5. Registra en `--reason` por qué modelo y variante bastan.
 
-No elige automáticamente el mejor modelo ni usa siempre el mismo. Puede
-preferirse un proveedor externo a OpenAI para reservar cuota, sin prohibir
-OpenAI conectado. Coste cero en OpenAI no implica gratuidad: puede consumir
-cuota. El catálogo prueba disponibilidad actual, no calidad.
+No elige automáticamente el mejor modelo ni usa siempre el mismo. El proveedor
+directo `openai` está bloqueado porque comparte la cuenta Codex: se rechaza
+`openai/*`, incluidas variantes, y `doctor` lo excluye. Los modelos GPT/OpenAI de
+otros proveedores conectados (`opencode`, `opencode-go`, etc.) siguen permitidos,
+gratuitos o de pago. El bloqueo depende del `providerID`, no del fabricante,
+nombre o metadatos `canonical`. El catálogo prueba disponibilidad actual, no
+calidad.
 
 ## Ejecución
 

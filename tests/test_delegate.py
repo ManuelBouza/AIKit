@@ -251,7 +251,7 @@ class DelegateTestCase(unittest.TestCase):
                 self.assertEqual(payload["code"], code)
         self.assertEqual(transport.calls, [])
 
-    def test_paid_openai_and_multiprovider_models_are_allowed(self):
+    def test_direct_openai_is_rejected_before_any_subprocess_with_variants_and_case(self):
         paid_openai = api_model(
             "gpt-5.3",
             provider="openai",
@@ -259,26 +259,52 @@ class DelegateTestCase(unittest.TestCase):
             variants=[variant("high", reasoningEffort="high")],
             cost={"input": 3, "output": 15, "cache": {"read": 0.3, "write": 3}},
         )
-        paid_anthropic = api_model(
-            "claude-ficticio",
-            provider="anthropic",
-            name="Claude ficticio",
+        transport = self.fake(models=[paid_openai])
+        for overrides in (
+            {"model": "openai/gpt-5.3"},
+            {"model": "openai/gpt-5.3#high"},
+            {"model": "openai/gpt-5.3", "variant": "high"},
+            {"model": " OPENAI /gpt-5.3#HIGH"},
+        ):
+            with self.subTest(overrides=overrides):
+                result = self.run_task(
+                    reason="capacidad necesaria para una revisión compleja",
+                    **overrides,
+                )
+                self.assertEqual(result["status"], "error")
+                self.assertEqual(result["code"], "provider_not_allowed")
+        self.assertEqual(transport.calls, [])
+
+    def test_third_party_gpt_models_are_allowed_with_real_variants(self):
+        opencode_gpt = api_model(
+            "gpt-6.1-sol",
+            provider="opencode",
+            name="OpenAI GPT",
+            canonical="openai",
+            variants=[variant("high", reasoningEffort="high")],
+            cost={"input": 3, "output": 15},
+        )
+        opencode_go_gpt = api_model(
+            "openai/gpt-6.1-sol",
+            provider="opencode-go",
+            name="OpenAI GPT",
+            canonical="openai",
+            variants=[variant("high", reasoningEffort="high")],
             cost={"input": 2, "output": 10},
         )
-        transport = self.fake(models=[paid_openai, paid_anthropic])
-        for full_model in ("openai/gpt-5.3#high", "anthropic/claude-ficticio"):
+        transport = self.fake(models=[opencode_gpt, opencode_go_gpt])
+        for full_model in (
+            "opencode/gpt-6.1-sol#high",
+            "opencode-go/openai/gpt-6.1-sol#high",
+        ):
             with self.subTest(model=full_model):
                 result = self.run_task(
                     model=full_model,
                     reason="capacidad necesaria para una revisión compleja",
                 )
                 self.assertEqual(result["status"], "ok")
-                self.assertEqual(
-                    transport.run_calls()[-1][0][
-                        transport.run_calls()[-1][0].index("--model") + 1
-                    ],
-                    full_model,
-                )
+                argv = transport.run_calls()[-1][0]
+                self.assertEqual(argv[argv.index("--model") + 1], full_model)
 
     def test_disabled_or_absent_models_are_not_executed(self):
         disabled = api_model("apagado", enabled=False)
@@ -350,9 +376,15 @@ class DelegateTestCase(unittest.TestCase):
 
     def test_absent_local_config_does_not_block_paid_execution(self):
         self.assertFalse((self.project / "opencode.json").exists())
-        model = api_model("gpt-5.3", provider="openai", cost={"input": 1, "output": 2})
+        model = api_model(
+            "gpt-6.1-sol",
+            provider="opencode-go",
+            cost={"input": 1, "output": 2},
+        )
         transport = self.fake(models=[model])
-        result = self.run_task(model="openai/gpt-5.3", reason="pago autorizado por el usuario")
+        result = self.run_task(
+            model="opencode-go/gpt-6.1-sol", reason="pago autorizado por el usuario"
+        )
         self.assertEqual(result["status"], "ok")
         self.assertEqual(len(transport.run_calls()), 1)
 
@@ -403,6 +435,62 @@ class DelegateTestCase(unittest.TestCase):
         self.assertEqual(entry["input"], ["text", "image"])
         self.assertEqual(entry["output"], ["text"])
         self.assertEqual(entry["limits"], {"context": 200000, "input": 150000, "output": 20000})
+
+    def test_doctor_filters_direct_openai_but_keeps_third_party_gpt_metadata(self):
+        direct_openai = api_model(
+            "gpt-6.1-sol",
+            provider="openai",
+            name="OpenAI GPT",
+            canonical="openai",
+            cost={"input": 3, "output": 15},
+        )
+        opencode_gpt = api_model(
+            "gpt-6.1-sol",
+            provider="opencode",
+            name="OpenAI GPT",
+            canonical="openai",
+            cost=FREE_COST,
+        )
+        opencode_go_gpt = api_model(
+            "openai/gpt-6.1-sol",
+            provider="opencode-go",
+            name="OpenAI GPT",
+            canonical="openai",
+            cost={"input": 2, "output": 10},
+        )
+        openrouter_gpt = api_model(
+            "openai/gpt-6.1-sol",
+            provider="openrouter",
+            name="OpenAI GPT",
+            canonical="openai",
+            cost={"input": 1, "output": 5},
+        )
+        transport = self.fake(
+            models=[direct_openai, opencode_gpt, opencode_go_gpt, openrouter_gpt]
+        )
+        result = self.doctor()
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["catalog_count"], 3)
+        self.assertEqual(
+            {entry["model"] for entry in result["catalog"]},
+            {
+                "opencode/gpt-6.1-sol",
+                "opencode-go/openai/gpt-6.1-sol",
+                "openrouter/openai/gpt-6.1-sol",
+            },
+        )
+
+        transport.calls.clear()
+        for filter_model in (
+            "openai/gpt-6.1-sol",
+            "OPENAI/gpt-6.1-sol",
+            " OpenAI /gpt-6.1-sol",
+        ):
+            with self.subTest(filter_model=filter_model):
+                rejected = self.doctor(model=filter_model)
+                self.assertEqual(rejected["status"], "error")
+                self.assertEqual(rejected["code"], "provider_not_allowed")
+        self.assertEqual(transport.calls, [])
 
     def test_doctor_reports_all_pricing_tiers_without_level_secrets(self):
         model = api_model(
@@ -457,19 +545,26 @@ class DelegateTestCase(unittest.TestCase):
         )
         self.assertFalse(entry["free_candidate"])
 
-    def test_unknown_prices_are_null_and_zero_openai_is_not_free(self):
+    def test_unknown_prices_are_null_and_direct_openai_is_filtered(self):
         unknown = api_model("sin-precio", cost=None)
-        openai_zero = api_model("gpt-5.3", provider="openai", cost=FREE_COST)
+        direct_openai = api_model("gpt-5.3", provider="openai", cost=FREE_COST)
+        third_party_zero = api_model(
+            "gpt-6.1-sol",
+            provider="opencode-go",
+            name="OpenAI GPT",
+            canonical="openai",
+            cost=FREE_COST,
+        )
         free = api_model("modelo-gratuito", cost=FREE_COST)
-        self.fake(models=[unknown, openai_zero, free])
+        self.fake(models=[unknown, direct_openai, third_party_zero, free])
         result = self.doctor()
         entries = {entry["model"]: entry for entry in result["catalog"]}
+        self.assertNotIn("openai/gpt-5.3", entries)
         self.assertIsNone(entries["opencode/sin-precio"]["pricing"])
         self.assertIsNone(entries["opencode/sin-precio"]["pricing_tiers"])
         self.assertIsNone(entries["opencode/sin-precio"]["free_candidate"])
-        self.assertEqual(entries["openai/gpt-5.3"]["pricing"]["input"], 0)
-        self.assertFalse(entries["openai/gpt-5.3"]["free_candidate"])
-        self.assertTrue(entries["openai/gpt-5.3"]["may_use_openai_quota"])
+        self.assertTrue(entries["opencode-go/gpt-6.1-sol"]["free_candidate"])
+        self.assertFalse(entries["opencode-go/gpt-6.1-sol"]["may_use_openai_quota"])
         self.assertTrue(entries["opencode/modelo-gratuito"]["free_candidate"])
         self.assertFalse(entries["opencode/modelo-gratuito"]["may_use_openai_quota"])
 
@@ -496,7 +591,7 @@ class DelegateTestCase(unittest.TestCase):
         free_a = api_model("alfa-free", cost=FREE_COST)
         self.fake(models=[expensive, openai_zero, free_b, free_a])
         result = self.doctor()
-        self.assertEqual(result["catalog_count"], 4)
+        self.assertEqual(result["catalog_count"], 3)
         free_flags = [entry["free_candidate"] for entry in result["catalog"]]
         self.assertEqual(free_flags[:2], [True, True])
         self.assertEqual(
@@ -504,7 +599,7 @@ class DelegateTestCase(unittest.TestCase):
             {"opencode/alfa-free", "opencode/zeta-free"},
         )
         filtered = self.doctor(model="opencode/alfa-free")
-        self.assertEqual(filtered["catalog_count"], 4)
+        self.assertEqual(filtered["catalog_count"], 3)
         self.assertEqual(len(filtered["catalog"]), 1)
         self.assertEqual(filtered["catalog"][0]["model"], "opencode/alfa-free")
 

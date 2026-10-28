@@ -40,6 +40,22 @@ class DelegateError(Exception):
         self.message = message
 
 
+def _is_openai_provider(provider: Any) -> bool:
+    """El bloqueo depende solo del proveedor de conexión, no del modelo."""
+
+    return isinstance(provider, str) and provider.strip().lower() == "openai"
+
+
+def _reject_direct_openai(provider: str) -> None:
+    if not _is_openai_provider(provider):
+        return
+    raise DelegateError(
+        "provider_not_allowed",
+        "El proveedor directo openai está bloqueado porque comparte la cuenta "
+        "de Codex; usa un modelo GPT de otro proveedor conectado.",
+    )
+
+
 def _cap(text: Any, limit: int = MAX_TEXT) -> str:
     value = "" if text is None else str(text)
     return value[:limit]
@@ -118,6 +134,7 @@ def parse_model(
         raise DelegateError(
             "invalid_model", "El modelo debe tener el formato provider/model."
         )
+    _reject_direct_openai(provider)
 
     clean_variant = embedded_variant.strip() if embedded_variant else None
     return base, clean_variant or None
@@ -361,7 +378,7 @@ def _pricing(cost: Any) -> dict[str, Any] | None:
 def _free_candidate(provider: str, cost: Any) -> bool | None:
     """Solo es candidato si las tarifas conocidas son cero y no es OpenAI."""
 
-    if provider.lower() == "openai":
+    if _is_openai_provider(provider):
         return False
     rates = _cost_rates(cost)
     if not rates:
@@ -454,6 +471,8 @@ def _model_record(item: Any) -> dict[str, Any] | None:
     if not isinstance(model_id, str) or not model_id.strip():
         return None
     provider = provider.strip()
+    if _is_openai_provider(provider):
+        return None
     model_id = model_id.strip()
     full = f"{provider}/{model_id}"
     name = item.get("name")
@@ -476,9 +495,7 @@ def _model_record(item: Any) -> dict[str, Any] | None:
         "output": output_modalities,
         "limits": _limits(item.get("limit")),
         "free_candidate": _free_candidate(provider, cost),
-        "may_use_openai_quota": (
-            provider.lower() == "openai" or full.lower().startswith("openai/")
-        ),
+        "may_use_openai_quota": _is_openai_provider(provider),
     }
 
 
@@ -730,7 +747,6 @@ def doctor(
     try:
         project = _validate_cwd(cwd)
         seconds = _validate_timeout(timeout)
-        policy = load_policy()
         filter_model: str | None = None
         if model is not None:
             if not isinstance(model, str) or not model.strip():
@@ -742,6 +758,9 @@ def doctor(
                 raise DelegateError(
                     "invalid_model", "El filtro --model no puede estar vacío."
                 )
+            if "/" in filter_model:
+                _reject_direct_openai(filter_model.partition("/")[0])
+        policy = load_policy()
 
         exe = find_opencode()
         if not exe:

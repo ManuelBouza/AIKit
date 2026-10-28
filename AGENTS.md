@@ -2,38 +2,54 @@
 
 ## Propósito
 
-Este proyecto sirve para probar y documentar las preferencias personales de configuración de Codex de Manuel. El objetivo es poder reproducir en otras instalaciones el comportamiento validado aquí. Cada preferencia debe explicar qué se configura, por qué se elige y cómo comprobar su resultado.
+Reproducir y documentar preferencias de configuración de Codex. La ejecución de
+tareas rutinarias se delega a modelos gratuitos de OpenCode; Codex coordina y
+verifica el resultado.
 
-## Estructura y organización
+## Estructura
 
-Actualmente solo existe esta guía. Al incorporar contenido, utiliza estas ubicaciones según sea necesario:
+- `skills/delegating-to-opencode/`: skill autocontenida, `policy.json` y
+  `scripts/delegate.py`.
+- `tests/`: pruebas `unittest` con transporte falso, sin inferencia real.
+- `docs/`: investigación, validación, diseño y planes.
+- `opencode.json`: política del proyecto que limita proveedores y subagentes.
+- `.aikit/`: tareas locales ignoradas por Git.
+- `README.md`: requisitos, uso, instalación y restauración.
 
-- `README.md`: objetivo, requisitos y pasos para reproducir la configuración.
-- `config/`: configuraciones de referencia sin secretos ni datos personales.
-- `docs/`: preferencias, decisiones y limitaciones conocidas.
-- `tests/`: escenarios y resultados de las pruebas de comportamiento.
-- `scripts/`: utilidades de instalación, comprobación o restauración, cuando existan.
+## Regla de coordinación
 
-Distingue las preferencias ya verificadas de los experimentos pendientes.
+Codex usa `delegating-to-opencode` para el trabajo de ejecución rutinario y
+verifica al final el diff, las pruebas y el resultado. No usa el spawn nativo de
+subagentes para esas tareas. Los workers no cargan la skill. Si un modelo
+gratuito falla, el error vuelve al coordinador; no hay fallback de pago.
 
-## Configuración y comandos
+## Comandos
 
-Todavía no hay comandos de instalación ni pruebas automatizadas. Documenta cada comando cuando se incorpore, indicando desde qué directorio se ejecuta, sus requisitos y los archivos que modifica. Para cada procedimiento de réplica, incluye cómo guardar la configuración anterior y restaurarla.
+Desde la raíz del repositorio:
 
-Identifica qué ajustes son personales, cuáles pertenecen al proyecto y cuáles dependen del equipo o del sistema operativo. Usa rutas parametrizadas en los ejemplos.
+```powershell
+python -m unittest discover -s tests -v
+python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
+python skills/delegating-to-opencode/scripts/delegate.py run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free --agent build --timeout 600
+```
 
-## Estilo y documentación
+Solo se permiten los tres modelos `-free` de `opencode` listados en
+`skills/delegating-to-opencode/policy.json`. Consulta `README.md` para instalar
+la skill sin sobrescribir y restaurar una copia anterior.
 
-Escribe la documentación en español, con instrucciones breves y ejemplos reproducibles. Conserva los nombres originales de opciones, archivos y comandos. Utiliza nombres descriptivos para los archivos, como `preferencias-de-respuesta.md`. Explica la intención de cada ajuste y sus dependencias.
+## Estilo
 
-## Validación de preferencias
+Documentación en español, instrucciones breves y ejemplos reproducibles. Conserva
+nombres originales de opciones y archivos. Distingue preferencias verificadas de
+experimentos pendientes.
 
-Prueba cada cambio con un escenario concreto. Registra la versión de Codex, el entorno, la configuración aplicada, el resultado esperado y el observado. Al replicar la configuración, repite el escenario en la instalación de destino y documenta las diferencias. No presentes una preferencia como verificada sin evidencias.
+## Validación
 
-## Commits y solicitudes de cambios
-
-Utiliza Git para versionar la configuración y su documentación. Escribe títulos breves en imperativo, como `Documenta las preferencias de respuesta`. Mantén cada cambio centrado en una preferencia o procedimiento. En las solicitudes de cambios, explica el motivo, las pruebas realizadas y las limitaciones de portabilidad.
+Cada cambio requiere un escenario concreto con entorno, configuración, resultado
+esperado y observado. No presentes una preferencia como verificada sin evidencia.
 
 ## Seguridad
 
-Excluye credenciales, tokens, conversaciones privadas y datos de cuenta. Comparte ejemplos con valores ficticios. Revisa las configuraciones antes de incorporarlas al repositorio.
+No incluyas credenciales, tokens, conversaciones privadas ni datos de cuenta. Usa
+ejemplos ficticios. La política del proyecto y la lista de modelos no sustituyen
+un sandbox del sistema operativo.

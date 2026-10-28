@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-28. Estado: investigación terminada; integración pendiente de elegir e implementar.
 
+Este informe conserva el estado previo a la implementación. La skill propia elegida después y sus pruebas se documentan en [validacion-opencode.md](validacion-opencode.md).
+
 ## Objetivo
 
 Reservar la cuota de OpenAI utilizada por Codex para coordinación, decisiones y verificación. Delegar las tareas de ejecución a OpenCode, priorizando sus modelos gratuitos. Usar OpenCode no implica por sí solo consumir una cuenta diferente: el proveedor seleccionado determina dónde se procesa el trabajo.

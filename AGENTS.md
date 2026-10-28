@@ -2,9 +2,9 @@
 
 ## Propósito
 
-Reproducir y documentar preferencias de configuración de Codex. La ejecución de
-tareas rutinarias se delega a modelos gratuitos de OpenCode; Codex coordina y
-verifica el resultado.
+Reproducir y documentar preferencias de configuración de Codex. OpenCode permite
+delegar tareas adecuadas a modelos gratuitos y complementa la coordinación,
+los subagentes y la verificación de Codex y Superpowers.
 
 ## Estructura
 
@@ -12,16 +12,22 @@ verifica el resultado.
   `scripts/delegate.py`.
 - `tests/`: pruebas `unittest` con transporte falso, sin inferencia real.
 - `docs/`: investigación, validación, diseño y planes.
-- `opencode.json`: política del proyecto que limita proveedores y subagentes.
+- `opencode.json`: limita proveedores y subdelegación interna de OpenCode.
 - `.aikit/`: tareas locales ignoradas por Git.
 - `README.md`: requisitos, uso, instalación y restauración.
 
 ## Regla de coordinación
 
-Codex usa `delegating-to-opencode` para el trabajo de ejecución rutinario y
-verifica al final el diff, las pruebas y el resultado. No usa el spawn nativo de
-subagentes para esas tareas. Los workers no cargan la skill. Si un modelo
-gratuito falla, el error vuelve al coordinador; no hay fallback de pago.
+Conserva los roles, subagentes, revisiones y pruebas de Codex y Superpowers.
+El coordinador decide qué tareas ejecutar nativamente y cuáles externalizar;
+prioriza OpenCode gratuito para subtareas adecuadas. Tanto el coordinador como
+un subagente nativo autorizado pueden usar `delegating-to-opencode`. Quien lo
+invoca verifica el diff y las pruebas; el resultado no sustituye una revisión
+independiente requerida. Los workers de OpenCode no vuelven a delegar.
+
+La skill se invoca con `$delegating-to-opencode` o se selecciona por coincidencia
+con la tarea; no intercepta llamadas ni cambia modelos nativos. Si falla un
+modelo gratuito, informa al rol que lo invocó; no hay fallback externo de pago.
 
 ## Comandos
 
@@ -33,7 +39,7 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 python skills/delegating-to-opencode/scripts/delegate.py run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free --agent build --timeout 600
 ```
 
-Solo se permiten los tres modelos `-free` de `opencode` listados en
+El adaptador solo permite los tres modelos `-free` de `opencode` listados en
 `skills/delegating-to-opencode/policy.json`. Consulta `README.md` para instalar
 la skill sin sobrescribir y restaurar una copia anterior.
 

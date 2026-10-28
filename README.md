@@ -1,8 +1,33 @@
 # AIKit: preferencias de Codex
 
 Objetivo: reproducir y validar preferencias de configuración de Codex. La
-delegación de ejecución a OpenCode reserva la cuota de OpenAI de Codex para
-coordinación y verificación.
+delegación de subtareas adecuadas a OpenCode reduce trabajo de ejecución en
+Codex y complementa sus subagentes y los flujos de Superpowers.
+
+## Activación e integración
+
+La skill personal `delegating-to-opencode` ya aparece en el catálogo de esta
+conversación. Puede invocarse explícitamente:
+
+```text
+$delegating-to-opencode ejecuta esta subtarea y conserva los revisores de Superpowers
+```
+
+Codex también puede seleccionarla por coincidencia entre tarea y descripción;
+esa selección no está garantizada en todas las tareas. No hay hooks ni un MCP
+que intercepten `spawn_agent`. Leer la skill no ejecuta inferencia: el comando
+`run` inicia el trabajo externo y `doctor` solo consulta versión y catálogo.
+
+El coordinador conserva la elección de ejecutor y los roles de Superpowers.
+Un implementador nativo de Codex, autorizado y con acceso a shell, puede llamar
+al adaptador para una subtarea, recibir el resultado y continuar su trabajo.
+Los revisores independientes conservan su función. El adaptador no cambia los
+modelos, esfuerzos ni el ciclo de vida de los subagentes nativos.
+
+La regla `tool.use subagent:*` de `opencode.json` bloquea únicamente nuevas
+delegaciones dentro de OpenCode; no bloquea subagentes de Codex o Superpowers.
+El ejecutor externo no se registra como un subagente nativo y su resultado no
+equivale por sí solo a la revisión independiente requerida por un flujo.
 
 ## Requisitos
 
@@ -14,7 +39,8 @@ coordinación y verificación.
 - Modelos gratuitos permitidos: `opencode/mimo-v2.6-flash-free` (predeterminado),
   `opencode/deepseek-v4.1-flash-free` y `opencode/glm-5.3-flash-free`.
 
-No se admiten modelos de pago ni un fallback automático.
+El adaptador no admite modelos de pago ni fallback automático. Esta restricción
+no modifica la selección de modelos de Codex ni de sus subagentes nativos.
 
 ## Pruebas
 

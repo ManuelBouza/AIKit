@@ -1,14 +1,30 @@
 ---
 name: delegating-to-opencode
-description: Use when tasks should be delegated to OpenCode to conserve the Codex OpenAI quota, especially with free models.
+description: Use when delegating a bounded task or subtask to OpenCode, especially to use free models alongside Codex or Superpowers workflows.
 ---
 
 # Delegar a OpenCode
 
-Usa esta skill solo desde el coordinador Codex. El coordinador planifica, delega
-trabajo acotado al adaptador y verifica al final el diff, las pruebas y el
-resultado. Los workers de OpenCode no cargan esta skill: así no se delegan a sí
-mismos ni crean cadenas de delegación.
+OpenCode es un ejecutor externo complementario. El coordinador o un subagente
+nativo de Codex con autorización y acceso a shell puede usar el adaptador para
+una tarea acotada. El resultado vuelve al rol que lo invocó para su verificación.
+Los workers de OpenCode no cargan esta skill ni vuelven a delegar.
+
+## Activación e integración
+
+Se puede invocar con `$delegating-to-opencode` o seleccionar cuando la tarea
+coincida con su descripción. Estar disponible no obliga a utilizarla. Una
+consulta sin trabajo externalizable no necesita ejecutar OpenCode.
+
+Conserva los roles, subagentes, revisiones y pruebas previstos por Codex y
+Superpowers. El coordinador elige entre ejecución nativa y externa según la
+tarea; prioriza modelos gratuitos para subtareas adecuadas. Un implementador
+nativo puede encargar una subtarea al adaptador y conservar su responsabilidad.
+La salida de OpenCode no sustituye una revisión independiente requerida.
+
+Esta skill no intercepta `spawn_agent`, cambia modelos o esfuerzos nativos ni
+instala hooks, MCP o servicios. Solo `run` inicia trabajo de inferencia externo;
+`doctor` consulta versión y catálogo. No crea subagentes nativos automáticamente.
 
 ## Ruta del adaptador
 
@@ -54,6 +70,8 @@ python $delegate doctor --cwd .
 El directorio destino debe tener un `opencode.json` con esta política. El orden
 importa: `deny` de `provider.use '*'` debe ir antes del `allow` de `opencode`.
 No agregues `allow` para otros proveedores, comodines ni `tool.use`.
+La regla `subagent:*` limita únicamente la subdelegación interna de OpenCode;
+no limita los subagentes de Codex ni los roles de Superpowers.
 
 ```json
 {
@@ -81,8 +99,8 @@ falta `opencode.json` o la política no cumple, el adaptador falla cerrado.
   un modelo de pago por iniciativa propia.
 - El adaptador no reintenta; OpenCode puede reintentar internamente dentro del
   tiempo máximo del proceso. Revisa cambios parciales antes de un nuevo intento.
-- No uses el spawn nativo de subagentes para tareas rutinarias: consume cuota de
-  Codex y evita el objetivo de esta skill.
+- Las restricciones de proveedor y modelo se aplican a este adaptador; no
+  cambian la selección de modelos de los subagentes nativos.
 - Una carpeta o worktree no es un sandbox del sistema operativo. Revisa permisos
   y no ejecutes tareas destructivas sin supervisión.
 - No escribas credenciales, transcripciones ni registros desde el adaptador.

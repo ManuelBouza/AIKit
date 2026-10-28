@@ -1,4 +1,15 @@
-# AIKit: selección de modelos para delegar
+# AIKit: configuraciones y skills para Codex
+
+AIKit evoluciona hacia un complemento instalable que reúna preferencias de
+configuración y distintas skills reutilizables. Debe complementar Superpowers y
+las demás capacidades instaladas. Antes de crear o modificar una skill, se
+comprueba si una existente cubre la necesidad y se documenta la diferencia que
+justifica el cambio.
+
+Actualmente el repositorio distribuye una skill individual con instalación
+manual; todavía no contiene el empaquetado de un complemento. Los criterios de
+evolución, reutilización y compatibilidad están en
+[Principios de AIKit](docs/principios-aikit.md).
 
 Objetivo: documentar y validar preferencias de Codex para delegar ejecución
 acotada a OpenCode. Codex conserva la orquestación, los roles de Superpowers,

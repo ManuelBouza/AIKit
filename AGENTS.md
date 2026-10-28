@@ -2,18 +2,26 @@
 
 ## Propósito
 
-Documentar preferencias de Codex: OpenCode ejecuta; Codex y Superpowers coordinan
-y verifican.
+Evolucionar AIKit hacia un complemento instalable de configuraciones y skills
+reproducibles. Complementa Superpowers y otras skills instaladas.
+OpenCode ejecuta; Codex y Superpowers coordinan y verifican.
+
+## Antes de crear o modificar una skill
+
+Primero explora las skills y herramientas instaladas y lee sus instrucciones
+pertinentes. Registra cobertura, carencias y justificación del cambio.
+Reutiliza lo existente; implementa solo la necesidad no cubierta.
+No dupliques flujos de Superpowers ni alteres sus archivos, activación o roles.
+Aplica esta comprobación también a modificaciones de AIKit. Consulta
+`docs/principios-aikit.md` para los criterios de compatibilidad y distribución.
 
 ## Estructura
 
-- `skills/delegating-to-opencode/`: skill autocontenida, `policy.json` con
-  preferencias y `scripts/delegate.py`.
+- `skills/delegating-to-opencode/`: skill, política y adaptador Python.
 - `tests/`: pruebas pytest tipadas, fixtures y transporte falso, sin inferencia.
-- `docs/`: investigación, validación, diseño y planes.
+- `docs/`: investigación, validación y diseño.
 - `opencode.json`: bloquea `openai` directo y subdelegación interna de OpenCode.
 - `.aikit/`: tareas locales ignoradas por Git.
-- `README.md`: requisitos, uso, instalación y restauración.
 
 ## Regla de coordinación
 
@@ -21,23 +29,21 @@ Conserva roles, subagentes, revisiones y pruebas de Codex y Superpowers.
 El coordinador o subagente nativo delega la implementación a OpenCode y verifica
 el resultado; no sustituye revisiones independientes. Los workers no redelegan.
 
-La skill se invoca con `$delegating-to-opencode` o se selecciona por descripción;
-no intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
+Activa `$delegating-to-opencode` explícitamente o por descripción.
+No intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
 Permite modelos conectados gratuitos o de pago, salvo el proveedor directo
 `openai`. GPT de `opencode`, `opencode-go` u otros proveedores siguen permitidos;
-el bloqueo no depende del fabricante. Prioriza gratuitos suficientes.
-La variante debe existir en los metadatos; sin variante se registra el
-ajuste predeterminado. No hay lista cerrada, modelo por defecto ni elección
-automática del mejor modelo.
+prioriza gratuitos suficientes.
+Escoge modelo y esfuerzo según la tarea. La variante debe existir en los
+metadatos; sin variante se registra el ajuste predeterminado.
 
-Preparar briefs y verificar sigue siendo coordinación. Si OpenCode agota el uso
-gratuito (`free_limit_reached`), informa y continúa con Codex y sus subagentes
+Si OpenCode agota el uso gratuito (`free_limit_reached`), informa y continúa con Codex y sus subagentes
 nativos sin nueva confirmación; no uses OpenAI directo en OpenCode ni cambies
 automáticamente a pago. Para otros fallos, informa el bloqueo sin eludir permisos.
 
 ## Comandos
 
-Desde la raíz del repositorio:
+Desde la raíz:
 
 ```powershell
 uv sync --locked
@@ -46,13 +52,10 @@ uv run ruff check .
 uv run ruff format --check .
 uv run mypy
 python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
-python skills/delegating-to-opencode/scripts/delegate.py run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free#high --reason "Integracion acotada; variante alta disponible" --agent build --timeout 600
 ```
 
-`doctor` consulta la API local y muestra el catálogo compacto; `--model` filtra.
-`run` no exige un archivo de configuración local; OpenCode respeta la
-configuración existente. Consulta `README.md` para instalar la skill sin
-sobrescribir y restaurar una copia anterior.
+`doctor` consulta el catálogo. Consulta `README.md` para ejecutar tareas,
+instalar y restaurar la skill. OpenCode respeta la configuración existente.
 
 ## Estilo
 

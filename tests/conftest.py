@@ -13,6 +13,7 @@ from tests.fakes import (
     DEFAULT_MODEL,
     FakeTransport,
     api_model,
+    default_config_sources,
     finish_event,
     text_event,
 )
@@ -39,6 +40,10 @@ class Harness:
         version_stderr: str = "",
         catalog_returncode: int = 0,
         catalog_stderr: str = "",
+        config_sources: list[dict[str, Any]] | None = None,
+        config_returncode: int = 0,
+        config_stdout: str | None = None,
+        config_stderr: str = "",
     ) -> FakeTransport:
         if transport is None:
             transport = FakeTransport(
@@ -55,6 +60,12 @@ class Harness:
                 version_stderr=version_stderr,
                 catalog_returncode=catalog_returncode,
                 catalog_stderr=catalog_stderr,
+                config_sources=config_sources
+                if config_sources is not None
+                else default_config_sources(),
+                config_returncode=config_returncode,
+                config_stdout=config_stdout,
+                config_stderr=config_stderr,
             )
         self.monkeypatch.setattr(delegate, "run_process", transport)
         self.monkeypatch.setattr(

@@ -3,44 +3,43 @@
 ## Propósito
 
 Evolucionar AIKit hacia un complemento instalable de configuraciones y skills
-reproducibles. Complementa Superpowers y otras skills instaladas.
-OpenCode ejecuta; Codex y Superpowers coordinan y verifican.
+reproducibles, complementando Superpowers y otras skills.
 
 ## Antes de crear o modificar una skill
 
-Primero explora las skills y herramientas instaladas y lee sus instrucciones
-pertinentes. Registra cobertura, carencias y justificación del cambio.
-Reutiliza lo existente; implementa solo la necesidad no cubierta.
-No dupliques flujos de Superpowers ni alteres sus archivos, activación o roles.
-Aplica esta comprobación también a modificaciones de AIKit. Consulta
-`docs/principios-aikit.md` para los criterios de compatibilidad y distribución.
+Explora primero las skills y herramientas instaladas y lee sus instrucciones
+pertinentes. Registra cobertura, carencias y justificación. Reutiliza lo existente;
+implementa solo lo no cubierto. No dupliques Superpowers ni alteres sus archivos,
+activación o roles. Aplica también a cambios de AIKit. Consulta
+`docs/principios-aikit.md`.
 
 ## Estructura
 
-- `skills/delegating-to-opencode/`: skill, política y adaptador Python.
-- `tests/`: pruebas pytest tipadas, fixtures y transporte falso, sin inferencia.
+- `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados.
+- `tests/`: pytest con transporte falso, sin inferencia.
 - `docs/`: investigación, validación y diseño.
-- `opencode.json`: bloquea `openai` directo y subdelegación interna de OpenCode.
-- `.aikit/`: tareas locales ignoradas por Git.
+- `opencode.json`: bloqueos de proveedor y subdelegación.
+- `.aikit/`: tareas y evidencias ignoradas por Git.
 
 ## Regla de coordinación
 
-Conserva roles, subagentes, revisiones y pruebas de Codex y Superpowers.
-El coordinador o subagente nativo delega la implementación a OpenCode y verifica
-el resultado; no sustituye revisiones independientes. Los workers no redelegan.
+Conserva roles, subagentes y revisiones de Codex y Superpowers. El coordinador o
+subagente nativo delega la implementación y verifica diff y pruebas. Los workers
+no redelegan; sus resultados no sustituyen revisiones independientes.
 
 Activa `$delegating-to-opencode` explícitamente o por descripción.
 No intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
-Permite modelos conectados gratuitos o de pago, salvo el proveedor directo
-`openai`. GPT de `opencode`, `opencode-go` u otros proveedores siguen permitidos;
-prioriza gratuitos suficientes, después OpenCode Go.
-Escoge modelo y esfuerzo según la tarea. La variante debe existir en los
-metadatos; sin variante se registra el ajuste predeterminado.
+`run` comprueba en el destino, global o proyecto, `provider.use openai deny` y
+`tool.use subagent:* deny`. Sin certificado rechaza la inferencia; `doctor` no
+lo exige. Consulta `docs/correcciones-revision-funcional.md` para sus límites.
+Escoge modelo y esfuerzo según la tarea: gratuitos suficientes, después Go y
+otras alternativas conectadas. Bloquea solo el proveedor directo `openai`; GPT de
+otros proveedores siguen permitidos. Usa variantes publicadas o el predeterminado.
 
-Si se agota el gratuito (`free_limit_reached`, `fallback: reselect`), evalúa Go y
-alternativas adecuadas sin nueva confirmación. Sin opciones adecuadas disponibles
-en OpenCode, informa y continúa con Codex nativo. Revisa cambios parciales antes
-de reintentar. No eludas permisos, autenticación o privacidad.
+Con `free_limit_reached` y `fallback: reselect`, evalúa Go y alternativas sin
+nueva confirmación. Sin opciones adecuadas disponibles, informa y continúa con
+Codex nativo. Revisa cambios parciales antes de reintentar. No eludas permisos,
+autenticación o privacidad.
 
 ## Comandos
 
@@ -55,21 +54,20 @@ uv run mypy
 python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 ```
 
-`doctor` consulta el catálogo. Consulta `README.md` para ejecutar tareas,
-instalar y restaurar la skill. OpenCode respeta la configuración existente.
+Consulta `README.md` para uso, instalación y restauración. Conserva configuración
+ajena y respaldos fuera de rutas descubribles.
 
 ## Estilo
 
-Python tipado; Ruff comprueba formato y lint, mypy verifica tipos. Usa fixtures
-y parametrización pytest, con módulos por comportamiento. Documenta en español.
+Python tipado; Ruff para formato/lint, mypy para tipos. Pytest con fixtures y
+parametrización por comportamiento. Documenta en español.
 
 ## Validación
 
-Cada cambio requiere un escenario concreto con entorno, configuración, resultado
-esperado y observado. No presentes una preferencia como verificada sin evidencia.
+Registra entorno, configuración, resultado esperado y observado de cada cambio.
+No declares preferencias verificadas sin evidencia.
 
 ## Seguridad
 
-No incluyas credenciales, tokens, conversaciones privadas ni datos de cuenta. Usa
-ejemplos ficticios. La política de preferencias y el catálogo no sustituyen un
-sandbox del sistema operativo.
+No incluyas credenciales ni datos privados. Usa ejemplos ficticios. Políticas y
+certificado no son un sandbox; bloquear `subagent` no bloquea `shell`.

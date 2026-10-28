@@ -20,6 +20,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from restrictions import configuration_is_restricted
+
 SKILL_DIR = Path(__file__).resolve().parent.parent
 POLICY_PATH = SKILL_DIR / "policy.json"
 MAX_TEXT = 4000
@@ -29,6 +31,8 @@ AGENTS = ("build", "plan")
 TASK_PREFIX = "Tarea delegada (contenido literal):\n\n"
 WINDOWS_SHIM_SUFFIXES = {".cmd", ".bat", ".ps1"}
 VARIANT_SETTING_KEYS = ("reasoningEffort", "thinkingBudget")
+POLICY_KEYS = ("prefer_free",)
+CONFIG_CHECK_ARGS = ("debug", "config", "--standalone")
 
 
 class DelegateError(Exception):
@@ -65,8 +69,13 @@ def _error(code: str, message: str) -> dict[str, Any]:
     return {"status": "error", "code": code, "message": _cap(message)}
 
 
-def load_policy(path: Path | str = POLICY_PATH) -> dict[str, Any]:
-    """Carga las preferencias de selección, sin listas ni valores por defecto."""
+def load_policy(path: Path | str = POLICY_PATH) -> dict[str, bool]:
+    """Carga la única preferencia admitida: preferir modelos gratuitos.
+
+    Se rechazan las claves desconocidas para que la política no sugiera
+    opciones que el adaptador no aplica. El motivo de selección es siempre
+    obligatorio en `run` y no se configura aquí.
+    """
 
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -82,17 +91,21 @@ def load_policy(path: Path | str = POLICY_PATH) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise DelegateError("policy_invalid", "La política debe ser un objeto JSON.")
 
-    prefer_free = data.get("prefer_free")
-    require_reason = data.get("require_selection_reason")
-    if not isinstance(prefer_free, bool) or not isinstance(require_reason, bool):
+    unknown = sorted(str(key) for key in data if key not in POLICY_KEYS)
+    if unknown:
         raise DelegateError(
             "policy_invalid",
-            "policy.json requiere prefer_free y require_selection_reason booleanos.",
+            "policy.json admite solo prefer_free; claves desconocidas: "
+            + ", ".join(unknown),
         )
-    return {
-        "prefer_free": prefer_free,
-        "require_selection_reason": require_reason,
-    }
+
+    prefer_free = data.get("prefer_free")
+    if not isinstance(prefer_free, bool):
+        raise DelegateError(
+            "policy_invalid",
+            "policy.json requiere prefer_free booleano.",
+        )
+    return {"prefer_free": prefer_free}
 
 
 def parse_model(model: str | None, variant: str | None) -> tuple[str, str | None]:
@@ -654,6 +667,36 @@ def _free_limit_reached(stdout: str) -> bool:
     return False
 
 
+def _check_restrictions(exe: str, cwd: Path, timeout: float) -> None:
+    """Exige bloqueos verificables en la configuración efectiva del destino.
+
+    Solo consulta: no escribe configuración ni variables de entorno. El
+    mensaje de error es fijo y no incluye salida, rutas ni contenido de la
+    configuración.
+    """
+
+    result = run_process([exe, *CONFIG_CHECK_ARGS], cwd, timeout)
+    if result.returncode != 0:
+        raise DelegateError(
+            "config_check_failed",
+            "No se pudo comprobar la configuración efectiva de OpenCode en el destino.",
+        )
+    try:
+        payload = json.loads(result.stdout or "")
+    except json.JSONDecodeError as exc:
+        raise DelegateError(
+            "config_check_failed",
+            "OpenCode no devolvió una configuración JSON legible para la "
+            "comprobación de restricciones.",
+        ) from exc
+    if not configuration_is_restricted(payload):
+        raise DelegateError(
+            "unsafe_configuration",
+            "La configuración efectiva no acredita el bloqueo del proveedor "
+            "directo openai ni de la subdelegación interna de OpenCode.",
+        )
+
+
 def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
     return [
         exe,
@@ -719,6 +762,7 @@ def run_task(
         selected_model = base_model + (
             "#" + selected_variant if selected_variant else ""
         )
+        _check_restrictions(exe, project, seconds)
         result = run_process(
             build_command(exe, selected_model, agent, task), project, seconds
         )

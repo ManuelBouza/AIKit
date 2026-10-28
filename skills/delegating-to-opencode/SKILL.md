@@ -27,13 +27,22 @@ cuentas, proveedores o credenciales.
 
 ## Selección
 
+La prioridad la decide el coordinador siguiendo estas instrucciones. El
+adaptador no evalúa si un modelo basta para la tarea, no ordena la elección ni
+la toma: solo presenta el catálogo y ejecuta el modelo indicado con su motivo.
+La preferencia de `policy.json` es solo `prefer_free` booleano y únicamente
+ordena la presentación del catálogo; el motivo es obligatorio en `run` en todos
+los casos.
+
 Antes de ejecutar:
 
 1. Clasifica la tarea: mecánica, integración o compleja.
 2. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
    variantes con `doctor`.
 3. Entre opciones suficientes para la tarea y su esfuerzo, prioriza gratuitos de
-   OpenCode (también los servidos por Go), después OpenCode Go. Otros proveedores
+   OpenCode (también los servidos por Go), después OpenCode Go, después otras
+   alternativas adecuadas de proveedores conectados y, si ninguna sirve,
+   continúa con Codex nativo. Otros proveedores
    conectados siguen permitidos si aportan una alternativa adecuada. No se
    confirma cada uso de Go o pago dentro del alcance autorizado.
 4. Elige una variante acorde con la complejidad solo si su ID aparece en
@@ -68,6 +77,20 @@ motivo, sesión, resumen <=4000 caracteres y coste informado o `null`. Errores y
 eventos fallidos vuelven al invocador. El adaptador no reintenta automáticamente;
 revisa cambios parciales antes de otro intento seleccionado por el coordinador.
 
+## Protección del destino
+
+`run` comprueba antes de inferir que la configuración efectiva del destino
+acredita los bloqueos `provider.use openai deny` y `tool.use subagent:* deny`.
+Los bloqueos pueden estar en la configuración global o en la del proyecto; no
+hace falta un archivo local. `doctor` no exige esos bloqueos: solo consulta.
+
+Si la comprobación falla o el certificado no se consigue, `run` devuelve
+`unsafe_configuration` o `config_check_failed` sin iniciar la inferencia. El
+mensaje es fijo y no expone salida, rutas ni contenido de la configuración. El
+certificado es conservador: cualquier `allow` que pueda contradecir un bloqueo
+impide la ejecución, aunque la configuración sea segura en la práctica. Detalles
+y límites en `docs/correcciones-revision-funcional.md`.
+
 ## Orquestación y verificación
 
 Codex conserva orquestación y verificación, incluidas comprobaciones de shell.
@@ -85,12 +108,22 @@ sin presentar trabajo no ejecutado como completado.
 
 Copia la carpeta completa (`scripts/` y `policy.json`) a
 `<CODEX_HOME>/skills/delegating-to-opencode`; si `CODEX_HOME` no existe, usa
-`$HOME/.codex`. No sobrescribas una instalación existente: valida la ruta, aparta
-un respaldo con fecha y decide.
+`$HOME/.codex`. No sobrescribas una instalación existente: valida la ruta y aparta
+un respaldo con fecha en `<CODEX_HOME>/backups/aikit`, fuera de los directorios
+`skills/` y `plugins/` que Codex descubre, para que el respaldo no se active
+como skill duplicada.
 
 ## Límites
 
-Una carpeta o worktree no es un sandbox del sistema operativo. Revisa permisos y
-evita tareas destructivas sin supervisión. No escribas credenciales,
+Una carpeta o worktree no es un sandbox del sistema operativo. El aislamiento es
+responsabilidad del entorno; esta skill no aporta contenedor ni aislamiento.
+El bloqueo `tool.use subagent:*` es una política de la herramienta `subagent` de
+OpenCode: no impide por sí solo el uso de `shell` ni de otros comandos
+arbitrarios que las reglas del agente permitan. Revisa permisos y evita tareas
+destructivas sin supervisión. El timeout se
+aplica por proceso: OpenCode puede reintentar internamente hasta que venza. Un
+intento puede dejar cambios parciales; el adaptador no los revierte ni ofrece
+rollback, así que revisa el diff antes de reintentar. No escribas credenciales,
 transcripciones ni registros. Los errores solo muestran códigos y mensajes
-breves; consulta los registros locales de OpenCode.
+breves; consulta los registros locales de OpenCode. El empaquetado del
+complemento y la propagación global de la preferencia siguen pendientes.

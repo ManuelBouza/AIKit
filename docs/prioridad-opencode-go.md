@@ -1,5 +1,10 @@
 # Prioridad de ejecución con OpenCode Go
 
+Nota de actualización: los escenarios de este documento conservan la validación
+inicial. Después se verificaron ejecuciones de MiniMax Flash en Go con variantes
+`high` y `medium`; véase [correcciones de revisión](correcciones-revision-funcional.md).
+El rechazo regional de DeepSeek no demuestra indisponibilidad de todos los modelos Go.
+
 ## Alcance y cobertura
 
 La skill existente `delegating-to-opencode` ya consulta modelos conectados,

@@ -78,6 +78,32 @@ def error_event(message: str = "fallo del proveedor") -> str:
     )
 
 
+def policy_rule(action: str, resource: str, effect: str) -> dict[str, Any]:
+    """Construye una regla de política con las tres claves exactas."""
+
+    return {"action": action, "resource": resource, "effect": effect}
+
+
+def deny_provider() -> dict[str, Any]:
+    return policy_rule("provider.use", "openai", "deny")
+
+
+def deny_subagent() -> dict[str, Any]:
+    return policy_rule("tool.use", "subagent:*", "deny")
+
+
+def default_config_sources() -> list[dict[str, Any]]:
+    """Fuentes seguras por defecto: los dos bloqueos exigidos."""
+
+    return [
+        {
+            "type": "document",
+            "path": "C:/cfg/opencode.json",
+            "info": {"policies": [deny_provider(), deny_subagent()]},
+        }
+    ]
+
+
 @dataclass(frozen=True)
 class Call:
     argv: list[str]
@@ -100,6 +126,10 @@ class FakeTransport:
     version_stderr: str = ""
     catalog_returncode: int = 0
     catalog_stderr: str = ""
+    config_sources: list[dict[str, Any]] = field(default_factory=default_config_sources)
+    config_returncode: int = 0
+    config_stdout: str | None = None
+    config_stderr: str = ""
     calls: list[Call] = field(default_factory=list)
 
     def __call__(
@@ -120,6 +150,13 @@ class FakeTransport:
                 self.catalog_returncode,
                 json.dumps(payload, ensure_ascii=False),
                 self.catalog_stderr,
+            )
+        if args[1:] == ["debug", "config", "--standalone"]:
+            stdout = self.config_stdout
+            if stdout is None:
+                stdout = json.dumps(self.config_sources, ensure_ascii=False)
+            return subprocess.CompletedProcess(
+                args, self.config_returncode, stdout, self.config_stderr
             )
         if len(args) >= 2 and args[1] == "run":
             assert len(args) == 11
@@ -143,3 +180,11 @@ class FakeTransport:
     @property
     def run_calls(self) -> list[Call]:
         return [call for call in self.calls if call.argv[1:2] == ["run"]]
+
+    @property
+    def config_calls(self) -> list[Call]:
+        return [
+            call
+            for call in self.calls
+            if call.argv[1:4] == ["debug", "config", "--standalone"]
+        ]

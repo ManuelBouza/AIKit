@@ -21,7 +21,13 @@ La implementación se delega a OpenCode; Codex revisa equivalencia de escenarios
 
 Durante la migración OpenCode devolvió `provider.free-limit` al probar DeepSeek gratuito. Un segundo intento con GLM tampoco ejecutó la migración. Manuel autorizó entonces una regla permanente: si OpenCode agota el uso gratuito, informar y continuar normalmente con Codex y sus subagentes nativos, sin otra confirmación. La implementación se completó de esa forma.
 
-El adaptador reconoce exclusivamente la señal estructurada y devuelve `free_limit_reached` con `fallback: codex`, incluso si el proceso termina con código distinto de cero. No lanza otra CLI ni habilita `openai/*` en OpenCode. Errores de permisos o autenticación y texto que simplemente mencione la señal no activan esta autorización.
+Durante esta migración el adaptador devolvía `free_limit_reached` con
+`fallback: codex`. Esa señal fue sustituida después por `fallback: reselect`
+para evaluar Go antes de recurrir a Codex; véase
+[prioridad de Go](prioridad-opencode-go.md). La detección sigue exigiendo un
+evento estructurado: texto que simplemente mencione la señal no la activa.
+El adaptador no lanza otra CLI ni habilita `openai/*`; tampoco elude permisos o
+autenticación.
 
 ## Resultado verificado
 

@@ -7,8 +7,10 @@ comprueba si una existente cubre la necesidad y se documenta la diferencia que
 justifica el cambio.
 
 Actualmente el repositorio distribuye una skill individual con instalación
-manual; todavía no contiene el empaquetado de un complemento. Los criterios de
-evolución, reutilización y compatibilidad están en
+manual; todavía no contiene el empaquetado de un complemento. La portabilidad
+del complemento entre entornos sigue pendiente: las rutas, las cuentas y las
+credenciales son locales y no forman parte de la preferencia distribuible. Los
+criterios de evolución, reutilización y compatibilidad están en
 [Principios de AIKit](docs/principios-aikit.md).
 
 Objetivo: documentar y validar preferencias de Codex para delegar ejecución
@@ -47,6 +49,11 @@ limita otros proveedores ni subagentes nativos.
   OpenCode. No se crean cuentas ni se modifican credenciales.
 - No se exige `opencode.json` en el directorio de destino. Se respeta la
   configuración y las cuentas ya conectadas.
+- Para usar `run` sí hace falta que la configuración efectiva del destino
+  acredite dos bloqueos: el proveedor directo `openai` (`provider.use`) y la
+  subdelegación interna (`tool.use` con `subagent:*`). Basta con que estén en
+  la configuración global o en la del proyecto; no hace falta un archivo local.
+  `doctor` no exige esos bloqueos.
 
 Los modelos conectados y habilitados en el catálogo efectivo pueden usarse, sean
 gratuitos o de pago, salvo el proveedor directo `openai`: comparte la cuenta de
@@ -67,7 +74,8 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd . --model 
 modelo, nombre, `pricing`, `pricing_tiers`, variantes, herramientas, modalidades
 de entrada/salida, límites, `free_candidate` y `may_use_openai_quota`. El
 catálogo se ordena con los candidatos gratuitos primero, después OpenCode Go y
-finalmente otros proveedores (coste desconocido antes de pago). Excluye entradas
+finalmente otros proveedores (coste desconocido antes de pago). Ese orden es de
+lectura, no una selección: el adaptador no elige modelo. Excluye entradas
 cuyo `providerID` sea `openai`. `--model` filtra por el ID base; un filtro
 `openai/...` devuelve `provider_not_allowed` antes de consultar el catálogo.
 
@@ -111,22 +119,48 @@ Un evento `error` produce `status: "error"` y salida no cero aunque el proceso
 termine con código 0. Los rechazos de modelo, variante, tarea, directorio o
 timeout ocurren antes de ejecutar la inferencia.
 
+Antes de inferir, `run` comprueba la configuración efectiva del destino con
+`opencode debug config --standalone` y exige un certificado: los bloqueos exactos
+`provider.use openai deny` y `tool.use subagent:* deny`, presentes en la
+configuración global o en la del proyecto, y ningún `allow` que pueda
+contradecirlos. Si la comprobación falla o el certificado no se consigue, `run`
+devuelve `unsafe_configuration` o `config_check_failed` y no inicia la
+inferencia. El mensaje es fijo y no incluye salida, rutas ni contenido de la
+configuración. El certificado es conservador: un `allow` anterior o demasiado
+amplio puede impedir la ejecución aunque la configuración sea segura en la
+práctica. Los detalles y los límites están en
+[Correcciones de la revisión funcional](docs/correcciones-revision-funcional.md).
+
 ## Selección por tarea
+
+La prioridad es una decisión del coordinador: las preferencias se aplican por
+instrucciones al coordinador, no dentro del adaptador. El adaptador no evalúa
+si un modelo basta para la tarea, no ordena la elección y no la toma; solo
+presenta el catálogo y ejecuta el modelo que el coordinador indica junto a su
+motivo.
 
 Antes de ejecutar, clasifica la tarea como mecánica, integración o compleja y
 consulta capacidades, herramientas, modalidades, límites, tarifas y variantes.
 Determina primero las capacidades y el esfuerzo necesarios. Entre opciones
-suficientes, prioriza gratuitos de OpenCode (incluidos los de Go), después
-OpenCode Go. Otros proveedores conectados siguen permitidos si ofrecen una
-alternativa adecuada; no se confirma cada uso dentro del alcance autorizado.
-El proveedor directo `openai` está bloqueado; los GPT de
-otros proveedores siguen disponibles según su conexión y tarifas.
+suficientes, el coordinador prioriza gratuitos de OpenCode (incluidos los de
+Go), después OpenCode Go, después otras alternativas adecuadas de proveedores
+conectados y, si ninguna sirve, continúa con Codex nativo. Otros proveedores
+conectados siguen permitidos si ofrecen una alternativa adecuada; no se
+confirma cada uso dentro del alcance autorizado. El proveedor directo `openai`
+está bloqueado; los GPT de otros proveedores siguen disponibles según su
+conexión y tarifas.
 
 La variante debe existir en los metadatos. Si no hay variantes o conviene el
 ajuste predeterminado, regístralo en `--reason`; no inventes equivalencias con
 esfuerzos de Codex. El adaptador no elige automáticamente el mejor modelo ni
 debe usarse siempre el mismo. El catálogo prueba disponibilidad actual, no
 calidad garantizada.
+
+La preferencia distribuida en `policy.json` solo admite `prefer_free`
+booleano y únicamente ordena la presentación del catálogo. No contiene
+opciones de modelo, de pago ni de motivo: el motivo es obligatorio en `run` en
+todos los casos y el modelo lo elige el coordinador. Cualquier clave
+desconocida hace fallar la carga de la política con `policy_invalid`.
 
 ## Desarrollo y pruebas
 
@@ -185,22 +219,33 @@ $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.c
 $dest = Join-Path $codexHome 'skills\delegating-to-opencode'
 if (-not (Test-Path $source)) { throw "No existe el origen: $source" }
 if (Test-Path $dest) { throw "Ya existe $dest. Valida la ruta y aparta un respaldo antes de continuar." }
-New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
-Copy-Item -Recurse -Path $source -Destination $dest
+New-Item -ItemType Directory -Force -ErrorAction Stop (Split-Path $dest) | Out-Null
+Copy-Item -Recurse -Path $source -Destination $dest -ErrorAction Stop
 ```
 
+Los respaldos viven en `<CODEX_HOME>/backups/aikit`, fuera de los directorios
+`skills/` y `plugins/` que Codex descubre. Un respaldo guardado dentro de
+`<CODEX_HOME>/skills/` aparecería en el catálogo como una skill duplicada y
+podría activarse por descripción. Fuera de esas rutas habituales no se puede
+garantizar que un archivo sea indescubrible: comprueba que ningún enlace ni
+referencia de la configuración o de tus scripts apunte al respaldo.
+
 Para actualizar, aparta primero la instalación actual a una carpeta de respaldo
-específica después de validar las rutas:
+específica después de validar las rutas. La marca de tiempo puede colisionar, así
+que el respaldo no debe existir antes de mover nada:
 
 ```powershell
 $source = Join-Path (Get-Location) 'skills\delegating-to-opencode'
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
 $dest = Join-Path $codexHome 'skills\delegating-to-opencode'
+$backupRoot = Join-Path $codexHome 'backups\aikit'
 if (-not (Test-Path $source)) { throw "No existe el origen: $source" }
 if (-not (Test-Path $dest)) { throw "No existe la instalación actual: $dest" }
-$backup = Join-Path (Split-Path $dest) ("delegating-to-opencode.backup-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
-Move-Item -LiteralPath $dest -Destination $backup
-Copy-Item -Recurse -Path $source -Destination $dest
+New-Item -ItemType Directory -Force -ErrorAction Stop $backupRoot | Out-Null
+$backup = Join-Path $backupRoot ("delegating-to-opencode-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+if (Test-Path $backup) { throw "Ya existe el respaldo $backup. Aparta ese respaldo o usa otra marca de tiempo." }
+Move-Item -LiteralPath $dest -Destination $backup -ErrorAction Stop
+Copy-Item -Recurse -Path $source -Destination $dest -ErrorAction Stop
 ```
 
 Restauración sin borrados recursivos: solo mueve carpetas verificadas y no
@@ -209,10 +254,10 @@ sobrescribe una instalación existente.
 ```powershell
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
 $dest = Join-Path $codexHome 'skills\delegating-to-opencode'
-$backup = Join-Path (Split-Path $dest) 'delegating-to-opencode.backup-20261028-120000'
+$backup = Join-Path $codexHome 'backups\aikit\delegating-to-opencode-20261028-120000'
 if (-not (Test-Path $backup)) { throw "No existe el respaldo: $backup" }
 if (Test-Path $dest) { throw "Ya existe $dest. Aparta esa carpeta a otro respaldo antes de restaurar." }
-Move-Item -LiteralPath $backup -Destination $dest
+Move-Item -LiteralPath $backup -Destination $dest -ErrorAction Stop
 ```
 
 Ajusta la fecha del ejemplo al respaldo real. Desinstalar es apartar manualmente
@@ -221,8 +266,12 @@ solo la carpeta `delegating-to-opencode`.
 ## Límites
 
 - El catálogo y la política de preferencias no son un sandbox del sistema
-  operativo ni garantizan precios, cuotas o calidad futuras. Revisa permisos
-  antes de delegar tareas destructivas.
+  operativo ni garantizan precios, cuotas o calidad futuras. El aislamiento es
+  responsabilidad del entorno; esta skill no aporta contenedor ni aislamiento.
+  Revisa permisos antes de delegar tareas destructivas.
+- El bloqueo `tool.use subagent:*` es una política de la herramienta `subagent`
+  de OpenCode, no un sandbox: no impide por sí solo que el agente use `shell`
+  ni otros comandos arbitrarios que sus reglas permitan.
 - No se modifican credenciales ni la configuración personal de OpenCode. El
   adaptador no escribe transcripciones ni registros.
 - Los workers de OpenCode no cargan esta skill para no delegarse a sí mismos.
@@ -230,4 +279,8 @@ solo la carpeta `delegating-to-opencode`.
   otro modelo o presupuesto.
 - El timeout se aplica por proceso. El adaptador no repite llamadas; OpenCode
   puede reintentar internamente hasta que venza ese límite.
+- Un intento puede dejar cambios parciales en el destino. El adaptador no los
+  revierte ni ofrece rollback: revisa el diff antes de reintentar.
+- El empaquetado del complemento y la propagación global de la preferencia
+  siguen pendientes; hoy la instalación es manual y por entorno.
 - La validación real se realizó en Windows; Unix no se ha probado con OpenCode.

@@ -10,12 +10,11 @@ from unittest.mock import Mock
 import delegate
 import pytest
 
+from tests.conftest import Harness
+
 
 def test_policy_only_contains_preferences() -> None:
-    assert delegate.load_policy() == {
-        "prefer_free": True,
-        "require_selection_reason": True,
-    }
+    assert delegate.load_policy() == {"prefer_free": True}
 
 
 def test_policy_rejects_invalid_shape(tmp_path: Path) -> None:
@@ -24,6 +23,37 @@ def test_policy_rejects_invalid_shape(tmp_path: Path) -> None:
     with pytest.raises(delegate.DelegateError) as error:
         delegate.load_policy(path)
     assert error.value.code == "policy_invalid"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param(
+            {"prefer_free": True, "require_selection_reason": True},
+            id="opcion-retirada",
+        ),
+        pytest.param(
+            {"prefer_free": True, "allow_paid": True}, id="opcion-desconocida"
+        ),
+        pytest.param({}, id="sin-claves"),
+        pytest.param({"prefer_free": "true"}, id="tipo-no-booleano"),
+        pytest.param({"prefer_free": 1}, id="entero-no-booleano"),
+    ],
+)
+def test_policy_rejects_options_other_than_prefer_free(
+    tmp_path: Path, payload: dict[str, object]
+) -> None:
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(delegate.DelegateError) as error:
+        delegate.load_policy(path)
+    assert error.value.code == "policy_invalid"
+
+
+def test_reason_is_required_even_without_a_policy_option(harness: Harness) -> None:
+    transport = harness.fake()
+    assert harness.run(reason=None)["code"] == "reason_required"
+    assert transport.calls == []
 
 
 def test_windows_npm_shim_resolves_to_sibling_exe(tmp_path: Path) -> None:

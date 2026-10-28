@@ -95,9 +95,7 @@ def load_policy(path: Path | str = POLICY_PATH) -> dict[str, Any]:
     }
 
 
-def parse_model(
-    model: str | None, variant: str | None
-) -> tuple[str, str | None]:
+def parse_model(model: str | None, variant: str | None) -> tuple[str, str | None]:
     """Separa el modelo base y una variante explícita, sin elegir un modelo."""
 
     if not isinstance(model, str) or not model.strip():
@@ -113,7 +111,9 @@ def parse_model(
         or "#" in embedded_variant
         or not embedded_variant.strip()
     ):
-        raise DelegateError("invalid_model", f"Modelo con variante no válido: {selected}")
+        raise DelegateError(
+            "invalid_model", f"Modelo con variante no válido: {selected}"
+        )
 
     if variant is not None:
         if not isinstance(variant, str) or not variant.strip():
@@ -163,12 +163,7 @@ def resolve_opencode(which_result: str, is_windows: bool | None = None) -> str:
         return which_result
     if suffix in WINDOWS_SHIM_SUFFIXES:
         candidate = (
-            shim.parent
-            / "node_modules"
-            / "@opencode"
-            / "cli"
-            / "bin"
-            / "opencode.exe"
+            shim.parent / "node_modules" / "@opencode" / "cli" / "bin" / "opencode.exe"
         )
         if candidate.is_file():
             return str(candidate)
@@ -190,7 +185,7 @@ def _kill_tree(process: subprocess.Popen[str]) -> None:
     """Mata el árbol del proceso propio; nunca procesos ajenos."""
 
     try:
-        if os.name == "nt":
+        if sys.platform == "win32":
             subprocess.run(
                 ["taskkill", "/T", "/F", "/PID", str(process.pid)],
                 stdout=subprocess.DEVNULL,
@@ -222,7 +217,7 @@ def run_process(
         "errors": "replace",
         "shell": False,
     }
-    if os.name == "nt":
+    if sys.platform == "win32":
         kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         kwargs["start_new_session"] = True
@@ -230,7 +225,9 @@ def run_process(
     try:
         process = subprocess.Popen(argv, **kwargs)
     except FileNotFoundError as exc:
-        raise DelegateError("opencode_missing", "No se encontró el ejecutable de OpenCode.") from exc
+        raise DelegateError(
+            "opencode_missing", "No se encontró el ejecutable de OpenCode."
+        ) from exc
     except OSError as exc:
         raise DelegateError(
             "opencode_failed", f"No se pudo iniciar OpenCode: {exc}"
@@ -245,7 +242,8 @@ def run_process(
         except Exception:
             pass
         raise DelegateError(
-            "timeout", f"OpenCode excedió {timeout:g} s; se terminó su árbol de procesos."
+            "timeout",
+            f"OpenCode excedió {timeout:g} s; se terminó su árbol de procesos.",
         ) from exc
 
     return subprocess.CompletedProcess(
@@ -263,11 +261,15 @@ def _validate_cwd(cwd: Path | str) -> Path:
 def _read_task(task_file: Path | str) -> str:
     path = Path(task_file).expanduser()
     if not path.is_file():
-        raise DelegateError("task_not_found", f"No existe el archivo de tarea: {task_file}")
+        raise DelegateError(
+            "task_not_found", f"No existe el archivo de tarea: {task_file}"
+        )
     try:
         task = path.read_text(encoding="utf-8-sig")
     except OSError as exc:
-        raise DelegateError("task_unreadable", f"No se pudo leer la tarea: {exc}") from exc
+        raise DelegateError(
+            "task_unreadable", f"No se pudo leer la tarea: {exc}"
+        ) from exc
     task = task.strip()
     if not task:
         raise DelegateError("empty_task", "El archivo de tarea está vacío.")
@@ -341,9 +343,7 @@ def _pricing_tier(rate: dict[str, Any]) -> dict[str, Any] | None:
     cache = rate.get("cache")
     if isinstance(cache, dict):
         clean_cache = {
-            key: cache[key]
-            for key in ("read", "write")
-            if _is_number(cache.get(key))
+            key: cache[key] for key in ("read", "write") if _is_number(cache.get(key))
         }
         if clean_cache:
             pricing["cache"] = clean_cache
@@ -410,12 +410,15 @@ def _variants(value: Any) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in value:
+        variant_id: object
+        settings: dict[str, Any]
         if isinstance(item, str):
             variant_id = item.strip()
-            settings: dict[str, Any] = {}
+            settings = {}
         elif isinstance(item, dict):
             variant_id = item.get("id")
-            settings = item.get("settings") if isinstance(item.get("settings"), dict) else {}
+            raw_settings = item.get("settings")
+            settings = raw_settings if isinstance(raw_settings, dict) else {}
         else:
             continue
         if not isinstance(variant_id, str) or not variant_id.strip():
@@ -478,9 +481,7 @@ def _model_record(item: Any) -> dict[str, Any] | None:
     name = item.get("name")
     if not isinstance(name, str) or not name.strip():
         name = full
-    tools, input_modalities, output_modalities = _capabilities(
-        item.get("capabilities")
-    )
+    tools, input_modalities, output_modalities = _capabilities(item.get("capabilities"))
     variants = _variants(item.get("variants"))
     cost = item.get("cost")
     return {
@@ -595,7 +596,8 @@ def parse_events(
         if not isinstance(event, dict):
             continue
 
-        part = event.get("part") if isinstance(event.get("part"), dict) else {}
+        raw_part = event.get("part")
+        part = raw_part if isinstance(raw_part, dict) else {}
         candidate_session = (
             event.get("sessionID")
             or event.get("sessionId")
@@ -635,6 +637,21 @@ def parse_events(
     summary = "\n".join(part for part in summary_parts if part).strip()
     cost = sum(costs) if costs else None
     return summary, session, cost, errors
+
+
+def _free_limit_reached(stdout: str) -> bool:
+    """Reconoce la señal estructurada de cuota sin confiar en texto del modelo."""
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict) or event.get("type") != "error":
+            continue
+        error = event.get("error")
+        if isinstance(error, dict) and error.get("type") == "provider.free-limit":
+            return True
+    return False
 
 
 def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
@@ -682,9 +699,7 @@ def run_task(
             )
         _check_version(exe, project, seconds)
         catalog = _catalog(exe, project, seconds)
-        selected = next(
-            (item for item in catalog if item["model"] == base_model), None
-        )
+        selected = next((item for item in catalog if item["model"] == base_model), None)
         if selected is None:
             raise DelegateError(
                 "model_unavailable",
@@ -711,6 +726,15 @@ def run_task(
         return _error(exc.code, exc.message)
 
     stdout = result.stdout or ""
+    if _free_limit_reached(stdout):
+        return {
+            **_error(
+                "free_limit_reached",
+                "OpenCode ha agotado el uso gratuito; continúa con Codex "
+                "y sus subagentes nativos.",
+            ),
+            "fallback": "codex",
+        }
     if result.returncode != 0:
         return _error(
             "opencode_failed",
@@ -822,14 +846,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     doctor_parser.add_argument("--cwd", required=True)
     doctor_parser.add_argument("--model", help="Filtra por modelo base provider/model.")
-    doctor_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
+    doctor_parser.add_argument(
+        "--timeout", type=_positive_float, default=DEFAULT_TIMEOUT
+    )
 
     run_parser = subparsers.add_parser(
         "run", help="Ejecuta una tarea con un único intento."
     )
     run_parser.add_argument("--cwd", required=True)
     run_parser.add_argument("--task-file", required=True)
-    run_parser.add_argument("--model", help="Modelo explícito provider/model[#variant].")
+    run_parser.add_argument(
+        "--model", help="Modelo explícito provider/model[#variant]."
+    )
     run_parser.add_argument("--variant", help="Variante real del modelo, sin '#'.")
     run_parser.add_argument("--reason", help="Motivo de selección no vacío.")
     run_parser.add_argument("--agent", choices=AGENTS, default="build")
@@ -841,9 +869,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "doctor":
-            payload = doctor(
-                cwd=args.cwd, timeout=args.timeout, model=args.model
-            )
+            payload = doctor(cwd=args.cwd, timeout=args.timeout, model=args.model)
         else:
             payload = run_task(
                 cwd=args.cwd,

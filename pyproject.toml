@@ -1,0 +1,35 @@
+[project]
+name = "aikit"
+version = "0.1.0"
+description = "Preferencias reproducibles de Codex y delegación a OpenCode"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=9.2.0", "ruff>=0.17.3", "mypy>=2.4.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["skills/delegating-to-opencode/scripts"]
+addopts = "-ra --strict-markers --strict-config --basetemp=.aikit/pytest-tmp"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+extend-exclude = [".aikit"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "PT", "ANN"]
+# Any es válido en los límites JSON de la API; todas las funciones se anotan.
+ignore = ["ANN401", "E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["skills/delegating-to-opencode/scripts/delegate.py", "tests"]
+mypy_path = ["skills/delegating-to-opencode/scripts"]
+cache_dir = ".aikit/mypy-cache"

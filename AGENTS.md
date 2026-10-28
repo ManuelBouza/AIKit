@@ -2,15 +2,14 @@
 
 ## Propósito
 
-Documentar preferencias de configuración de Codex. OpenCode ejecuta
-tareas acotadas con modelos conectados, preferentemente gratuitos; Codex y
-Superpowers conservan coordinación, subagentes, revisiones y verificación.
+Documentar preferencias de Codex: OpenCode ejecuta; Codex y Superpowers coordinan
+y verifican.
 
 ## Estructura
 
 - `skills/delegating-to-opencode/`: skill autocontenida, `policy.json` con
   preferencias y `scripts/delegate.py`.
-- `tests/`: pruebas `unittest` con transporte falso, sin inferencia real.
+- `tests/`: pruebas pytest tipadas, fixtures y transporte falso, sin inferencia.
 - `docs/`: investigación, validación, diseño y planes.
 - `opencode.json`: bloquea `openai` directo y subdelegación interna de OpenCode.
 - `.aikit/`: tareas locales ignoradas por Git.
@@ -19,10 +18,8 @@ Superpowers conservan coordinación, subagentes, revisiones y verificación.
 ## Regla de coordinación
 
 Conserva roles, subagentes, revisiones y pruebas de Codex y Superpowers.
-Antes de implementar o transformar archivos, el coordinador o un subagente
-nativo autorizado delega la ejecución a OpenCode y conserva la verificación. El
-resultado no sustituye una revisión independiente. Los workers de OpenCode no
-delegan.
+El coordinador o subagente nativo delega la implementación a OpenCode y verifica
+el resultado; no sustituye revisiones independientes. Los workers no redelegan.
 
 La skill se invoca con `$delegating-to-opencode` o se selecciona por descripción;
 no intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
@@ -33,17 +30,21 @@ La variante debe existir en los metadatos; sin variante se registra el
 ajuste predeterminado. No hay lista cerrada, modelo por defecto ni elección
 automática del mejor modelo.
 
-Preparar briefs y ejecutar verificaciones, incluidas comprobaciones de shell,
-siguen siendo coordinación de Codex. Si falla el backend, informa el bloqueo
-real; no implementes en local en silencio. Sin ejecución externalizable no se
-llama a OpenCode.
+Preparar briefs y verificar sigue siendo coordinación. Si OpenCode agota el uso
+gratuito (`free_limit_reached`), informa y continúa con Codex y sus subagentes
+nativos sin nueva confirmación; no uses OpenAI directo en OpenCode ni cambies
+automáticamente a pago. Para otros fallos, informa el bloqueo sin eludir permisos.
 
 ## Comandos
 
 Desde la raíz del repositorio:
 
 ```powershell
-python -m unittest discover -s tests -v
+uv sync --locked
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
 python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 python skills/delegating-to-opencode/scripts/delegate.py run --cwd . --task-file .aikit/tarea.md --model opencode/deepseek-v4.1-flash-free#high --reason "Integracion acotada; variante alta disponible" --agent build --timeout 600
 ```
@@ -55,9 +56,8 @@ sobrescribir y restaurar una copia anterior.
 
 ## Estilo
 
-Documentación en español, instrucciones breves y ejemplos reproducibles. Conserva
-nombres originales de opciones y archivos. Distingue preferencias verificadas de
-experimentos pendientes.
+Python tipado; Ruff comprueba formato y lint, mypy verifica tipos. Usa fixtures
+y parametrización pytest, con módulos por comportamiento. Documenta en español.
 
 ## Validación
 

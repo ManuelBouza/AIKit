@@ -68,9 +68,13 @@ pago: revisa cambios parciales antes de otro intento.
 
 ## Orquestación y verificación
 
-Codex conserva orquestación y verificación, incluidas comprobaciones de shell. Si
-el backend falla, informa el bloqueo real; no implementes en local en silencio ni
-presentes trabajo no ejecutado como completado.
+Codex conserva orquestación y verificación, incluidas comprobaciones de shell.
+Si OpenCode agota el uso gratuito (`provider.free-limit` o `free_limit_reached`
+con `fallback: codex`), informa y continúa normalmente con Codex y sus subagentes
+nativos, sin pedir otra confirmación. No uses `openai/*` a través de OpenCode ni
+cambies automáticamente a pago. El adaptador devuelve la señal; no lanza Codex.
+Para otros fallos, informa el bloqueo real sin eludir permisos ni presentar
+trabajo no ejecutado como completado.
 
 ## Instalación
 

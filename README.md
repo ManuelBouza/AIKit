@@ -114,24 +114,45 @@ esfuerzos de Codex. El adaptador no elige automáticamente el mejor modelo ni
 debe usarse siempre el mismo. El catálogo prueba disponibilidad actual, no
 calidad garantizada.
 
-## Pruebas
+## Desarrollo y pruebas
 
-Desde la raíz del repositorio:
-
-```powershell
-python -m unittest discover -s tests -v
-```
-
-Si el sandbox exige temporales dentro del proyecto:
+Instala [uv](https://docs.astral.sh/uv/) y, desde la raíz, sincroniza el entorno
+reproducible. `uv sync` crea o actualiza `.venv` usando `uv.lock`; no necesitas
+activar el entorno manualmente. Solo las herramientas de desarrollo requieren
+dependencias: el adaptador distribuido sigue usando la biblioteca estándar.
 
 ```powershell
-$env:TEMP = (Join-Path (Get-Location) '.aikit\tmp')
-$env:TMP = $env:TEMP
-New-Item -ItemType Directory -Force $env:TEMP | Out-Null
-python -m unittest discover -s tests -v
+uv sync --locked
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
 ```
 
-Las pruebas usan un transporte falso: no invocan OpenCode ni consumen cuota.
+Para aplicar el formato:
+
+```powershell
+uv run ruff format .
+```
+
+Las pruebas usan fixtures, parametrización y un transporte falso: no invocan
+OpenCode ni consumen cuota. Los temporales de pytest viven en `.aikit/pytest-tmp`.
+Si el sandbox restringe la caché de uv, usa
+`$env:UV_CACHE_DIR = Join-Path (Get-Location) '.aikit\uv-cache'`.
+
+La configuración de pytest, Ruff y mypy está en `pyproject.toml`. Las anotaciones
+son obligatorias; el uso de `Any` se reserva para los datos JSON externos. Los
+módulos de pruebas se organizan por comportamiento y comparten solo fixtures
+y constructores de datos.
+
+## Cuando se agota la cuota gratuita
+
+Si OpenCode informa `provider.free-limit`, el adaptador devuelve
+`code: free_limit_reached` y `fallback: codex`. El coordinador informa del cambio
+y continúa normalmente en Codex, con sus subagentes nativos y el flujo de
+Superpowers, sin otra confirmación. El helper no lanza Codex automáticamente,
+no habilita el proveedor directo `openai` y no pasa a pago por iniciativa propia.
+Esta autorización no permite eludir errores de permisos o autenticación.
 
 ## Instalación personal
 

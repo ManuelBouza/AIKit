@@ -94,10 +94,38 @@ class Harness:
             timeout=timeout,
         )
 
+    def run_text(
+        self,
+        task: str,
+        *,
+        cwd: Path | None = None,
+        model: str | None = DEFAULT_MODEL,
+        variant: str | None = None,
+        reason: str | None = "tarea mecánica con herramientas de texto",
+        agent: str = "build",
+        timeout: float = 30,
+    ) -> dict[str, Any]:
+        return delegate.run_text_task(
+            cwd=cwd or self.project,
+            task=task,
+            model=model,
+            variant=variant,
+            reason=reason,
+            agent=agent,
+            timeout=timeout,
+        )
+
     def doctor(
         self, *, model: str | None = None, timeout: float = 30
     ) -> dict[str, Any]:
         return delegate.doctor(cwd=self.project, model=model, timeout=timeout)
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """Los transportes MCP en memoria corren sobre asyncio."""
+
+    return "asyncio"
 
 
 @pytest.fixture

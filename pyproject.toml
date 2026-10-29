@@ -5,8 +5,14 @@ description = "Preferencias reproducibles de Codex y delegación a OpenCode"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.optional-dependencies]
+# Solo el servidor MCP necesita el SDK; la CLI sigue siendo stdlib.
+mcp = ["mcp>=1.26,<2"]
+
 [dependency-groups]
-dev = ["pytest>=9.2.0", "ruff>=0.17.3", "mypy>=2.4.0"]
+# El SDK entra en desarrollo para que `uv sync --locked` ejecute las pruebas
+# MCP completas sin omitirlas.
+dev = ["pytest>=9.2.0", "ruff>=0.17.3", "mypy>=2.4.0", "mcp>=1.26,<2"]
 
 [tool.uv]
 package = false
@@ -30,6 +36,6 @@ ignore = ["ANN401", "E501"]
 [tool.mypy]
 python_version = "3.10"
 strict = true
-files = ["skills/delegating-to-opencode/scripts/delegate.py", "tests"]
+files = ["skills/delegating-to-opencode/scripts/delegate.py", "skills/delegating-to-opencode/scripts/mcp_server.py", "tests"]
 mypy_path = ["skills/delegating-to-opencode/scripts"]
 cache_dir = ".aikit/mypy-cache"

@@ -32,6 +32,12 @@ hay hooks ni un MCP que intercepten `spawn_agent`. Leer la skill no ejecuta
 inferencia: `run` inicia el trabajo externo y `doctor` solo consulta versión y
 catálogo.
 
+El repositorio incluye además un servidor MCP local (`aikit-opencode`) que
+expone el mismo núcleo como dos herramientas: `opencode_catalog` y
+`opencode_delegate`. Es la interfaz preferida cuando el cliente las expone; la
+CLI sigue disponible como alternativa y como herramienta de diagnóstico. El
+detalle está en [MCP local de AIKit](docs/mcp-opencode.md).
+
 El coordinador decide si ejecuta de forma nativa o delega. Un subagente nativo de
 Codex autorizado y con shell puede usar el adaptador, recibir el resultado y
 continuar su trabajo. Los revisores independientes conservan su función. El
@@ -131,6 +137,55 @@ amplio puede impedir la ejecución aunque la configuración sea segura en la
 práctica. Los detalles y los límites están en
 [Correcciones de la revisión funcional](docs/correcciones-revision-funcional.md).
 
+## Uso por MCP
+
+El servidor MCP local reusa el mismo núcleo que la CLI y expone dos
+herramientas. Es la vía preferida si el cliente las publica; la CLI queda como
+alternativa y diagnóstico.
+
+```powershell
+$root = 'C:\ruta\absoluta\AIKit'
+$python = Join-Path $root '.venv\Scripts\python.exe'
+$server = Join-Path $root 'skills\delegating-to-opencode\scripts\mcp_server.py'
+& $python $server
+```
+
+El cliente lo arranca con ese Python absoluto, que necesita el SDK oficial
+`mcp>=1.26,<2` (`uv sync --locked` ya lo instala en desarrollo; el extra `mcp`
+lo declara para ejecución). Transporte STDIO local, sin HTTP. `stdout` queda
+reservado al protocolo MCP.
+
+| Herramienta | Parámetros | Efecto |
+| --- | --- | --- |
+| `opencode_catalog` | `cwd` absoluto, `model` opcional, `timeout` (300) | Consulta versión y catálogo |
+| `opencode_delegate` | `cwd` absoluto, `task`, `model`, `reason`, `variant` opcional, `agent` (`build`/`plan`), `timeout` (300) | Ejecuta una tarea acotada |
+
+La respuesta trae el JSON compacto en `content`, la misma copia en
+`structuredContent` e `isError` según el `status` del núcleo. `model` y `reason`
+son obligatorios: no hay modelo por defecto ni reintento automático, y
+`openai/*` se rechaza antes de iniciar procesos. El timeout es por proceso y
+finito, con máximo 3600 s.
+
+Hay dos clases de error. Los **errores del núcleo** llegan como JSON en
+`content` y en `structuredContent`, con su código (`reason_required`,
+`provider_not_allowed`, `invalid_cwd`…). Los **errores de validación del
+SDK** —un campo obligatorio ausente, como `reason`, o un tipo incorrecto— los
+rechaza el SDK antes de invocar el núcleo: llegan con `isError: true`, texto
+y **sin** `structuredContent`. Respeta siempre `isError` y no deserialices
+`structuredContent` sin comprobar que existe.
+
+El **timeout del cliente** debe cubrir toda la ejecución: `run` lanza hasta
+cuatro procesos (versión, catálogo, configuración y ejecución), así que el
+peor caso es `4 × 3600 = 14400` s más la limpieza. Configura `tool_timeout_sec`
+en 15000 (o el equivalente de tu cliente); 600 s o el valor por defecto de 60 s
+cortan la llamada antes de tiempo. Cancelar o cerrar la llamada MCP **no**
+detiene el backend: el SDK puede responder de inmediato mientras el worker
+sigue, y el timeout del proceso solo protege mientras el servidor MCP siga
+vivo.
+
+Detalle, límites y resultados observados:
+[MCP local de AIKit](docs/mcp-opencode.md).
+
 ## Selección por tarea
 
 La prioridad es una decisión del coordinador: las preferencias se aplican por
@@ -168,6 +223,8 @@ Instala [uv](https://docs.astral.sh/uv/) y, desde la raíz, sincroniza el entorn
 reproducible. `uv sync` crea o actualiza `.venv` usando `uv.lock`; no necesitas
 activar el entorno manualmente. Solo las herramientas de desarrollo requieren
 dependencias: el adaptador distribuido sigue usando la biblioteca estándar.
+El SDK de MCP entra en el grupo de desarrollo para que las pruebas MCP se
+ejecuten sin omitirse; el runtime de la CLI no lo necesita.
 
 ```powershell
 uv sync --locked
@@ -278,7 +335,14 @@ solo la carpeta `delegating-to-opencode`.
   Un fallo vuelve al coordinador, que decide si revisa cambios parciales y prueba
   otro modelo o presupuesto.
 - El timeout se aplica por proceso. El adaptador no repite llamadas; OpenCode
-  puede reintentar internamente hasta que venza ese límite.
+  puede reintentar internamente hasta que venza ese límite. Por MCP el cliente
+  debe permitir hasta cuatro procesos por ejecución: 15000 s.
+- Cerrar o cancelar una llamada MCP no detiene el proceso de OpenCode: sigue
+  vivo hasta su timeout y puede dejar procesos huérfanos. El SDK puede
+  responder la cancelación de inmediato mientras el worker continúa. El
+  timeout del proceso solo protege mientras el servidor MCP siga vivo; si
+  muere de forma forzada, no hay garantía de matar los hijos ni un plazo para
+  los huérfanos. No reintentes a ciegas.
 - Un intento puede dejar cambios parciales en el destino. El adaptador no los
   revierte ni ofrece rollback: revisa el diff antes de reintentar.
 - El empaquetado del complemento y la propagación global de la preferencia

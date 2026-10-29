@@ -25,6 +25,37 @@ su ruta absoluta instalada, no relativa al repositorio de origen. Requiere Pytho
 `opencode.exe` nativo. No requiere `opencode.json` en destino ni modificar
 cuentas, proveedores o credenciales.
 
+## MCP local
+
+El mismo núcleo se expone como servidor MCP local por STDIO
+(`scripts/mcp_server.py`), con dos herramientas: `opencode_catalog` y
+`opencode_delegate`. Si el cliente publica ese servidor, prefiere las
+herramientas MCP; la CLI sigue como alternativa y diagnóstico. Ninguna de las
+dos rutas intercepta `spawn_agent` ni los subagentes nativos.
+
+```powershell
+$skillDir = 'C:\ruta\absoluta\descubierta\delegating-to-opencode'
+$python = 'C:\ruta\absoluta\AIKit\.venv\Scripts\python.exe'
+& $python (Join-Path $skillDir 'scripts\mcp_server.py')
+```
+
+El servidor necesita el SDK oficial `mcp>=1.26,<2` en ese intérprete; la CLI
+sigue siendo solo biblioteca estándar. `stdout` queda reservado al protocolo
+MCP. Las mismas políticas, bloqueos, certificado de configuración y errores se
+aplican en ambos caminos: no hay una segunda copia de esas reglas.
+
+El timeout del cliente MCP debe ser suficiente: una ejecución lanza hasta cuatro
+procesos de OpenCode, así que usa `tool_timeout_sec` 15000 (o el equivalente de
+tu cliente), no 600 s ni el valor por defecto de 60 s. Cancelar o cerrar la
+llamada no detiene el backend: el SDK puede responder de inmediato mientras el
+worker sigue, y el timeout del proceso solo protege mientras el servidor MCP
+esté vivo. Detalle y límites en `docs/mcp-opencode.md`.
+
+Las respuestas del núcleo son JSON en `content` y en `structuredContent`. Los
+errores de validación del SDK —campo obligatorio ausente o tipo incorrecto—
+llegan como texto con `isError: true` y sin `structuredContent`: respeta
+`isError` y no deserialices `structuredContent` sin comprobar que existe.
+
 ## Selección
 
 La prioridad la decide el coordinador siguiendo estas instrucciones. El
@@ -48,6 +79,11 @@ Antes de ejecutar:
 4. Elige una variante acorde con la complejidad solo si su ID aparece en
    metadatos; sin variante, registra el ajuste predeterminado.
 5. Registra en `--reason` por qué modelo y variante bastan.
+
+Antes de cada tarea o reintento con inferencia, avisa al usuario qué se delega,
+el modelo/proveedor elegido, el esfuerzo (variante publicada o predeterminado)
+y si es gratuito o de pago. Si la tarifa no está acreditada, indícala como
+desconocida; no equipares coste no informado con gratuito.
 
 No elige automáticamente el mejor modelo ni usa siempre el mismo. El proveedor
 directo `openai` está bloqueado porque comparte la cuenta Codex: se rechaza

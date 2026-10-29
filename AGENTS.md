@@ -15,7 +15,8 @@ activación o roles. Aplica también a cambios de AIKit. Consulta
 
 ## Estructura
 
-- `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados.
+- `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados
+  (`delegate.py` para la CLI y `mcp_server.py` para el servidor MCP local).
 - `tests/`: pytest con transporte falso, sin inferencia.
 - `docs/`: investigación, validación y diseño.
 - `opencode.json`: bloqueos de proveedor y subdelegación.
@@ -35,6 +36,14 @@ lo exige. Consulta `docs/correcciones-revision-funcional.md` para sus límites.
 Escoge modelo y esfuerzo según la tarea: gratuitos suficientes, después Go y
 otras alternativas conectadas. Bloquea solo el proveedor directo `openai`; GPT de
 otros proveedores siguen permitidos. Usa variantes publicadas o el predeterminado.
+Antes de cada tarea o reintento en OpenCode, anuncia su objetivo, modelo,
+esfuerzo y condición gratuita o de pago; indica cuando la tarifa sea desconocida.
+
+El servidor MCP local `aikit-opencode` expone el mismo núcleo con
+`opencode_catalog` y `opencode_delegate`; prefiere esas herramientas si el
+cliente las publica y conserva la CLI como alternativa. No elige modelo ni
+reintenta. Su timeout es por proceso: el cliente MCP necesita 15000 s para
+cubrir los cuatro procesos de una ejecución. Consulta `docs/mcp-opencode.md`.
 
 Con `free_limit_reached` y `fallback: reselect`, evalúa Go y alternativas sin
 nueva confirmación. Sin opciones adecuadas disponibles, informa y continúa con

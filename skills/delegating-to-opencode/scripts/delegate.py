@@ -17,6 +17,7 @@ import shutil
 import signal
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -286,6 +287,14 @@ def _read_task(task_file: Path | str) -> str:
     task = task.strip()
     if not task:
         raise DelegateError("empty_task", "El archivo de tarea está vacío.")
+    return task
+
+
+def _validate_task_text(task: str) -> str:
+    """Acepta la tarea en memoria sin alterar su contenido literal."""
+
+    if not isinstance(task, str) or not task.strip():
+        raise DelegateError("empty_task", "La tarea está vacía.")
     return task
 
 
@@ -722,13 +731,61 @@ def run_task(
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
 ) -> dict[str, Any]:
-    """Ejecuta un único intento, sin alternativas ni reintentos automáticos."""
+    """Ejecuta un único intento leyendo la tarea de un archivo."""
+
+    return _run_core(
+        cwd=cwd,
+        task_loader=lambda: _read_task(task_file),
+        model=model,
+        variant=variant,
+        reason=reason,
+        agent=agent,
+        timeout=timeout,
+    )
+
+
+def run_text_task(
+    cwd: Path | str,
+    task: str,
+    model: str | None = None,
+    variant: str | None = None,
+    reason: str | None = None,
+    agent: str = "build",
+    timeout: float = DEFAULT_TIMEOUT,
+) -> dict[str, Any]:
+    """Ejecuta un único intento con la tarea ya en memoria.
+
+    Comparte con `run_task` el mismo núcleo: mismas validaciones, mismos
+    bloqueos, mismo catálogo y ningún archivo intermedio.
+    """
+
+    return _run_core(
+        cwd=cwd,
+        task_loader=lambda: _validate_task_text(task),
+        model=model,
+        variant=variant,
+        reason=reason,
+        agent=agent,
+        timeout=timeout,
+    )
+
+
+def _run_core(
+    cwd: Path | str,
+    task_loader: Callable[[], str],
+    model: str | None,
+    variant: str | None,
+    reason: str | None,
+    agent: str,
+    timeout: float,
+) -> dict[str, Any]:
+    """Núcleo común de ejecución: valida antes de tocar procesos."""
 
     try:
         base_model, selected_variant = parse_model(model, variant)
         clean_reason = _validate_reason(reason)
         project = _validate_cwd(cwd)
-        task = _read_task(task_file)
+        task = task_loader()
         load_policy()
         if agent not in AGENTS:
             raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")

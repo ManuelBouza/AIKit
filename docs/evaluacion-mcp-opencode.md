@@ -123,3 +123,7 @@ ejecución: debe conectarse y comprobarse explícitamente.
 
 La recomendación es una conclusión de esta evaluación, no una migración aprobada
 ni una compatibilidad de terceros ya verificada en ejecución.
+
+Actualización del 29 de octubre de 2026: tras la aprobación se implementó el
+[MCP local sobre la CLI](mcp-opencode.md), reutilizando el núcleo de AIKit y el
+SDK oficial. Allí se documentan la validación observada y los límites actuales.

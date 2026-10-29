@@ -240,6 +240,21 @@ Para aplicar el formato:
 uv run ruff format .
 ```
 
+Como atajo, el script `scripts\verificar.ps1` ejecuta la secuencia completa
+(sincronización, pruebas, Ruff y mypy) desde la raíz del repositorio, muestra la
+salida de cada paso y termina con una tabla y un resumen `OK`/`ERROR`:
+
+```powershell
+.\scripts\verificar.ps1
+```
+
+Devuelve código 0 si todo pasa y 1 si algún comando falla o falta `uv`.
+Reutiliza las herramientas existentes, sin añadir otra skill ni sustituir la
+verificación de Superpowers. Validado el 29 de octubre de 2026 en Windows:
+ejecución real con PowerShell 7 (205 pruebas, Ruff y mypy correctos, código 0)
+y fallo simulado en PowerShell 5.1 y 7 (cinco pasos ejecutados, resumen de error,
+código 1 y directorio inicial conservado).
+
 Las pruebas usan fixtures, parametrización y un transporte falso: no invocan
 OpenCode ni consumen cuota. Los temporales de pytest viven en `.aikit/pytest-tmp`.
 Si el sandbox restringe la caché de uv, usa

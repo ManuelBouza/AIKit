@@ -66,3 +66,36 @@ el contrato de carga se distribuye dentro del complemento.
 
 En el registro de coordinación se distingue result/backend_status (ok/error) de
 review (accepted/needs_corrections); el éxito de ejecución no equivale a calidad.
+
+## Prueba real desde un subagente nativo
+
+El 29 de octubre de 2026 se comprobó el recorrido coordinador Codex →
+subagente nativo `opencode_e2e_worker` → OpenCode → revisión del subagente →
+verificación independiente del coordinador. Se usó la skill instalada de AIKit
+0.1.2, Windows y OpenCode 2.2.0, en un directorio ignorado y con datos ficticios.
+
+El subagente consultó el catálogo y eligió
+`opencode/deepseek-v4.1-flash-free#low`, gratuito según tarifas publicadas,
+para agregar un CSV a JSON. No encontró MCP tras una espera de seis segundos
+y ejecutó él mismo la CLI instalada, con un intento y timeout de 120 s por
+proceso. El coordinador anunció la selección antes de autorizar la inferencia.
+
+Esperado: que OpenCode creara el archivo, sin implementación nativa, y que
+ambos niveles de revisión comprobaran sus valores y la integridad de entradas.
+Observado: backend `ok`, código 0, coste informado 0.0 y sesión
+`ses_e7691deb2ffegL2bBT2q3ub72T`. El JSON inexistente al inicio quedó creado
+con seis filas agregadas, nueve unidades y 1130 céntimos. Subagente y
+coordinador recalcularon y verificaron el resultado; los hashes de entradas y
+configuración permanecieron intactos, sin cambios inesperados en Git ni en
+el inventario local comprobado. No se necesitó reintentar ni corregir el JSON.
+
+Las evidencias locales están en
+`.aikit/subagent-e2e-8ae6895ee2f3416d922a15f98b027307/`:
+`delegate-result.json`, `summary.json` y `verification.json`. La comprobación
+del coordinador está en `.aikit/subagent-e2e-coordinator-verification.json`.
+Son archivos ignorados; este apartado conserva la evidencia sanitizada.
+
+Esta prueba acredita una delegación real por CLI desde un subagente con la
+skill indicada explícitamente. No acredita descubrimiento implícito en todos
+los subagentes, MCP desde subagentes, funcionamiento de todos los roles de
+Superpowers ni aislamiento del sistema operativo.

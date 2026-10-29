@@ -1,7 +1,7 @@
 # Diseño: Codex diseña y coordina; OpenCode ejecuta y verifica
 
-Estado: propuesta para revisión, 29 de octubre de 2026. No es una instrucción
-activa ni acredita capacidades nuevas. Este documento no cambia la skill,
+Estado: diseño aprobado por el usuario con `go`, 29 de octubre de 2026.
+No es una instrucción activa ni acredita capacidades nuevas. No cambia la skill,
 la configuración global, el complemento instalado ni los flujos de Superpowers.
 
 ## Objetivo y decisiones acordadas
@@ -163,5 +163,5 @@ reanudación. No se prometen trabajos asíncronos o permisos que aún no existen
   con `go`, conservando configuración ajena y sin garantías de activación
   universal basadas únicamente en instrucciones.
 
-Este diseño no afirma que estas pruebas se hayan realizado. Su aprobación
-permitirá preparar el plan de implementación y sus criterios verificables.
+Este diseño no afirma que estas pruebas se hayan realizado. El siguiente paso
+es ejecutar su plan de implementación una vez aprobado por el usuario.

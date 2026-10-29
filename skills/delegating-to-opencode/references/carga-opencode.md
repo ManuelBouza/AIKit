@@ -42,3 +42,13 @@ porcentaje de ahorro de tokens; no cuentes dos veces los reintentos como tareas
 completadas. Distingue result/backend_status (ok/error) de review
 (accepted/needs_corrections). Sin prompts, transcripciones, secretos, tokens ni
 costes inventados.
+
+## Revisión independiente
+
+Contrato futuro `review.json`: `role: reviewer`, `session`, `snapshot`,
+`verdict: accepted|needs_corrections`, `checks[]` (`id`, `command`, `cwd`,
+`exit_code`, `summary`), `findings[]` (`severity: blocker|warning|info`,
+`description`), `limitations[]`. El revisor recibe diseño, aceptación y archivos;
+usa sesión nueva y ejecuta sus comprobaciones. Correcciones invalidan la
+aceptación anterior. Si necesita otro diseño, devuelve la decisión a Codex sin
+rediseñar. La utilidad de validación aún no existe hasta tarea 2.

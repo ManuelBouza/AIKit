@@ -43,7 +43,8 @@ revisores y verificación final. Excepciones a nativo solo por: datos no
 externalizables, permiso, falta de opciones adecuadas/disponibles. No se
 parchea en Codex por comodidad. Ver contrato en
 `skills/delegating-to-opencode/references/carga-opencode.md` y
-`docs/balance-carga.md`. El `opencode.json` del repositorio bloquea nuevas
+`docs/balance-carga.md`. La orquestación Codex/OpenCode está en
+[docs/orquestacion-opencode.md](docs/orquestacion-opencode.md). El `opencode.json` del repositorio bloquea nuevas
 delegaciones dentro de OpenCode con `tool.use subagent:*` y el proveedor directo
 `openai` con `provider.use`; no limita otros proveedores ni subagentes
 nativos.

@@ -53,20 +53,20 @@ skill; crear `skills/delegating-to-opencode/references/revision-opencode.md` y
 
 **Interfaz:** contratos de implementador y revisor para las tareas 2 y 4.
 
-- [ ] Ejecutar antes del cambio escenarios en seco con las instrucciones actuales:
+- [x] Ejecutar antes del cambio escenarios en seco con las instrucciones actuales:
   quién diseña, quién revisa, Free insuficiente y falta de opciones adecuadas.
   Registrar decisiones observadas sin presentarlas como pruebas de ejecución.
-- [ ] Actualizar únicamente instrucciones contradictorias: diseño en Codex,
+- [x] Actualizar únicamente instrucciones contradictorias: diseño en Codex,
   revisión y verificación en OpenCode; el retorno automático no necesita agotar
   modelos descartados ni nueva aprobación. Preservar permisos y roles existentes.
-- [ ] Definir entrega en `review.json`: `role: reviewer`, `session`, `snapshot`,
+- [x] Definir entrega en `review.json`: `role: reviewer`, `session`, `snapshot`,
   `verdict: accepted|needs_corrections`, `checks`, `findings` y `limitations`.
   Cada check contiene `id`, `command`, `cwd`, `exit_code` y `summary`.
   Cada hallazgo contiene `severity: blocker|warning|info` y `description`.
-- [ ] El revisor recibe diseño, aceptación y archivos; usa sesión nueva y ejecuta
+- [x] El revisor recibe diseño, aceptación y archivos; usa sesión nueva y ejecuta
   sus comprobaciones. Las correcciones invalidan la aceptación anterior.
   Si necesita otro diseño, devuelve la decisión a Codex, sin rediseñar por su cuenta.
-- [ ] Repetir los escenarios con instrucciones nuevas. Documentar cobertura de
+- [x] Repetir los escenarios con instrucciones nuevas. Documentar cobertura de
   Superpowers y carencia cubierta por AIKit; no crear otra skill de planificación.
 - [ ] Revisar esta tarea desde otra sesión OpenCode antes de integrarla.
 
@@ -85,8 +85,11 @@ class ReviewExpectation:
     reviewer_session: str
     checks: dict[str, str]  # id -> comando requerido
 
+
 def capture_snapshot(root: Path, files: Sequence[str]) -> dict[str, str | None]: ...
-def validate_review(root: Path, report: dict[str, Any], expected: ReviewExpectation) -> dict[str, Any]: ...
+def validate_review(
+    root: Path, report: dict[str, Any], expected: ReviewExpectation
+) -> dict[str, Any]: ...
 ```
 
 **Contrato:** SHA256 por ruta relativa explícita, `None` para archivos eliminados.

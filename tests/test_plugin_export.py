@@ -23,7 +23,7 @@ def builder() -> ModuleType:
     return module
 
 
-def test_export_excludes_unlisted_files_and_generates_compatibility(
+def test_export_excludes_unlisted_files_and_preserves_portable_manifests(
     builder: ModuleType, tmp_path: Path
 ) -> None:
     source = tmp_path / "fuentes"
@@ -47,30 +47,25 @@ def test_export_excludes_unlisted_files_and_generates_compatibility(
     actual = {
         p.relative_to(package).as_posix() for p in package.rglob("*") if p.is_file()
     }
-    assert actual == (set(builder.PACKAGE_FILES) - {"plugin.json", "mcp.json"}) | {
-        ".codex-plugin/plugin.json",
-        ".mcp.json",
-    }
-    legacy = json.loads((package / ".codex-plugin/plugin.json").read_text())
-    assert legacy["mcpServers"] == "./.mcp.json"
-    portable = json.loads((source / "mcp.json").read_text())
-    compatible = json.loads((package / ".mcp.json").read_text())
-    for name, server in portable["mcpServers"].items():
-        assert compatible["mcpServers"][name] == {
-            key: value for key, value in server.items() if key != "type"
-        }
+    assert actual == set(builder.PACKAGE_FILES)
+    assert (package / "plugin.json").read_bytes() == (
+        source / "plugin.json"
+    ).read_bytes()
+    assert (package / "mcp.json").read_bytes() == (source / "mcp.json").read_bytes()
+    assert not (package / ".codex-plugin").exists()
+    assert not (package / ".mcp.json").exists()
     marketplace = json.loads((output / ".agents/plugins/marketplace.json").read_text())
     assert marketplace["plugins"][0]["source"]["path"] == "./aikit"
 
 
-def test_effective_openai_overlay_resolves_bundled_mcp(
+def test_portable_entrypoint_resolves_bundled_mcp(
     builder: ModuleType, tmp_path: Path
 ) -> None:
     package = builder.export_plugin(ROOT, tmp_path / "salida")
-    assert not (package / "plugin.json").exists()
-    assert not (package / "mcp.json").exists()
-    effective = json.loads((package / ".codex-plugin/plugin.json").read_text())
-    mcp_path = package / effective["mcpServers"]
+    manifest = json.loads((package / "plugin.json").read_text())
+    assert manifest["extensions"]["com.openai"]["requires_local_executor"] is True
+    assert manifest["extensions"]["com.openai"]["interface"]["displayName"] == "AIKit"
+    mcp_path = package / "mcp.json"
     assert set(json.loads(mcp_path.read_text())["mcpServers"]) == {"aikit-opencode"}
     server = json.loads(mcp_path.read_text())["mcpServers"]["aikit-opencode"]
     assert server["cwd"] == "${PLUGIN_ROOT}"
@@ -83,8 +78,10 @@ def test_effective_openai_overlay_resolves_bundled_mcp(
         "--extra",
         "mcp",
     ]
-    assert server["tool_timeout_sec"] == 15000
-    assert server["startup_timeout_sec"] == 120
+    assert server["type"] == "stdio"
+    assert set(server) <= {"type", "command", "args", "env", "cwd"}
+    script = package / server["args"][-1].removeprefix("${PLUGIN_ROOT}/")
+    assert script.is_file()
 
 
 def test_existing_output_is_preserved(builder: ModuleType, tmp_path: Path) -> None:
@@ -93,6 +90,27 @@ def test_existing_output_is_preserved(builder: ModuleType, tmp_path: Path) -> No
     with pytest.raises(FileExistsError):
         builder.export_plugin(ROOT, tmp_path)
     assert sentinel.read_text() == "conservar"
+
+
+@pytest.mark.parametrize(
+    "field", ["startup_timeout_sec", "tool_timeout_sec", "enabled_tools"]
+)
+def test_nonportable_settings_are_rejected_before_writing(
+    builder: ModuleType, tmp_path: Path, field: str
+) -> None:
+    source = tmp_path / "fuentes"
+    for relative in builder.PACKAGE_FILES:
+        path = source / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((ROOT / relative).read_bytes())
+    config = source / "mcp.json"
+    settings = json.loads(config.read_text())
+    settings["mcpServers"]["aikit-opencode"][field] = 15000
+    config.write_text(json.dumps(settings), encoding="utf-8")
+    output = tmp_path / "salida"
+    with pytest.raises(ValueError, match="MCP portable"):
+        builder.export_plugin(source, output)
+    assert not output.exists()
 
 
 def test_missing_source_creates_no_output(builder: ModuleType, tmp_path: Path) -> None:

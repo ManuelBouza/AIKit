@@ -57,33 +57,27 @@ def export_plugin(source: Path, output: Path) -> Path:
     portable_mcp = json.loads(files["mcp.json"])
     if manifest["name"] != "aikit":
         raise ValueError("Se esperaba el paquete aikit.")
-    legacy = {
-        "name": manifest["name"],
-        "version": manifest["version"],
-        "description": manifest["description"],
-        "skills": "./skills/",
-        "mcpServers": "./.mcp.json",
-        "requires_local_executor": True,
-        "interface": {
-            "displayName": "AIKit",
-            "shortDescription": "Skills y delegación a OpenCode",
-            "developerName": manifest["author"]["name"],
-            "category": "Developer Tools",
-            "capabilities": ["Read", "Write"],
-        },
-    }
-    compatible_mcp = {
-        "mcpServers": {
-            name: {key: value for key, value in server.items() if key != "type"}
-            for name, server in portable_mcp["mcpServers"].items()
-        }
-    }
-    files[".codex-plugin/plugin.json"] = _json_bytes(legacy)
-    files[".mcp.json"] = _json_bytes(compatible_mcp)
-    # El cliente prioriza los manifiestos portables y rechaza sus extras Codex.
-    # Distribuir solo la variante compatible; los originales son fuentes de build.
-    del files["plugin.json"]
-    del files["mcp.json"]
+    if not isinstance(portable_mcp.get("mcpServers"), dict):
+        raise ValueError("Se esperaba mcpServers en mcp.json.")
+    allowed = {"type", "command", "args", "env", "cwd"}
+    for server in portable_mcp["mcpServers"].values():
+        if (
+            not isinstance(server, dict)
+            or server.get("type") != "stdio"
+            or set(server) - allowed
+        ):
+            raise ValueError(
+                "MCP portable: se esperaba STDIO sin campos específicos de Codex."
+            )
+    # No sobrescribir ni borrar: un fallo de E/S puede dejar una salida parcial.
+    output.mkdir(parents=True, exist_ok=False)
+    package = output / "aikit"
+    for relative, content in files.items():
+        destination = package / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+    catalog = output / ".agents/plugins/marketplace.json"
+    catalog.parent.mkdir(parents=True, exist_ok=True)
     marketplace = {
         "name": "aikit-local",
         "interface": {"displayName": "AIKit privado"},
@@ -99,15 +93,6 @@ def export_plugin(source: Path, output: Path) -> Path:
             }
         ],
     }
-    # No sobrescribir ni borrar: un fallo de E/S puede dejar una salida parcial.
-    output.mkdir(parents=True, exist_ok=False)
-    package = output / "aikit"
-    for relative, content in files.items():
-        destination = package / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(content)
-    catalog = output / ".agents/plugins/marketplace.json"
-    catalog.parent.mkdir(parents=True, exist_ok=True)
     catalog.write_bytes(_json_bytes(marketplace))
     return package
 

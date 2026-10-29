@@ -44,9 +44,12 @@ sigue siendo solo biblioteca estándar. `stdout` queda reservado al protocolo
 MCP. Las mismas políticas, bloqueos, certificado de configuración y errores se
 aplican en ambos caminos: no hay una segunda copia de esas reglas.
 
-El timeout del cliente MCP debe ser suficiente: una ejecución lanza hasta cuatro
-procesos de OpenCode, así que usa `tool_timeout_sec` 15000 (o el equivalente de
-tu cliente), no 600 s ni el valor por defecto de 60 s. Cancelar o cerrar la
+El timeout del cliente MCP debe cubrir hasta cuatro procesos. En el MCP
+independiente configura `tool_timeout_sec` 15000 para admitir el máximo del
+núcleo. El complemento portable usa los límites del cliente (normalmente 60 s
+por herramienta): no asumas que el paquete los aumenta. Usa la CLI si la tarea
+no cabe en el límite; no reintentes por otra vía mientras siga un intento vivo.
+Cancelar o cerrar la
 llamada no detiene el backend: el SDK puede responder de inmediato mientras el
 worker sigue, y el timeout del proceso solo protege mientras el servidor MCP
 esté vivo. Detalle y límites en `docs/mcp-opencode.md`.

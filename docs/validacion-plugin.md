@@ -4,6 +4,50 @@
 Python de desarrollo 3.14.9; uv eligió Python 3.13.14 para el runtime instalado,
 SDK MCP 1.30.0 y dependencias resueltas con el lock incluido.
 
+**Corrección 0.1.1:** la validación de la versión 0.1.0 descrita abajo no
+demostró publicación de herramientas en el chat. La prueba posterior falló:
+el formato legacy transmitía `${PLUGIN_ROOT}` literalmente y Windows devolvía
+error 267 al usarlo como `cwd`. La sonda nativa también confirmó que no expandía
+`${CLAUDE_PLUGIN_ROOT}`. El SDK usado inicialmente expandía las rutas por su
+cuenta, lo que ocultó la diferencia del cargador.
+
+Se corrigió a manifiestos portables estrictos y sin variante legacy generada.
+En una sesión diagnóstica efímera del cliente nativo, sin inferencia, se observó
+`pluginId: aikit@aikit-local` y ambas herramientas `opencode_catalog` y
+`opencode_delegate`. Los campos de timeout específicos se eliminan porque ese
+lector los rechaza: se aplican los límites predeterminados del cliente. Para
+tareas largas se conserva CLI; no se promete un timeout de 15000 s en el paquete.
+Las regresiones nuevas verifican metadatos portables y rechazo de campos no
+admitidos antes de crear la salida. Las secciones siguientes conservan el
+registro histórico; no deben interpretarse como validación de chat de 0.1.0.
+
+## Comprobación real de 0.1.1
+
+Chat de prueba: `01a1892f-26d3-7bc3-9a99-8d5088fec8ce`. Se revisaron sus
+llamadas MCP nativas, además del informe local ignorado por Git.
+
+- Las herramientas aparecieron tras una espera de seis segundos y una segunda
+  consulta al inventario; la primera búsqueda aún coincidía con el arranque.
+- `opencode_catalog` devolvió 74 modelos, sin el proveedor directo `openai`.
+- `opencode_delegate` rechazó `openai/gpt-6-luna` con `provider_not_allowed`.
+- Una llamada real a `opencode/beam-free#low`, con timeout 10 por proceso,
+  devolvió exactamente `AIKIT_CHAT_OK` en unos 9,6 s. Se anunció selección y
+  tarifa gratuita publicada antes de ejecutar; coste devuelto `null`, sin
+  importe acreditado por llamada. No hizo falta Go ni reintentar.
+- El chat comparó estado y diff completos antes y después; los cambios
+  preexistentes del coordinador se conservaron. No usó CLI/SDK como sustitutos.
+
+La implementación de este bugfix se intentó con Beam gratuito `medium`; alcanzó
+60 s con cambios parciales y el adaptador terminó su árbol. Codex revisó y
+completó los cambios mediante el fallback autorizado. Se observó RED para la
+extensión OpenAI incorrecta y para tres campos MCP no portables; GREEN posterior.
+Resultado final: **215 pruebas**, Ruff y mypy correctos. La revisión independiente
+no encontró bloqueantes; se corrigió la codificación de metadatos y se documentó
+la preparación previa del runtime. Instalación personal 0.1.1 con respaldo,
+hashes coincidentes y configuración ajena conservada.
+
+## Registro histórico de 0.1.0
+
 ## Cobertura y decisiones
 
 Se reutilizaron el núcleo CLI, MCP, política y skill existentes. Superpowers

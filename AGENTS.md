@@ -43,8 +43,10 @@ esfuerzo y condición gratuita o de pago; indica cuando la tarifa sea desconocid
 El servidor MCP local `aikit-opencode` expone el mismo núcleo con
 `opencode_catalog` y `opencode_delegate`; prefiere esas herramientas si el
 cliente las publica y conserva la CLI como alternativa. No elige modelo ni
-reintenta. Su timeout es por proceso: el cliente MCP necesita 15000 s para
-cubrir los cuatro procesos de una ejecución. Consulta `docs/mcp-opencode.md`.
+reintenta. El timeout del núcleo es por proceso. El paquete portable usa los
+límites del cliente (normalmente 60 s por herramienta); usa CLI si la tarea
+no cabe en ese límite. El MCP independiente puede configurarse a 15000 s para
+cubrir cuatro procesos al máximo. Consulta `docs/mcp-opencode.md`.
 
 Con `free_limit_reached` y `fallback: reselect`, evalúa Go y alternativas sin
 nueva confirmación. Sin opciones adecuadas disponibles, informa y continúa con

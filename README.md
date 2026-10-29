@@ -143,6 +143,11 @@ El servidor MCP local reusa el mismo núcleo que la CLI y expone dos
 herramientas. Es la vía preferida si el cliente las publica; la CLI queda como
 alternativa y diagnóstico.
 
+En el complemento portable los límites son los del cliente (normalmente 60 s
+por herramienta). Usa la CLI para tareas que no quepan en ese tiempo. El ejemplo
+y ajuste de 15000 s siguientes corresponden a una conexión MCP independiente;
+el paquete no aplica ese ajuste. Consulta [instalación](docs/plugin-aikit.md).
+
 ```powershell
 $root = 'C:\ruta\absoluta\AIKit'
 $python = Join-Path $root '.venv\Scripts\python.exe'

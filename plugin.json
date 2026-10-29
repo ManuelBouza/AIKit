@@ -1,7 +1,24 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "aikit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Preferencias reproducibles y delegación a OpenCode, complementando Codex y Superpowers.",
-  "author": {"name": "Manuel"}
+  "author": {
+    "name": "Manuel"
+  },
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "AIKit",
+        "shortDescription": "Skills y delegación a OpenCode",
+        "developerName": "Manuel",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Read",
+          "Write"
+        ]
+      }
+    }
+  }
 }

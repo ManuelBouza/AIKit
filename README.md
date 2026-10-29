@@ -13,11 +13,10 @@ y no forman parte de la preferencia distribuible. Los
 criterios de evolución, reutilización y compatibilidad están en
 [Principios de AIKit](docs/principios-aikit.md).
 
-Objetivo: documentar y validar preferencias de Codex para delegar ejecución
-acotada a OpenCode. Codex conserva la orquestación, los roles de Superpowers,
-las revisiones y la verificación; OpenCode ejecuta la tarea elegida y devuelve un
-resultado breve a quien la encargó. El adaptador no sustituye una revisión
-independiente.
+Objetivo: documentar y validar preferencias de Codex para delegar trabajo
+externalizable a OpenCode como ejecutor habitual. Codex conserva decisiones,
+revisores y verificación final; OpenCode ejecuta el trabajo y devuelve un
+resultado breve. El adaptador no sustituye una revisión independiente.
 
 ## Activación e integración
 
@@ -38,12 +37,16 @@ expone el mismo núcleo como dos herramientas: `opencode_catalog` y
 CLI sigue disponible como alternativa y como herramienta de diagnóstico. El
 detalle está en [MCP local de AIKit](docs/mcp-opencode.md).
 
-El coordinador decide si ejecuta de forma nativa o delega. Un subagente nativo de
-Codex autorizado y con shell puede usar el adaptador, recibir el resultado y
-continuar su trabajo. Los revisores independientes conservan su función. El
-`opencode.json` del repositorio bloquea nuevas delegaciones dentro de OpenCode con
-`tool.use subagent:*` y el proveedor directo `openai` con `provider.use`; no
-limita otros proveedores ni subagentes nativos.
+El trabajo externalizable se envía primero a OpenCode: exploración técnica,
+diagnóstico, implementación+tests+correcciones. Codex conserva decisiones,
+revisores y verificación final. Excepciones a nativo solo por: datos no
+externalizables, permiso, falta de opciones adecuadas/disponibles. No se
+parchea en Codex por comodidad. Ver contrato en
+`skills/delegating-to-opencode/references/carga-opencode.md` y
+`docs/balance-carga.md`. El `opencode.json` del repositorio bloquea nuevas
+delegaciones dentro de OpenCode con `tool.use subagent:*` y el proveedor directo
+`openai` con `provider.use`; no limita otros proveedores ni subagentes
+nativos.
 
 ## Requisitos
 

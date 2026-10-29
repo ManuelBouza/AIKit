@@ -53,6 +53,11 @@ nueva confirmación. Sin opciones adecuadas disponibles, informa y continúa con
 Codex nativo. Revisa cambios parciales antes de reintentar. No eludas permisos,
 autenticación o privacidad.
 
+OpenCode es ejecutor habitual del trabajo externalizable autorizado; Codex
+conserva comprensión, roles y revisión final. Contrato de carga en
+`skills/delegating-to-opencode/references/carga-opencode.md`; evidencia en
+`docs/balance-carga.md`.
+
 ## Comandos
 
 Desde la raíz:

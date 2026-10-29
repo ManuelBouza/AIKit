@@ -1,12 +1,13 @@
 ---
 name: delegating-to-opencode
-description: Use when delegating a bounded implementation or transformation task to OpenCode with a connected model other than the direct openai provider, preferring free models and recording the selection reason.
+description: Use when authorized repository work involves technical exploration, diagnosis, implementation, tests, corrections or documentation that can be delegated to connected OpenCode accounts.
 ---
 
 # Delegar a OpenCode
 
 OpenCode ejecuta trabajo acotado. El coordinador o subagente nativo de Codex
-autorizado usa esta skill antes de implementar o transformar archivos. Conserva
+autorizado usa esta skill antes de explorar técnicamente, implementar o
+transformar archivos. Conserva
 roles, ciclo de vida y revisiones de Codex y Superpowers: ejecuta en OpenCode y
 devuelve el resultado a quien lo invocó, que verifica diff y pruebas. Los workers
 de OpenCode no cargan esta skill ni redelegan.
@@ -14,8 +15,19 @@ de OpenCode no cargan esta skill ni redelegan.
 ## Activación
 
 Se invoca con `$delegating-to-opencode` o por descripción. No intercepta
-`spawn_agent`, MCP ni modelos nativos. Sin ejecución externalizable no se llama
-al backend. `run` inicia inferencia; `doctor` solo consulta versión y catálogo.
+`spawn_agent`, MCP ni modelos nativos. Se activa antes de exploración técnica
+extensa e implementación, para trabajo externalizable autorizado: exploración
+técnica/diagnóstico, propuesta técnica dentro del alcance acordado,
+implementación + pruebas/lint/tipos + correcciones/documentación. Antes de
+delegar: exploración mínima local para seguridad, skills y alcance; no
+inspección exhaustiva del coordinador. Sin ejecución externalizable no se
+llama al backend. `run` inicia inferencia; `doctor` solo
+consulta versión y catálogo. Los defectos vuelven al worker (misma sesión solo
+si el backend lo permite; hoy no ofrece reanudación, por lo que se crea tarea
+acotada nueva). No se parchea en Codex por ser "dos líneas". Codex conserva
+comprensión, decisiones del usuario, roles nativos/Superpowers, revisión
+independiente del diff y verificación final. No delegar deliberaciones ni
+solicitudes solo de conversación.
 
 ## Ruta y requisitos
 
@@ -133,15 +145,21 @@ y límites en `docs/correcciones-revision-funcional.md`.
 ## Orquestación y verificación
 
 Codex conserva orquestación y verificación, incluidas comprobaciones de shell.
-Si OpenCode agota el uso gratuito, `free_limit_reached` con `fallback: reselect`
-devuelve la elección al coordinador. Evalúa Go y otras alternativas conectadas
-adecuadas, con modelo y variante razonados, sin nueva confirmación. Si no queda
-una opción adecuada disponible en OpenCode, informa y continúa normalmente con
-Codex y sus subagentes nativos. El catálogo no garantiza cuota ni disponibilidad
-de inferencia; un fallo aislado tampoco demuestra que todo OpenCode esté agotado.
-No uses `openai/*` ni eludas controles de permisos, autenticación o privacidad.
-El helper no cambia cuentas, reintenta ni lanza Codex. Informa los bloqueos reales
-sin presentar trabajo no ejecutado como completado.
+Capacidad primero: Free suficiente -> Go -> otras alternativas adecuadas ->
+nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
+opciones. Sin bucles ilimitados: fija presupuesto razonado de intentos/tiempo
+por tarea, revisa parciales y, si se agota, reevalúa adecuación y justifica
+cualquier retorno nativo. Si OpenCode agota el uso gratuito, `free_limit_reached`
+con `fallback: reselect` devuelve la elección al coordinador. Evalúa Go y otras
+alternativas conectadas adecuadas, con modelo y variante razonados, sin nueva
+confirmación. Si no queda una opción adecuada disponible en OpenCode, informa y
+continúa normalmente con Codex y sus subagentes nativos. El catálogo no
+garantiza cuota ni disponibilidad de inferencia; un fallo aislado tampoco
+demuestra que todo OpenCode esté agotado. Respeta autorizaciones y datos que no
+se puedan externalizar. No uses `openai/*` ni eludas controles de permisos,
+autenticación o privacidad. El helper no cambia cuentas, reintenta ni lanza
+Codex. Informa los bloqueos reales sin presentar trabajo no ejecutado como
+completado.
 
 ## Instalación
 
@@ -151,6 +169,16 @@ Copia la carpeta completa (`scripts/` y `policy.json`) a
 un respaldo con fecha en `<CODEX_HOME>/backups/aikit`, fuera de los directorios
 `skills/` y `plugins/` que Codex descubre, para que el respaldo no se active
 como skill duplicada.
+
+## Contrato de carga
+
+Antes de delegar, prepara una tarea acotada y compacta siguiendo
+[references/carga-opencode.md](references/carga-opencode.md): objetivo, rutas permitidas o ámbito de
+exploración, criterios de aceptación, límites y presupuesto; salida compacta
+con archivos, pruebas comando/resultado y riesgos pendientes. No copies la
+conversación ni vuelques logs extensos. Consulta el catálogo al seleccionar y
+reutilízalo en el mismo contexto mientras no haya señal de cambio; no es caché
+garantizada ni cuota.
 
 ## Límites
 

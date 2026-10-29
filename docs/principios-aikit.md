@@ -57,3 +57,5 @@ Las preferencias del usuario prevalecen sobre los valores propuestos por AIKit.
 
 Estos criterios son requisitos pendientes de verificar al implementar el
 empaquetado, no capacidades que el repositorio ya ofrezca.
+
+OpenCode es ejecutor habitual del trabajo externalizable autorizado; Codex conserva comprensión, roles y revisión final. Ver [../skills/delegating-to-opencode/references/carga-opencode.md](../skills/delegating-to-opencode/references/carga-opencode.md) y [balance-carga.md](balance-carga.md).

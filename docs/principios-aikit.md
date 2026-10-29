@@ -4,8 +4,9 @@
 
 AIKit debe convertirse en un complemento instalable para reproducir preferencias
 de Codex y distribuir distintas skills. Hoy contiene una skill de delegación a
-OpenCode y su instalación manual. El empaquetado del complemento queda pendiente;
-este documento establece los criterios que deberá cumplir.
+OpenCode y su instalación manual, junto a un exportador del complemento privado.
+La guía `docs/plugin-aikit.md` registra instalación y límites; este documento
+establece los criterios que debe conservar el empaquetado.
 
 ## Explorar antes de implementar
 

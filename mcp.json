@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "aikit-opencode": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "${PLUGIN_ROOT}", "--locked", "--no-dev", "--extra", "mcp", "python", "${PLUGIN_ROOT}/skills/delegating-to-opencode/scripts/mcp_server.py"],
+      "cwd": "${PLUGIN_ROOT}",
+      "startup_timeout_sec": 120,
+      "tool_timeout_sec": 15000,
+      "enabled_tools": ["opencode_catalog", "opencode_delegate"]
+    }
+  }
+}

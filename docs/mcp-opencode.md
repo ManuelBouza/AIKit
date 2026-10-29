@@ -236,3 +236,10 @@ comprobó que todos los ajustes ajenos coincidían con los originales.
 El catálogo de herramientas de este chat todavía no publica el nuevo servidor.
 Abre una nueva sesión o recarga el cliente para cargarlo. El entorno `.venv`
 debe seguir disponible en su ruta actual; aún no es un complemento empaquetado.
+
+Actualización del 29 de octubre de 2026: esa instalación manual se sustituyó por
+`aikit@aikit-local`. El paquete resuelve el runtime con uv y su lock desde caché;
+ya no depende de la `.venv` del checkout. La skill manual y su configuración
+quedaron respaldadas. Consulta [instalación](plugin-aikit.md) y
+[validación del complemento](validacion-plugin.md); el apartado anterior conserva
+la evidencia de la primera instalación del MCP independiente.

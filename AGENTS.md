@@ -18,6 +18,7 @@ activación o roles. Aplica también a cambios de AIKit. Consulta
 - `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados
   (`delegate.py` para la CLI y `mcp_server.py` para el servidor MCP local).
 - `tests/`: pytest con transporte falso, sin inferencia.
+- `scripts/build_plugin.py`: exporta el complemento y catálogo por lista permitida.
 - `docs/`: investigación, validación y diseño.
 - `opencode.json`: bloqueos de proveedor y subdelegación.
 - `.aikit/`: tareas y evidencias ignoradas por Git.
@@ -65,6 +66,8 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 
 Consulta `README.md` para uso, instalación y restauración. Conserva configuración
 ajena y respaldos fuera de rutas descubribles.
+Para empaquetar, consulta `docs/plugin-aikit.md`; no instales desde la raíz del
+checkout, ya que Codex también copia archivos ignorados por Git.
 
 ## Estilo
 

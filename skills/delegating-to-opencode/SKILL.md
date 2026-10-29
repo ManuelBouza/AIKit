@@ -162,4 +162,6 @@ intento puede dejar cambios parciales; el adaptador no los revierte ni ofrece
 rollback, así que revisa el diff antes de reintentar. No escribas credenciales,
 transcripciones ni registros. Los errores solo muestran códigos y mensajes
 breves; consulta los registros locales de OpenCode. El empaquetado del
-complemento y la propagación global de la preferencia siguen pendientes.
+complemento está disponible mediante el exportador del repositorio; instalación
+y migración en `docs/plugin-aikit.md`. La propagación global automática de la
+preferencia sigue pendiente.

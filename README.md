@@ -6,10 +6,10 @@ las demás capacidades instaladas. Antes de crear o modificar una skill, se
 comprueba si una existente cubre la necesidad y se documenta la diferencia que
 justifica el cambio.
 
-Actualmente el repositorio distribuye una skill individual con instalación
-manual; todavía no contiene el empaquetado de un complemento. La portabilidad
-del complemento entre entornos sigue pendiente: las rutas, las cuentas y las
-credenciales son locales y no forman parte de la preferencia distribuible. Los
+El repositorio permite exportar un complemento privado con la skill y el MCP,
+sin copiar archivos privados ni el entorno del checkout. Consulta
+[Instalar AIKit](docs/plugin-aikit.md). Las cuentas y credenciales son locales
+y no forman parte de la preferencia distribuible. Los
 criterios de evolución, reutilización y compatibilidad están en
 [Principios de AIKit](docs/principios-aikit.md).
 
@@ -360,6 +360,7 @@ solo la carpeta `delegating-to-opencode`.
   los huérfanos. No reintentes a ciegas.
 - Un intento puede dejar cambios parciales en el destino. El adaptador no los
   revierte ni ofrece rollback: revisa el diff antes de reintentar.
-- El empaquetado del complemento y la propagación global de la preferencia
-  siguen pendientes; hoy la instalación es manual y por entorno.
+- El complemento privado se exporta con `scripts/build_plugin.py`; la activación
+  y migración requieren instalarlo por entorno. La propagación global automática
+  de preferencias sigue pendiente.
 - La validación real se realizó en Windows; Unix no se ha probado con OpenCode.

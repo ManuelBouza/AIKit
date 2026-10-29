@@ -49,3 +49,8 @@ Se consultó también el manifiesto instalado de Superpowers, sin modificarlo.
   manifiesto sea JSON válido.
 
 No se ha creado el paquete ni cambiado la instalación personal en esta revisión.
+
+Actualización posterior: el usuario aprobó el enfoque nativo. Ya existe un
+exportador con lista permitida y formato compatible validado con el cliente
+instalado; se completó la migración personal. Detalles y límites en
+[validación del complemento](validacion-plugin.md).

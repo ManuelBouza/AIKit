@@ -48,6 +48,20 @@ delegaciones dentro de OpenCode con `tool.use subagent:*` y el proveedor directo
 `openai` con `provider.use`; no limita otros proveedores ni subagentes
 nativos.
 
+## Mecanismo global `go`
+
+AIKit incluye un instalador explícito para incorporar un bloque delimitado a
+`AGENTS.md` global sin alterar configuración ajena. No añade skills, hooks ni
+MCP ni se autoinstala al cargar el complemento.
+
+Guía completa: [Mecanismo go](docs/mecanismo-go.md).
+
+Comando real:
+
+```powershell
+python scripts/install_go.py --codex-home C:\ruta\.codex --template config/codex/go.md
+```
+
 ## Requisitos
 
 - Windows (probado) o Unix con Python 3.10+.

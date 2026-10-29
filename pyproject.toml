@@ -1,6 +1,6 @@
 [project]
 name = "aikit"
-version = "0.1.2"
+version = "0.1.3"
 description = "Preferencias reproducibles de Codex y delegación a OpenCode"
 requires-python = ">=3.10"
 dependencies = []
@@ -20,7 +20,7 @@ package = false
 [tool.pytest.ini_options]
 minversion = "9.0"
 testpaths = ["tests"]
-pythonpath = ["skills/delegating-to-opencode/scripts"]
+pythonpath = ["skills/delegating-to-opencode/scripts", "scripts"]
 addopts = "-ra --strict-markers --strict-config --basetemp=.aikit/pytest-tmp"
 
 [tool.ruff]
@@ -36,6 +36,6 @@ ignore = ["ANN401", "E501"]
 [tool.mypy]
 python_version = "3.10"
 strict = true
-files = ["skills/delegating-to-opencode/scripts/delegate.py", "skills/delegating-to-opencode/scripts/mcp_server.py", "scripts/build_plugin.py", "tests"]
+files = ["skills/delegating-to-opencode/scripts/delegate.py", "skills/delegating-to-opencode/scripts/mcp_server.py", "scripts/build_plugin.py", "scripts/install_go.py", "tests"]
 mypy_path = ["skills/delegating-to-opencode/scripts"]
 cache_dir = ".aikit/mypy-cache"

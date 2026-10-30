@@ -95,11 +95,42 @@ observado. Si el supervisor desaparece, no se promete cancelación automática.
 La pérdida de conectividad devuelve estado desconocido y contexto recuperable.
 
 Antes de cada inferencia, incluida continuación, se anuncia objetivo, modelo,
-esfuerzo y tarifa. Continúan el bloqueo de `openai` directo, la prohibición de
-subdelegación y las reglas de permisos. No se añaden aprobaciones automáticas.
+esfuerzo y tarifa. El proveedor directo `openai` permanece bloqueado para tareas
+nuevas, con la excepción de recuperación descrita debajo. Continúan la
+prohibición de subdelegación y las reglas de permisos. No se añaden aprobaciones
+automáticas.
 El implementador reutiliza sesión; un revisor independiente comienza otra.
 Sin OpenCode adecuado/disponible se aplica el retorno nativo existente, tras
 resolver intentos vivos o inciertos para no duplicar trabajo.
+
+### Excepción autorizada: conservar contexto al agotar cuota
+
+Ampliación solicitada por el usuario el 30 de octubre de 2026: cuando una tarea
+existente no pueda continuar por agotamiento acreditado de tokens/cuota, Free o
+de pago, se permite seleccionar un modelo adecuado del proveedor directo
+`openai` dentro de OpenCode para continuar la misma sesión. No se requiere otra
+confirmación dentro de este alcance. Esta excepción sustituye el bloqueo
+absoluto anterior únicamente para esa recuperación.
+
+Primero se evalúan alternativas adecuadas Free, Go y otros proveedores de
+OpenCode; después, OpenAI directo para preservar la sesión; finalmente Codex
+nativo si no hay una opción adecuada disponible. No se degrada capacidad para
+conservar contexto ni se prueba una lista de modelos con inferencias.
+El coordinador selecciona modelo/esfuerzo, anuncia tarifa y uso de la cuenta
+OpenAI y registra el motivo, error de cuota e identidades anterior/nueva.
+
+Se exige sesión existente, misma tarea/rol/directorio, ejecución inactiva
+comprobada, revisión de efectos parciales y soporte real de cambio de modelo.
+No se copia la sesión del autor a un revisor independiente. Conservar historial
+no garantiza que todo quepa en el contexto del nuevo modelo: se comprueban
+límites y se declara cualquier compactación. Un desbordamiento de contexto,
+timeout o error de autenticación no se clasifica como agotamiento de cuota.
+
+El adaptador actual todavía rechaza `openai`. La implementación deberá acreditar
+una política efectiva que permita esta recuperación sin levantar el bloqueo
+general ni contradecir un `deny` vigente. Si OpenCode no permite expresar el
+alcance necesario, se devuelve la limitación al diseño; no se edita globalmente
+la cuenta ni se ignoran permisos para simular la excepción.
 
 ## Aceptación y entrega incremental
 

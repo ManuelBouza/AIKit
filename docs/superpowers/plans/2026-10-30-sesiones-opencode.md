@@ -13,7 +13,7 @@
 ## Restricciones globales
 
 - Codex conserva diseño, contratos, plan y selección de modelo. OpenCode implementa, prueba y revisa; workers no redelegan.
-- Capacidad primero: Free adecuado, Go, otras alternativas adecuadas, Codex si falta disponibilidad/capacidad. Bloquear solo proveedor directo `openai`.
+- Capacidad primero: Free adecuado, Go, otras alternativas adecuadas, Codex si falta disponibilidad/capacidad. Bloquear proveedor directo `openai` salvo recuperación de sesión existente por cuota agotada: en ese caso OpenAI adecuado dentro de OpenCode precede al retorno nativo, para conservar contexto.
 - Anunciar objetivo, modelo, variante publicada o predeterminada y tarifa antes de cada inferencia, incluso continuación. No inferir para probar permisos.
 - Implementador conserva sesión; revisor independiente usa otra. No interceptar subagentes ni alterar Superpowers; ampliar la skill existente.
 - No usar `--auto`, `--continue`, sesiones inexistentes como continuación, ni terminación global de procesos.
@@ -46,7 +46,7 @@ Ampliar los falsos existentes sin invalidar sus comprobaciones de argumentos o s
 
 `session_store.py` define dataclasses y un `TypedDict` público:
 
-- `TaskRecord`: versión 1, IDs UUID, rol `implementer|reviewer`, cwd canónico, selección de modelo/motivo/tarifa, sesión opcional, identidad de servidor opcional, identidad cliente/supervisor opcional, plazos, observaciones fechadas y cursor opcional. Un PID siempre va unido a identidad de arranque comprobable.
+- `TaskRecord`: versión 1, IDs UUID, rol `implementer|reviewer`, cwd canónico, selección de modelo/motivo/tarifa, sesión opcional, identidad de servidor opcional, identidad cliente/supervisor opcional, plazos, observaciones fechadas y cursor opcional. Un PID siempre va unido a identidad de arranque comprobable. Una recuperación OpenAI registra autorización de alcance `quota_resume`, evidencia sanitizada del agotamiento, modelo anterior y nuevo, y motivo de no usar alternativas adecuadas; no guarda tokens de autenticación.
 - `ExecutionObservation`: estado `active|waiting|retrying|idle|unknown`, fuente y fecha. `waiting` incluye motivo permiso/entrada cuando consta.
 - `DeliveryObservation`: estado `pending|partial|completed|failed|interrupted`, fuente y fecha.
 - `TaskReply`: `status: ok|pending|error`, `task_id`, `attempt_id`, sesión opcional, observaciones, capacidades, limitaciones y código opcional. Solo `completed` acreditado produce entrega satisfactoria.
@@ -92,6 +92,7 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 - [ ] Preflight factual sin inferencia: registrar versión, ayuda y operaciones API instaladas. Investigar cómo identificar el servidor privado de `--standalone` y si sobrevive a su cliente. Filtrar campos; no volcar configuración/transcripciones.
 - [ ] Documentar operaciones, argumentos y respuestas reales de sesión existente, actividad, entrada pendiente, eventos e interrupción. Contrastar Context7 con versión instalada; no reutilizar endpoints v1.
+- [ ] Verificar sin inferencia soporte de cambio de modelo en la misma sesión y política efectiva para la excepción `quota_resume`. Un `deny` vigente no se ignora ni se retira globalmente. Si no existe mecanismo suficientemente acotado, registrar la limitación y devolver esa decisión al coordinador antes de habilitar OpenAI.
 - [ ] Puerta de diseño: si no se puede identificar/controlar `--standalone`, registrar `control_unavailable`. Implementar observación local y limitaciones; presentar al coordinador la necesidad de otro contrato antes de crear un servidor dedicado. No cambiar silenciosamente de transporte ni usar el servidor habitual como sustituto.
 - [ ] Escribir pruebas con respuestas sanitizadas: servidor equivocado/reiniciado, sesión inexistente, directorio distinto, permisos pendientes, reintento, evento terminal antiguo seguido de actividad, cursor duplicado, timeout y respuesta malformada. Todos deben impedir conclusiones falsas o mutaciones inciertas.
 - [ ] Ejecutar `uv run pytest tests/test_session_backend.py -q` y comprobar fallo previo.
@@ -100,7 +101,7 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 ## Tarea 4: recuperación, continuación y detención
 
-**Archivos:** crear `session_service.py`, `tests/test_session_service.py`; modificar `delegate.py`.
+**Archivos:** crear `session_service.py`, `tests/test_session_service.py`; modificar `delegate.py`, `restrictions.py`, `tests/test_selection.py` y pruebas de restricciones afectadas para la excepción acotada.
 
 **Interfaces:** `start_task(cwd: Path, task: str, model: str, reason: str, *, role: str, execution_timeout: float) -> TaskReply`; `task_status(cwd: Path, task_id: str) -> TaskReply`; `task_result(cwd: Path, task_id: str) -> TaskReply`; `resume_task(cwd: Path, task_id: str, task: str, model: str, reason: str) -> TaskReply`; `interrupt_task(cwd: Path, task_id: str) -> TaskReply`; `stop_task(cwd: Path, task_id: str, *, force: bool) -> TaskReply`.
 
@@ -110,6 +111,8 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 - [ ] Ejecutar `uv run pytest tests/test_session_service.py -q`; verificar fallo previo.
 - [ ] Implementar reconciliación: comprobación de existencia/directorio/rol y estado del propietario, entradas pendientes y cambios parciales declarados por el coordinador. Si falta evidencia, devolver `pending` con limitación sin nuevo prompt. Una continuación requiere trabajo adicional explícito; el revisor no continúa sesión de autor.
 - [ ] Revalidar catálogo, motivo y restricciones antes de cada envío usando el núcleo existente. Cambiar modelo exige selección explícita; no cambiarlo automáticamente para continuar.
+- [ ] Escribir y comprobar en rojo pruebas de `quota_resume`: `openai` rechazado para inicio nuevo, tarea/rol/cwd distinto, error no relacionado con cuota, sesión activa/desconocida y política efectiva denegada. Solo permitir misma sesión inactiva con cuota acreditada, selección OpenAI adecuada explícita y permisos efectivos válidos. No confiar únicamente en un booleano aportado por el cliente.
+- [ ] Implementar la excepción del contrato, conservando bloqueo por defecto y verificando capacidad/contexto del nuevo modelo. Permitir consultar metadatos OpenAI para esta selección acotada sin presentarlos como autorizados para tareas nuevas. Probar recuperación sin ejecutar modelos reales de pago por defecto.
 - [ ] Pasar pruebas, revisión independiente y commit `feat: recuperar y continuar tareas sin duplicar envios`.
 
 ## Tarea 5: superficie CLI/MCP y distribución coherente

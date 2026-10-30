@@ -1,6 +1,6 @@
 # Seguimiento y recuperación de sesiones OpenCode
 
-Estado: propuesta de contrato, pendiente de aprobación. No implementado.
+Estado: contrato aprobado por el usuario el 30 de octubre de 2026. No implementado.
 
 ## Objetivo y cobertura existente
 

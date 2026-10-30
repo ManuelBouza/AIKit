@@ -15,8 +15,9 @@ criterios de evolución, reutilización y compatibilidad están en
 
 Objetivo: documentar y validar preferencias de Codex para delegar trabajo
 externalizable a OpenCode como ejecutor habitual. Codex conserva decisiones,
-revisores y verificación final; OpenCode ejecuta el trabajo y devuelve un
-resultado breve. El adaptador no sustituye una revisión independiente.
+revisores y comprobación de aceptación de metadata; OpenCode ejecuta el trabajo
+y devuelve un resultado breve. El adaptador no sustituye la revisión técnica
+independiente, que Codex no repite.
 
 ## Activación e integración
 
@@ -39,7 +40,10 @@ detalle está en [MCP local de AIKit](docs/mcp-opencode.md).
 
 El trabajo externalizable se envía primero a OpenCode: exploración técnica,
 diagnóstico, implementación+tests+correcciones. Codex conserva decisiones,
-revisores y verificación final. Excepciones a nativo solo por: datos no
+revisores y verificación de la aceptación de metadata, sin repetir la revisión
+técnica independiente. Si un subagente nativo usa la CLI, devuelve su JSON por
+stdout al coordinador; este es el único que persiste. Un fallo al guardar no
+justifica repetir una inferencia ya terminada. Excepciones a nativo solo por: datos no
 externalizables, permiso, falta de opciones adecuadas/disponibles. No se
 parchea en Codex por comodidad. Ver contrato en
 `skills/delegating-to-opencode/references/carga-opencode.md` y

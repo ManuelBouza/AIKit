@@ -1,6 +1,6 @@
 [project]
 name = "aikit"
-version = "0.1.4"
+version = "0.1.5"
 description = "Preferencias reproducibles de Codex y delegación a OpenCode"
 requires-python = ">=3.10"
 dependencies = []

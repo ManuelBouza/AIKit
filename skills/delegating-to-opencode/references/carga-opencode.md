@@ -45,10 +45,22 @@ costes inventados.
 
 ## Revisión independiente
 
-Contrato futuro `review.json`: `role: reviewer`, `session`, `snapshot`,
+Formato `review.json`: `role: reviewer`, `session`, `snapshot`,
 `verdict: accepted|needs_corrections`, `checks[]` (`id`, `command`, `cwd`,
 `exit_code`, `summary`), `findings[]` (`severity: blocker|warning|info`,
 `description`), `limitations[]`. El revisor recibe diseño, aceptación y archivos;
 usa sesión nueva y ejecuta sus comprobaciones. Correcciones invalidan la
 aceptación anterior. Si necesita otro diseño, devuelve la decisión a Codex sin
-rediseñar. La utilidad de validación aún no existe hasta tarea 2.
+rediseñar. `scripts/review_evidence.py` valida metadata, snapshot y checks
+declarados, pero no ejecuta comandos ni demuestra autoría o calidad.
+
+Si un subagente nativo usa la CLI, devuelve el JSON de stdout directamente al
+coordinador; solo este persiste en una ruta permitida. Si falla el guardado,
+recupera stdout y registra el problema: no repitas una inferencia ya terminada.
+Reutiliza permisos conocidos solo en el mismo entorno/runtime/alcance. Si se sabe
+que el sandbox bloquea la CLI, pide `exec_command` con `require_escalated` desde
+el primer intento y justificación acotada; si cambió o se desconoce, usa antes un
+preflight sin inferencia. No escales globalmente ni para eludir cuotas,
+autenticación o privacidad. Si se deniega, informa código y motivo; no reintentes
+la inferencia a ciegas ni pruebes permisos con modelos. Si MCP está disponible,
+no elijas otra vía CLI solo por recordar un bloqueo antiguo.

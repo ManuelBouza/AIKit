@@ -4,7 +4,7 @@ import hashlib
 import json
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 import pytest
@@ -71,6 +71,14 @@ def test_capture_snapshot_missing_is_none(tmp_path: Path) -> None:
     assert snap["missing.txt"] is None
 
 
+def test_capture_snapshot_accepts_nested_relative_path(tmp_path: Path) -> None:
+    root = make_root(tmp_path)
+    (root / "nested").mkdir()
+    (root / "nested" / "c.txt").write_text("nested", encoding="utf-8")
+    snap = capture_snapshot(root, ["nested/c.txt"])
+    assert snap == {"nested/c.txt": sha256_bytes(b"nested")}
+
+
 def test_capture_snapshot_rejects_escape(tmp_path: Path) -> None:
     root = make_root(tmp_path)
     with pytest.raises(ValueError, match="."):
@@ -81,6 +89,50 @@ def test_capture_snapshot_rejects_absolute(tmp_path: Path) -> None:
     root = make_root(tmp_path)
     with pytest.raises(ValueError, match="."):
         capture_snapshot(root, [str(root / "a.txt")])
+
+
+def windows_escape_input(tmp_path: Path, path_kind: str) -> str:
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(b"controlled outside")
+    pure_outside = PureWindowsPath(str(outside))
+    without_anchor = str(pure_outside.relative_to(pure_outside.anchor))
+    inputs = {
+        "rooted_backslash": "\\" + without_anchor,
+        "rooted_slash": "/" + without_anchor.replace("\\", "/"),
+        "drive_relative": "C:a.txt",
+        "drive_absolute": str(outside),
+        "unc": r"\\server\share\outside.txt",
+    }
+    return inputs[path_kind]
+
+
+@pytest.mark.parametrize(
+    "path_kind",
+    ["rooted_backslash", "rooted_slash", "drive_relative", "drive_absolute", "unc"],
+)
+def test_capture_snapshot_rejects_windows_escapes_before_reading(
+    tmp_path: Path, path_kind: str
+) -> None:
+    root = make_root(tmp_path)
+    malicious = windows_escape_input(tmp_path, path_kind)
+    with pytest.raises(ValueError, match="."):
+        capture_snapshot(root, [malicious])
+
+
+@pytest.mark.parametrize(
+    "path_kind",
+    ["rooted_backslash", "rooted_slash", "drive_relative", "drive_absolute", "unc"],
+)
+def test_validate_review_rejects_malicious_expected_path(
+    tmp_path: Path, path_kind: str
+) -> None:
+    root = make_root(tmp_path)
+    malicious = windows_escape_input(tmp_path, path_kind)
+    snapshot: dict[str, str | None] = {malicious: sha256_bytes(b"controlled outside")}
+    expected = base_expected(root, snapshot)
+    report = base_report(root, snapshot)
+    result = validate_review(root, report, expected)
+    assert result == {"status": "error", "code": "invalid_expectation"}
 
 
 def test_capture_snapshot_rejects_symlink(tmp_path: Path) -> None:
@@ -319,6 +371,82 @@ def test_cli_snapshot_subprocess(tmp_path: Path) -> None:
     payload = json.loads(proc.stdout)
     assert payload["status"] == "captured"
     assert "snapshot" in payload
+
+
+@pytest.mark.parametrize(
+    "path_kind",
+    ["rooted_backslash", "rooted_slash", "drive_relative", "drive_absolute", "unc"],
+)
+def test_cli_snapshot_rejects_windows_escapes(tmp_path: Path, path_kind: str) -> None:
+    root = make_root(tmp_path)
+    malicious = windows_escape_input(tmp_path, path_kind)
+    files = tmp_path / "files.json"
+    files.write_text(json.dumps([malicious]), encoding="utf-8")
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "snapshot",
+            "--root",
+            str(root),
+            "--files",
+            str(files),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert json.loads(proc.stdout) == {"status": "error", "code": "invalid_input"}
+
+
+@pytest.mark.parametrize(
+    "path_kind",
+    ["rooted_backslash", "rooted_slash", "drive_relative", "drive_absolute", "unc"],
+)
+def test_cli_validate_rejects_malicious_expected_path(
+    tmp_path: Path, path_kind: str
+) -> None:
+    root = make_root(tmp_path)
+    malicious = windows_escape_input(tmp_path, path_kind)
+    snapshot: dict[str, str | None] = {malicious: sha256_bytes(b"controlled outside")}
+    expected = base_expected(root, snapshot)
+    exp_path = tmp_path / "expected.json"
+    exp_path.write_text(
+        json.dumps(
+            {
+                "snapshot": expected.snapshot,
+                "implementer_session": expected.implementer_session,
+                "reviewer_session": expected.reviewer_session,
+                "checks": expected.checks,
+            }
+        ),
+        encoding="utf-8",
+    )
+    rep_path = tmp_path / "report.json"
+    rep_path.write_text(
+        json.dumps(base_report(root, snapshot)),
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "validate",
+            "--root",
+            str(root),
+            "--report",
+            str(rep_path),
+            "--expectation",
+            str(exp_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert json.loads(proc.stdout) == {
+        "status": "error",
+        "code": "invalid_expectation",
+    }
 
 
 def test_cli_validate_subprocess_accepted(tmp_path: Path) -> None:

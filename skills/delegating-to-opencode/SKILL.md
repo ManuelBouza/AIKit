@@ -25,8 +25,8 @@ llama al backend. `run` inicia inferencia; `doctor` solo
 consulta versión y catálogo. Los defectos vuelven al worker (misma sesión solo
 si el backend lo permite; hoy no ofrece reanudación, por lo que se crea tarea
 acotada nueva). No se parchea en Codex por ser "dos líneas". Codex conserva
-comprensión, decisiones del usuario, roles nativos/Superpowers, revisión
-independiente del diff y verificación final. No delegar deliberaciones ni
+comprensión, decisiones del usuario y roles nativos/Superpowers; comprueba la
+aceptación de metadata sin repetir la revisión técnica independiente. No delegar deliberaciones ni
 solicitudes solo de conversación.
 
 ## Ruta y requisitos
@@ -162,6 +162,10 @@ se puedan externalizar. No uses `openai/*` ni eludas controles de permisos,
 autenticación o privacidad. El helper no cambia cuentas, reintenta ni lanza
 Codex. Informa los bloqueos reales sin presentar trabajo no ejecutado como
 completado.
+
+Para conservar resultados de CLI desde un subagente nativo y no repetir una
+inferencia tras un fallo al guardar, sigue la regla de stdout y permisos en
+[references/carga-opencode.md](references/carga-opencode.md).
 
 ## Instalación
 

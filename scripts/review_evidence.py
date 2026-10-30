@@ -5,7 +5,7 @@ import hashlib
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 
@@ -32,9 +32,10 @@ def _validate_relative(rel: str) -> None:
     if not isinstance(rel, str) or rel == "":
         raise ValueError("Ruta relativa invalida")
     p = Path(rel)
-    if p.is_absolute():
-        raise ValueError("Ruta absoluta no permitida")
-    for part in p.parts:
+    windows = PureWindowsPath(rel)
+    if p.is_absolute() or windows.drive or windows.root:
+        raise ValueError("Ruta absoluta o con unidad no permitida")
+    for part in (*p.parts, *windows.parts):
         if part == "..":
             raise ValueError("Escape de raiz no permitido")
         if part == "":

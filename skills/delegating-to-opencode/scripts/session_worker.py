@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 import delegate
+from session_backend import worker_interrupt
 from session_store import (
     DeliveryObservation,
     DeliveryState,
@@ -262,7 +263,8 @@ def supervise(
                     persist()
                     observe("execution_deadline_exceeded")
                 try:
-                    interrupt_confirmed = interrupt(record) if interrupt else None
+                    callback = worker_interrupt if interrupt is None else interrupt
+                    interrupt_confirmed = callback(record)
                 except Exception:
                     limitations.append("interrupt_failed")
                 grace_end = time.monotonic() + grace_seconds

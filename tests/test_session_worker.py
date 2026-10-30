@@ -144,6 +144,26 @@ def test_deadline_without_control_keeps_draining_and_does_not_kill(
     assert result(directory)["delivery"] == "completed"
 
 
+def test_deadline_uses_backend_callback_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    directory = prepare(tmp_path, timeout=0.05)
+    module = worker()
+    calls: list[str] = []
+
+    def observe_backend(record: Any) -> None:
+        calls.append(record.task_id)
+
+    monkeypatch.setattr(module, "worker_interrupt", observe_backend)
+    assert run_fake(tmp_path, "import time; time.sleep(.15)", grace_seconds=0) == 1
+    assert calls == [TASK_ID]
+    report = result(directory)
+    assert report["execution"] == "unknown"
+    assert "interrupt_unconfirmed" in report["limitations"]
+    assert report["delivery"] == "pending"
+
+
 def test_final_save_failure_still_prints_result(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

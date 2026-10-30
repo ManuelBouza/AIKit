@@ -90,14 +90,14 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 **Interfaces:** `inspect_session(record: TaskRecord) -> SessionInspection` y `interrupt_session(record: TaskRecord) -> InterruptOutcome`; consultas acotadas a 10 s. No hacen inferencia.
 
-- [ ] Preflight factual sin inferencia: registrar versión, ayuda y operaciones API instaladas. Investigar cómo identificar el servidor privado de `--standalone` y si sobrevive a su cliente. Filtrar campos; no volcar configuración/transcripciones.
-- [ ] Documentar operaciones, argumentos y respuestas reales de sesión existente, actividad, entrada pendiente, eventos e interrupción. Contrastar Context7 con versión instalada; no reutilizar endpoints v1.
-- [ ] Verificar sin inferencia soporte de cambio de modelo en la misma sesión y política efectiva para la excepción `quota_resume`. Un `deny` vigente no se ignora ni se retira globalmente. Si no existe mecanismo suficientemente acotado, registrar la limitación y devolver esa decisión al coordinador antes de habilitar OpenAI.
-- [ ] Puerta de diseño: si no se puede identificar/controlar `--standalone`, registrar `control_unavailable`. Implementar observación local y limitaciones; presentar al coordinador la necesidad de otro contrato antes de crear un servidor dedicado. No cambiar silenciosamente de transporte ni usar el servidor habitual como sustituto.
-- [ ] Escribir pruebas con respuestas sanitizadas: servidor equivocado/reiniciado, sesión inexistente, directorio distinto, permisos pendientes, reintento, evento terminal antiguo seguido de actividad, cursor duplicado, timeout y respuesta malformada. Todos deben impedir conclusiones falsas o mutaciones inciertas.
-- [ ] Ejecutar `uv run pytest tests/test_session_backend.py -q` y comprobar fallo previo.
-- [ ] Implementar el adaptador solo con operaciones verificadas y conectar el callback de tarea 2 a `interrupt_session`. Identidad externa desconocida implica observación limitada; no admitir URLs arbitrarias procedentes de registros manipulados. Mantener loopback y autenticación normal, sin exponerla en JSON.
-- [ ] Pasar pruebas; revisión independiente y commit `feat: observar el servidor propietario de una sesion`.
+- [x] Preflight factual sin inferencia: registrar versión, ayuda y operaciones API instaladas. Investigar cómo identificar el servidor privado de `--standalone` y si sobrevive a su cliente. Filtrar campos; no volcar configuración/transcripciones.
+- [x] Documentar operaciones, argumentos y respuestas reales de sesión existente, actividad, entrada pendiente, eventos e interrupción. Contrastar Context7 con versión instalada; no reutilizar endpoints v1.
+- [x] Verificar sin inferencia soporte de cambio de modelo en la misma sesión y política efectiva para la excepción `quota_resume`. Un `deny` vigente no se ignora ni se retira globalmente. Si no existe mecanismo suficientemente acotado, registrar la limitación y devolver esa decisión al coordinador antes de habilitar OpenAI.
+- [x] Puerta de diseño: si no se puede identificar/controlar `--standalone`, registrar `control_unavailable`. Implementar observación local y limitaciones; presentar al coordinador la necesidad de otro contrato antes de crear un servidor dedicado. No cambiar silenciosamente de transporte ni usar el servidor habitual como sustituto.
+- [x] Escribir pruebas con respuestas sanitizadas: servidor equivocado/reiniciado, sesión inexistente, directorio distinto, permisos pendientes, reintento, evento terminal antiguo seguido de actividad, cursor duplicado, timeout y respuesta malformada. Todos deben impedir conclusiones falsas o mutaciones inciertas.
+- [x] Ejecutar `uv run pytest tests/test_session_backend.py -q` y comprobar fallo previo.
+- [x] Implementar el adaptador solo con operaciones verificadas y conectar el callback de tarea 2 a `interrupt_session`. Identidad externa desconocida implica observación limitada; no admitir URLs arbitrarias procedentes de registros manipulados. Mantener loopback y autenticación normal, sin exponerla en JSON.
+- [x] Pasar pruebas; revisión independiente y commit `feat: observar el servidor propietario de una sesion`.
 
 ## Tarea 4: recuperación, continuación y detención
 

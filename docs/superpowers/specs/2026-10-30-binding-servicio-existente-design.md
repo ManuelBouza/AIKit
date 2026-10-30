@@ -1,8 +1,7 @@
 # Binding seguro al servicio existente de OpenCode
 
-Estado: opción 1 elegida por el usuario; revisión técnica completada por Beam
-Free de Kilo (high). Pendiente de aprobación del documento. No implementado
-ni instalado.
+Estado: aprobado por el usuario el 31 de octubre de 2026; revisión técnica
+completada por Beam Free de Kilo (high). No implementado ni instalado.
 
 ## Propósito y cobertura
 

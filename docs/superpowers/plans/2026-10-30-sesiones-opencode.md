@@ -101,6 +101,12 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 ## Tarea 4: recuperación, continuación y detención
 
+**Dependencia surgida en etapa 3:** ejecutar y aceptar primero
+`2026-10-31-binding-servicio-existente.md`, cuyo diseño fue aprobado el
+31 de octubre. Reutilizar sus conexiones, procedencia, wrappers y empaquetado;
+las tareas 4–6 siguientes no deben crear otro camino de envío ni repetir esa
+migración. La excepción OpenAI sigue necesitando su contrato acotado.
+
 **Archivos:** crear `session_service.py`, `tests/test_session_service.py`; modificar `delegate.py`, `restrictions.py`, `tests/test_selection.py` y pruebas de restricciones afectadas para la excepción acotada.
 
 **Interfaces:** `start_task(cwd: Path, task: str, model: str, reason: str, *, role: str, execution_timeout: float) -> TaskReply`; `task_status(cwd: Path, task_id: str) -> TaskReply`; `task_result(cwd: Path, task_id: str) -> TaskReply`; `resume_task(cwd: Path, task_id: str, task: str, model: str, reason: str) -> TaskReply`; `interrupt_task(cwd: Path, task_id: str) -> TaskReply`; `stop_task(cwd: Path, task_id: str, *, force: bool) -> TaskReply`.

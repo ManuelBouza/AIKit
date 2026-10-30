@@ -61,6 +61,7 @@ Comando real:
 
 ```powershell
 python scripts/install_go.py --codex-home C:\ruta\.codex --template config/codex/go.md
+python scripts/install_routing.py --codex-home C:\ruta\.codex --template config/codex/routing.md
 ```
 
 ## Requisitos

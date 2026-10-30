@@ -37,3 +37,12 @@ nueva skill. Evidencias históricas permanecen históricas.
   salida 0 solo si el veredicto es `accepted`, 1 en caso contrario.
 
 No ejecuta comandos contenidos en los informes ni recorre el repositorio.
+
+## Instalación de preferencias globales
+
+`scripts/install_go.py` y `scripts/install_routing.py` instalan bloques globales en
+`AGENTS.md` mediante el motor común `scripts/global_instructions.py`. Cada uno
+acepta `--codex-home` y `--template`; la plantilla por defecto se resuelve desde
+`__file__`, no desde el directorio actual. La instalación crea respaldo con UUID
+fuera de descubrimiento y preserva bytes ajenos, incluidos BOM y CRLF. No se
+ejecuta al cargar el plugin ni por hooks.

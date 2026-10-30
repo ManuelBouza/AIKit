@@ -770,6 +770,59 @@ def run_text_task(
     )
 
 
+def _prepare_run(
+    cwd: Path | str,
+    task_loader: Callable[[], str],
+    model: str | None,
+    variant: str | None,
+    reason: str | None,
+    agent: str,
+    timeout: float,
+) -> tuple[list[str], Path, str, str | None, str, float]:
+    """Prepara un envío validado, compartido por run y el supervisor interno."""
+    base_model, selected_variant = parse_model(model, variant)
+    clean_reason = _validate_reason(reason)
+    project = _validate_cwd(cwd)
+    task = task_loader()
+    load_policy()
+    if agent not in AGENTS:
+        raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
+    seconds = _validate_timeout(timeout)
+
+    exe = find_opencode()
+    if not exe:
+        raise DelegateError(
+            "opencode_missing",
+            "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
+        )
+    _check_version(exe, project, seconds)
+    catalog = _catalog(exe, project, seconds)
+    selected = next((item for item in catalog if item["model"] == base_model), None)
+    if selected is None:
+        raise DelegateError(
+            "model_unavailable",
+            f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
+        )
+    if selected_variant is not None and selected_variant not in selected["variant_ids"]:
+        available = ", ".join(selected["variant_ids"]) or "ninguna"
+        raise DelegateError(
+            "invalid_variant",
+            f"La variante '{selected_variant}' no existe para {base_model}. "
+            f"Variantes disponibles: {available}.",
+        )
+
+    selected_model = base_model + ("#" + selected_variant if selected_variant else "")
+    _check_restrictions(exe, project, seconds)
+    return (
+        build_command(exe, selected_model, agent, task),
+        project,
+        base_model,
+        selected_variant,
+        clean_reason,
+        seconds,
+    )
+
+
 def _run_core(
     cwd: Path | str,
     task_loader: Callable[[], str],
@@ -782,47 +835,10 @@ def _run_core(
     """Núcleo común de ejecución: valida antes de tocar procesos."""
 
     try:
-        base_model, selected_variant = parse_model(model, variant)
-        clean_reason = _validate_reason(reason)
-        project = _validate_cwd(cwd)
-        task = task_loader()
-        load_policy()
-        if agent not in AGENTS:
-            raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
-        seconds = _validate_timeout(timeout)
-
-        exe = find_opencode()
-        if not exe:
-            raise DelegateError(
-                "opencode_missing",
-                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
-            )
-        _check_version(exe, project, seconds)
-        catalog = _catalog(exe, project, seconds)
-        selected = next((item for item in catalog if item["model"] == base_model), None)
-        if selected is None:
-            raise DelegateError(
-                "model_unavailable",
-                f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
-            )
-        if (
-            selected_variant is not None
-            and selected_variant not in selected["variant_ids"]
-        ):
-            available = ", ".join(selected["variant_ids"]) or "ninguna"
-            raise DelegateError(
-                "invalid_variant",
-                f"La variante '{selected_variant}' no existe para {base_model}. "
-                f"Variantes disponibles: {available}.",
-            )
-
-        selected_model = base_model + (
-            "#" + selected_variant if selected_variant else ""
+        command, project, base_model, selected_variant, clean_reason, seconds = (
+            _prepare_run(cwd, task_loader, model, variant, reason, agent, timeout)
         )
-        _check_restrictions(exe, project, seconds)
-        result = run_process(
-            build_command(exe, selected_model, agent, task), project, seconds
-        )
+        result = run_process(command, project, seconds)
     except DelegateError as exc:
         return _error(exc.code, exc.message)
 

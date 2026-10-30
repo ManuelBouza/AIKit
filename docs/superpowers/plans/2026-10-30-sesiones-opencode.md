@@ -76,13 +76,13 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 **Interfaces:** `session_worker.supervise(root: Path, task_id: str) -> int`; `session_service` consumirá después `launch_worker(root: Path, task_id: str) -> TaskRecord`. Para interrupción, el worker recibe un callback `Callable[[TaskRecord], bool | None]`: confirmado, no confirmado o no disponible. Hasta tarea 3, el callback real devuelve `None`; los tests inyectan el falso. El módulo worker tendrá entrada privada por `python -m` o ruta resuelta desde la instalación, sin depender del checkout.
 
-- [ ] Escribir pruebas con ejecutable Python falso: emite sesión antes de acabar, emite salida fragmentada, llena stderr, excede el tamaño de una línea, termina con error y produce JSON inválido. Comprobar captura temprana sin deadlock ni crecimiento ilimitado.
-- [ ] Añadir pruebas: se desconecta el cliente y el supervisor conserva progreso; falla el guardado final y stdout sigue devolviendo resultado; espera agotada no mata; salida cliente cero sin terminal no se declara completada.
-- [ ] Ejecutar `uv run pytest tests/test_session_worker.py tests/test_policy_process.py tests/test_execution.py -q`; comprobar los fallos nuevos antes de cambiar código.
-- [ ] Implementar lectura concurrente de stdout/stderr, captura incremental del ID y diario de metadatos. Limitar línea a 1 MiB, cola de diagnóstico en memoria a 64 KiB y salida parcial persistida a 1 MiB por flujo; marcar truncamiento sin ocultarlo ni publicar texto crudo en errores.
-- [ ] Crear supervisor independiente del tiempo de vida del cliente. Windows: proceso sin ventana visible y handles no heredados innecesarios; POSIX: sesión propia. No registrar credenciales ni prompt en el manifiesto del supervisor. Persistir identidad comprobable o marcarla desconocida.
-- [ ] El límite de ejecución permanece finito (máximo 3600 s); la espera del cliente será independiente. Al límite, pedir interrupción mediante la interfaz de tarea 3 y esperar hasta 10 s. Sin capacidad o confirmación, registrar estado desconocido; no afirmar cancelación. No habilitar terminación forzada automática.
-- [ ] Pasar las pruebas nuevas y existentes; revisar independientemente y commit `feat: conservar progreso y resultados del worker OpenCode`.
+- [x] Escribir pruebas con ejecutable Python falso: emite sesión antes de acabar, emite salida fragmentada, llena stderr, excede el tamaño de una línea, termina con error y produce JSON inválido. Comprobar captura temprana sin deadlock ni crecimiento ilimitado.
+- [x] Añadir pruebas: se desconecta el cliente y el supervisor conserva progreso; falla el guardado final y stdout sigue devolviendo resultado; espera agotada no mata; salida cliente cero sin terminal no se declara completada.
+- [x] Ejecutar `uv run pytest tests/test_session_worker.py tests/test_policy_process.py tests/test_execution.py -q`; comprobar los fallos nuevos antes de cambiar código.
+- [x] Implementar lectura concurrente de stdout/stderr, captura incremental del ID y diario de metadatos. Limitar línea a 1 MiB, cola de diagnóstico en memoria a 64 KiB y salida parcial persistida a 1 MiB por flujo; marcar truncamiento sin ocultarlo ni publicar texto crudo en errores.
+- [x] Crear supervisor independiente del tiempo de vida del cliente. Windows: proceso sin ventana visible y handles no heredados innecesarios; POSIX: sesión propia. No registrar credenciales ni prompt en el manifiesto del supervisor. Persistir identidad comprobable o marcarla desconocida.
+- [x] El límite de ejecución permanece finito (máximo 3600 s); la espera del cliente será independiente. Al límite, pedir interrupción mediante la interfaz de tarea 3 y esperar hasta 10 s. Sin capacidad o confirmación, registrar estado desconocido; no afirmar cancelación. No habilitar terminación forzada automática.
+- [x] Pasar las pruebas nuevas y existentes; revisar independientemente y commit `feat: conservar progreso y resultados del worker OpenCode`.
 
 ## Tarea 3: verificar e integrar capacidades del servidor propietario
 

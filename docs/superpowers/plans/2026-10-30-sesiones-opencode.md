@@ -63,12 +63,12 @@ Las rutas se derivan de identificadores validados, nunca de rutas incluidas en u
 
 **Interfaces:** produce los tipos y funciones anteriores. Registro en `<cwd>/.aikit/sessions/<task_id>/record.json`; intento actual y anteriores se conservan por ID.
 
-- [ ] Escribir pruebas: ida/vuelta preserva selección e IDs; `session=None` es válido al arrancar; versión futura/corrupción falla sin sobrescribir; caída antes de reemplazo conserva JSON anterior; traversal, enlaces y rutas Windows absolutas se rechazan.
-- [ ] Añadir prueba con dos procesos reales sin inferencia: solo uno adquiere el bloqueo; tras salir el propietario se libera; un PID vivo diferente no acredita propiedad por número solamente.
-- [ ] Ejecutar `uv run pytest tests/test_session_store.py -q`; comprobar fallos por la capacidad ausente.
-- [ ] Implementar escritura temporal en el mismo directorio y reemplazo atómico, bloqueos del sistema operativo (`msvcrt`/`fcntl`) y validación de esquema/identidad. No borrar registros ni recuperar bloqueos por antigüedad.
-- [ ] Repetir el comando: todas las pruebas pasan; ejecutar Ruff y mypy sobre los archivos afectados.
-- [ ] Revisión independiente y commit `feat: registrar tareas y sesiones de OpenCode`.
+- [x] Escribir pruebas: ida/vuelta preserva selección e IDs; `session=None` es válido al arrancar; versión futura/corrupción falla sin sobrescribir; caída antes de reemplazo conserva JSON anterior; traversal, enlaces y rutas Windows absolutas se rechazan.
+- [x] Añadir prueba con dos procesos reales sin inferencia: solo uno adquiere el bloqueo; tras salir el propietario se libera; un PID vivo diferente no acredita propiedad por número solamente.
+- [x] Ejecutar `uv run pytest tests/test_session_store.py -q`; comprobar fallos por la capacidad ausente.
+- [x] Implementar escritura temporal en el mismo directorio y reemplazo atómico, bloqueos del sistema operativo (`msvcrt`/`fcntl`) y validación de esquema/identidad. No borrar registros ni recuperar bloqueos por antigüedad.
+- [x] Repetir el comando: todas las pruebas pasan; ejecutar Ruff y mypy sobre los archivos afectados.
+- [x] Revisión independiente y commit `feat: registrar tareas y sesiones de OpenCode`.
 
 ## Tarea 2: supervisor y resultados parciales recuperables
 

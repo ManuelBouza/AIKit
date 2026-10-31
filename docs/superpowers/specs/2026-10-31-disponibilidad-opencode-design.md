@@ -65,6 +65,14 @@ Otros disparadores propuestos para acordar:
 - Actualización periódica configurable, con intervalo y condiciones de actividad pendientes de decidir.
 
 Cada resultado real actualiza la fila observada sin consultar todo el catálogo. Los cambios detectados en un refresco completo incorporan modelos nuevos, retiran los desconectados de la selección y reclasifican sus tarifas, conservando el historial. Si una herramienta no ofrece notificaciones de cambios, esa limitación se documenta y se utilizan los demás disparadores acordados.
+
+## Actualización programada desde Codex
+
+El mecanismo de programación elegido por el usuario es una tarea programada de Codex. Se utilizará una única automatización vinculada al chat responsable, con acceso local al registro compartido, para atender a los proyectos que lo consulten. La frecuencia y el horario siguen pendientes de acordar.
+
+El encargo programado invocará la skill existente y el actualizador determinista: consultar fuentes verificadas, publicar la tabla y registrar el resultado. No seleccionará modelos para probar cuotas ni repetirá una investigación de proveedores en cada activación. Cada activación implica una ejecución de Codex; se mantendrán mínimos el contexto y las instrucciones, sin prometer consumo cero.
+
+La tarea permanecerá silenciosa ante resultados rutinarios o sin cambios relevantes y avisará ante fallos, cambios que requieran atención o intervención del usuario. Si OpenCode está apagado, conservará las observaciones fechadas y registrará su indisponibilidad, sin arrancarlo automáticamente. Antes de programarla se comprobarán manualmente el encargo y los accesos locales necesarios al estado del usuario. Guardar este diseño no crea ni activa la automatización.
 ## Esquema mínimo
 
 ```json

@@ -1,6 +1,6 @@
 # Diseño: disponibilidad real de cuentas OpenCode
 
-Estado: borrador para aprobación del usuario. No implementa código.
+Estado: aprobado por el usuario el 2026-10-31 mediante `go`. Implementación autorizada; el diseño no implica instalación ni publicación del complemento.
 
 ## Decisiones cerradas
 
@@ -43,7 +43,7 @@ El registro es compartido por todos los proyectos y chats de AIKit del mismo usu
 
 Se reutilizan locks y reemplazo atómico de `session_store`. No se crea infraestructura paralela. Esta decisión documenta la ubicación; todavía no crea el archivo ni modifica la configuración instalada.
 
-La tabla conserva el catálogo saneado necesario para elegir: proveedor, modelo, tarifa conocida, capacidades, variantes de esfuerzo y límites, junto con las observaciones de disponibilidad. El estado de cuentas es compartido; la habilitación de modelos conserva el contexto efectivo de cada proyecto y no se extrapola a otros proyectos.
+La tabla conserva el catálogo saneado necesario para elegir: proveedor, modelo, tarifa conocida, capacidades, variantes de esfuerzo y límites, junto con las observaciones de disponibilidad y rendimiento real. El estado de cuentas es compartido; la habilitación de modelos conserva el contexto efectivo de cada proyecto y no se extrapola a otros proyectos.
 
 La antigüedad de una observación se muestra explícitamente. Se retira la propuesta anterior de TTL 15/5 minutos como disparador previo a cada ejecución. La actualización periódica acordada es diaria a las 09:00, hora de Madrid. El cooldown de errores queda pendiente de concretar; no se fija implícitamente.
 
@@ -118,6 +118,16 @@ El alias debe derivarse de un identificador público de la fuente o de un alias 
 - Si no hay cobertura de binding para el grupo, se registra una observación agregada separada y los modelos no cubiertos quedan `unknown`.
 - Errores de cuota, rate limit, servicio, autenticación y `max_output` no asequible se separan; ninguno implica cuota cero universal.
 
+## Rendimiento observado y preferencia de selección
+
+Ampliación solicitada por el usuario durante la implementación: registrar la respuesta observada para orientar la elección entre modelos adecuados. Un modelo puede tener cuota disponible y responder lentamente; disponibilidad y rendimiento se mantienen separados.
+
+El perfil se agrupa por proveedor, modelo y variante de esfuerzo, conservando fecha, fuente, número de muestras y contexto comparable: rol de ejecución y tamaño del contexto cuando estén disponibles. Registrar tiempo hasta primera respuesta del modelo, duración de generación y tokens por segundo solo cuando la fuente permita medirlos con fiabilidad. La duración de herramientas y la duración total de una tarea se distinguen de la latencia del modelo. Las mediciones ausentes quedan desconocidas; no se estiman para rellenar la tabla.
+
+Las muestras proceden de tareas reales ya autorizadas, con identificadores existentes y sin guardar prompts, respuestas, rutas de trabajo ni secretos. Se conserva un historial acotado y se evita contar dos veces el mismo evento al recuperar un resultado. No se realizan inferencias de prueba ni sondeos adicionales para producir una clasificación.
+
+La selección conserva primero adecuación del modelo y del esfuerzo, disponibilidad y orden Free -> Go -> otros de pago -> Codex. Dentro del mismo nivel se favorece mejor rendimiento observado en condiciones comparables, ponderando vigencia y cantidad de muestras. Una sola respuesta lenta constituye evidencia limitada, no una conclusión general sobre todos los modelos de un proveedor. La lentitud no se registra como agotamiento de cuota ni produce reintentos o interrupciones automáticas de intentos vivos.
+
 ## Enforcement mínimo
 
 Regla breve en el `AGENTS.md` global de Codex, distribuida mediante la plantilla `config/codex/routing.md`, y procedimiento en la skill. La comprobación del camino CLI/MCP lee la tabla local antes de inferir, reutilizando preflight y supervisor actuales. Se sustituirán las consultas de catálogo en cada preparación o envío por la generación de tabla aplicable. Se conservan las comprobaciones necesarias de identidad, procedencia y permisos: no son sondeos de capacidad. No se duplica infraestructura ni se interceptan subagentes nativos o Superpowers.
@@ -144,6 +154,7 @@ La consulta de disponibilidad no ejecuta inferencia. La salida saneada incluye f
 - Selecciones sucesivas desde una tabla válida no consultan catálogo ni cuotas; un rechazo confirmado dispara un único refresco completo compartido.
 - Altas y bajas, cambios de tarifa/cuenta y nuevos modelos se reflejan tras los disparadores de actualización acordados.
 - Una versión nueva compatible continúa operando; una capacidad incompatible produce diagnóstico y retorno por función, sin rechazo basado únicamente en versión.
+- Las muestras de rendimiento se obtienen sin inferencias adicionales, se deduplican y distinguen proveedor/modelo/esfuerzo; no alteran el orden de niveles ni confunden lentitud con cuota agotada.
 - No hay secretos, PII ni estado mutable en el paquete exportado.
 - Los estados desconocidos usan un único intento real autorizado, registrado una vez con IDs existentes.
-- No se implementa hasta aprobación del usuario.
+- Implementar conforme a la aprobación del usuario del 2026-10-31, con verificación y revisión independiente.

@@ -33,7 +33,11 @@ Límites: otros proveedores quedan `unknown` o error hasta que exista fuente ver
 
 ## Estado compartido
 
-Ubicación: `HostContext.aikit_state`, compartido entre proyectos y fuera de Git. Se reutilizan locks y reemplazo atómico de `session_store`. No se crea infraestructura paralela.
+Ubicación acordada para este equipo: `C:\Users\Manuel\.local\state\aikit\availability-state.json`. La configuración `AIKIT_STATE` apuntará a `C:\Users\Manuel\.local\state\aikit`, que se resuelve como `HostContext.aikit_state`.
+
+El registro es compartido por todos los proyectos y chats de AIKit del mismo usuario y equipo que utilicen esa configuración. Permanece fuera de los repositorios, de Git y de las carpetas versionadas del complemento. En otros equipos se configurará la ruta equivalente del usuario, sin distribuir la ruta personal de Manuel como valor fijo del complemento.
+
+Se reutilizan locks y reemplazo atómico de `session_store`. No se crea infraestructura paralela. Esta decisión documenta la ubicación; todavía no crea el archivo ni modifica la configuración instalada.
 
 TTL propuesto (no aprobado por el usuario): 15 minutos para observación válida; 5 minutos de cooldown para error sin reset. Al llegar `reset_at`, reconsultar y no asumir disponibilidad.
 ## Esquema mínimo

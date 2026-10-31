@@ -9,8 +9,8 @@ Estado: aprobado por el usuario el 2026-10-31 mediante `go`. Implementación aut
 - Fuente inaccesible no acredita cuota cero ni reset.
 - Se conserva la última observación válida separada del último intento fallido.
 - La adecuación del modelo y del esfuerzo a la tarea se exige en todos los niveles, incluido Codex. La tarifa no justifica reducir la capacidad necesaria.
-- Entre opciones adecuadas y disponibles, la prioridad es: todos los modelos gratuitos de cualquier proveedor conectado a OpenCode -> OpenCode Go -> otros modelos de pago conectados a OpenCode -> Codex nativo.
-- Los modelos gratuitos ofrecidos mediante Go también participan en el primer nivel. Si un nivel no tiene una opción adecuada y disponible, se pasa al siguiente sin degradar la tarea.
+- Prioridad actualizada por el usuario durante la implementación: modelos de pago de OpenCode Go -> otros modelos de pago de cualquier proveedor conectado a OpenCode -> todos los modelos gratuitos conectados a OpenCode -> Codex nativo. Se aplica entre opciones adecuadas y disponibles, mediante tareas reales ya autorizadas.
+- Los modelos gratuitos ofrecidos mediante Go participan en el nivel de gratuitos. Si un nivel no tiene una opción adecuada y disponible, se pasa al siguiente sin degradar la tarea.
 - No se pregunta al usuario por cada fallo.
 - La tabla local compartida guía la selección del modelo y del esfuerzo. No se consulta el catálogo ni la cuota antes de cada ejecución.
 - `reset_at` pasado requiere verificación en una actualización de la tabla; no implica disponibilidad recuperada.
@@ -126,7 +126,7 @@ El perfil se agrupa por proveedor, modelo y variante de esfuerzo, conservando fe
 
 Las muestras proceden de tareas reales ya autorizadas, con identificadores existentes y sin guardar prompts, respuestas, rutas de trabajo ni secretos. Se conserva un historial acotado y se evita contar dos veces el mismo evento al recuperar un resultado. No se realizan inferencias de prueba ni sondeos adicionales para producir una clasificación.
 
-La selección conserva primero adecuación del modelo y del esfuerzo, disponibilidad y orden Free -> Go -> otros de pago -> Codex. Dentro del mismo nivel se favorece mejor rendimiento observado en condiciones comparables, ponderando vigencia y cantidad de muestras. Una sola respuesta lenta constituye evidencia limitada, no una conclusión general sobre todos los modelos de un proveedor. La lentitud no se registra como agotamiento de cuota ni produce reintentos o interrupciones automáticas de intentos vivos.
+La selección conserva primero adecuación del modelo y del esfuerzo, disponibilidad y orden Go de pago -> otros de pago -> gratuitos -> Codex. Dentro del mismo nivel se favorece mejor rendimiento observado en condiciones comparables, ponderando vigencia y cantidad de muestras. Una sola respuesta lenta constituye evidencia limitada, no una conclusión general sobre todos los modelos de un proveedor. La lentitud no se registra como agotamiento de cuota ni produce reintentos o interrupciones automáticas de intentos vivos. La nueva prioridad se aplica a las siguientes selecciones y no autoriza duplicar una ejecución en curso.
 
 ## Enforcement mínimo
 

@@ -45,7 +45,7 @@ Se reutilizan locks y reemplazo atómico de `session_store`. No se crea infraest
 
 La tabla conserva el catálogo saneado necesario para elegir: proveedor, modelo, tarifa conocida, capacidades, variantes de esfuerzo y límites, junto con las observaciones de disponibilidad. El estado de cuentas es compartido; la habilitación de modelos conserva el contexto efectivo de cada proyecto y no se extrapola a otros proyectos.
 
-La antigüedad de una observación se muestra explícitamente. Se retira la propuesta anterior de TTL 15/5 minutos como disparador previo a cada ejecución. La frecuencia de actualización periódica y el cooldown de errores quedan pendientes de acordar; no se fijan implícitamente.
+La antigüedad de una observación se muestra explícitamente. Se retira la propuesta anterior de TTL 15/5 minutos como disparador previo a cada ejecución. La actualización periódica acordada es diaria a las 09:00, hora de Madrid. El cooldown de errores queda pendiente de concretar; no se fija implícitamente.
 
 ## Selección y actualización de la tabla
 
@@ -62,13 +62,13 @@ Otros disparadores propuestos para acordar:
 - Altas, bajas o cambios de cuenta/configuración que la herramienta notifique o el usuario comunique; no se sondea ese estado en cada ejecución.
 - Hora de recuperación comunicada por una fuente, para verificar si realmente se recuperó la capacidad.
 - Cambio de versión detectado al interactuar normalmente con una herramienta.
-- Actualización periódica configurable, con intervalo y condiciones de actividad pendientes de decidir.
+- Actualización programada acordada: todos los días a las 09:00, zona `Europe/Madrid`.
 
 Cada resultado real actualiza la fila observada sin consultar todo el catálogo. Los cambios detectados en un refresco completo incorporan modelos nuevos, retiran los desconectados de la selección y reclasifican sus tarifas, conservando el historial. Si una herramienta no ofrece notificaciones de cambios, esa limitación se documenta y se utilizan los demás disparadores acordados.
 
 ## Actualización programada desde Codex
 
-El mecanismo de programación elegido por el usuario es una tarea programada de Codex. Se utilizará una única automatización vinculada al chat responsable, con acceso local al registro compartido, para atender a los proyectos que lo consulten. La frecuencia y el horario siguen pendientes de acordar.
+El mecanismo de programación elegido por el usuario es una tarea programada de Codex. Se utilizará una única automatización vinculada al chat responsable, con acceso local al registro compartido, para atender a los proyectos que lo consulten. Frecuencia y horario acordados: todos los días a las 09:00, zona `Europe/Madrid`, manteniendo la hora local al cambiar el horario de verano o invierno.
 
 El encargo programado invocará la skill existente y el actualizador determinista: consultar fuentes verificadas, publicar la tabla y registrar el resultado. No seleccionará modelos para probar cuotas ni repetirá una investigación de proveedores en cada activación. Cada activación implica una ejecución de Codex; se mantendrán mínimos el contexto y las instrucciones, sin prometer consumo cero.
 

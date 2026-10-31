@@ -225,7 +225,7 @@ def test_atomic_replace_failure_preserves_host_bytes(
     hr.reserve_host_attempt(ctx, record, agent="build")
     before = hr._host_file(ctx, record.task_id).read_bytes()
     monkeypatch.setattr(
-        os, "replace", lambda *a: (_ for _ in ()).throw(OSError("disk"))
+        hr, "_atomic_replace", lambda *a: (_ for _ in ()).throw(OSError("disk"))
     )
     with pytest.raises(hr.HostRegistryError):
         hr.record_host_session(ctx, record, "ses_1")
@@ -233,7 +233,6 @@ def test_atomic_replace_failure_preserves_host_bytes(
 
 
 def test_reparse_ancestor_fails_without_touching_target(tmp_path: Path) -> None:
-    import os
     import subprocess
     import sys
 

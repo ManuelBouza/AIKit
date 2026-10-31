@@ -12,16 +12,19 @@ import argparse
 import json
 import math
 import os
-import re
 import shutil
 import signal
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from restrictions import configuration_is_restricted
+from service_connection import BoundLaunch, ManagedBinding, discover_existing
+from service_identity import HostContext, ServiceError, resolve_host_context
+from session_store import Pricing, Role
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 POLICY_PATH = SKILL_DIR / "policy.json"
@@ -33,7 +36,6 @@ TASK_PREFIX = "Tarea delegada (contenido literal):\n\n"
 WINDOWS_SHIM_SUFFIXES = {".cmd", ".bat", ".ps1"}
 VARIANT_SETTING_KEYS = ("reasoningEffort", "thinkingBudget")
 POLICY_KEYS = ("prefer_free",)
-CONFIG_CHECK_ARGS = ("debug", "config", "--standalone")
 
 
 class DelegateError(Exception):
@@ -206,6 +208,7 @@ def _kill_tree(process: subprocess.Popen[str]) -> None:
                 stderr=subprocess.DEVNULL,
                 check=False,
                 timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
         else:
             os.killpg(os.getpgid(process.pid), signal.SIGKILL)
@@ -314,30 +317,6 @@ def _validate_timeout(timeout: float) -> float:
             "invalid_timeout", f"El timeout no puede superar {MAX_TIMEOUT:g} s."
         )
     return value
-
-
-def _check_version(exe: str, cwd: Path, timeout: float) -> str:
-    result = run_process([exe, "--version"], cwd, timeout)
-    output = (result.stdout or "") + (result.stderr or "")
-    if result.returncode != 0:
-        raise DelegateError(
-            "version_check_failed",
-            f"'opencode --version' falló con código {result.returncode}. Revisa "
-            "los registros locales de OpenCode.",
-        )
-    match = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
-    if not match:
-        raise DelegateError(
-            "invalid_version",
-            "No se pudo interpretar la versión de OpenCode. Revisa la instalación "
-            "y los registros locales.",
-        )
-    if int(match.group(1)) != 2:
-        raise DelegateError(
-            "unsupported_version",
-            f"Se requiere OpenCode v2; versión detectada: {match.group(0)}",
-        )
-    return match.group(0)
 
 
 def _is_number(value: Any) -> bool:
@@ -541,28 +520,41 @@ def _public_model(model: dict[str, Any]) -> dict[str, Any]:
     return {key: model[key] for key in keys}
 
 
-def _catalog(exe: str, cwd: Path, timeout: float) -> list[dict[str, Any]]:
-    result = run_process(
-        [exe, "api", "--standalone", "GET", "/api/model"], cwd, timeout
-    )
-    if result.returncode != 0:
-        raise DelegateError(
-            "catalog_unavailable",
-            f"No se pudo obtener el catálogo (código {result.returncode}). Revisa "
-            "los registros locales de OpenCode.",
-        )
+def _project_key(path: Path) -> str:
     try:
-        payload = json.loads(result.stdout or "")
-    except json.JSONDecodeError as exc:
+        resolved = path.resolve()
+    except OSError:
+        resolved = path.absolute()
+    return os.path.normcase(os.path.normpath(str(resolved)))
+
+
+def _catalog_from_payload(payload: object, project: Path) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
         raise DelegateError(
             "catalog_unavailable",
-            "OpenCode devolvió un catálogo que no es JSON válido.",
-        ) from exc
-    data = payload.get("data") if isinstance(payload, dict) else None
+            "El servicio OpenCode no devolvió un catálogo JSON válido.",
+        )
+    location = payload.get("location")
+    directory = location.get("directory") if isinstance(location, dict) else None
+    if not isinstance(directory, str) or not directory:
+        raise DelegateError(
+            "catalog_unavailable",
+            "El catálogo no indicó la ubicación del proyecto consultado.",
+        )
+    location_path = Path(directory)
+    if not location_path.is_absolute() or _project_key(location_path) != _project_key(
+        project
+    ):
+        raise DelegateError(
+            "project_mismatch",
+            "El catálogo del servicio no corresponde al proyecto solicitado.",
+        )
+
+    data = payload.get("data")
     if not isinstance(data, list):
         raise DelegateError(
             "catalog_unavailable",
-            "OpenCode devolvió un catálogo sin la lista 'data' esperada.",
+            "El catálogo no contiene la lista 'data' esperada.",
         )
 
     models: list[dict[str, Any]] = []
@@ -574,6 +566,15 @@ def _catalog(exe: str, cwd: Path, timeout: float) -> list[dict[str, Any]]:
         seen.add(model["model"])
         models.append(model)
     return models
+
+
+def _pricing_label(selected: dict[str, Any]) -> Pricing:
+    free = selected.get("free_candidate")
+    if free is True:
+        return "free"
+    if free is False:
+        return "paid"
+    return "unknown"
 
 
 def _extract_error(value: Any) -> str:
@@ -678,37 +679,11 @@ def _free_limit_reached(stdout: str) -> bool:
     return False
 
 
-def _check_restrictions(exe: str, cwd: Path, timeout: float) -> None:
-    """Exige bloqueos verificables en la configuración efectiva del destino.
+def _build_bound_command(
+    exe: str, url: str, model: str, agent: str, task: str
+) -> list[str]:
+    """Construye el envío explícito al servicio ya verificado."""
 
-    Solo consulta: no escribe configuración ni variables de entorno. El
-    mensaje de error es fijo y no incluye salida, rutas ni contenido de la
-    configuración.
-    """
-
-    result = run_process([exe, *CONFIG_CHECK_ARGS], cwd, timeout)
-    if result.returncode != 0:
-        raise DelegateError(
-            "config_check_failed",
-            "No se pudo comprobar la configuración efectiva de OpenCode en el destino.",
-        )
-    try:
-        payload = json.loads(result.stdout or "")
-    except json.JSONDecodeError as exc:
-        raise DelegateError(
-            "config_check_failed",
-            "OpenCode no devolvió una configuración JSON legible para la "
-            "comprobación de restricciones.",
-        ) from exc
-    if not configuration_is_restricted(payload):
-        raise DelegateError(
-            "unsafe_configuration",
-            "La configuración efectiva no acredita el bloqueo del proveedor "
-            "directo openai ni de la subdelegación interna de OpenCode.",
-        )
-
-
-def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
     return [
         exe,
         "run",
@@ -716,12 +691,53 @@ def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
         model,
         "--agent",
         agent,
-        "--standalone",
+        "--server",
+        url,
         "--format",
         "json",
         "--",
         TASK_PREFIX + task,
     ]
+
+
+def _service_failure(exc: ServiceError) -> DelegateError:
+    code = exc.code
+    if code in {
+        "transport_error",
+        "network_error",
+        "timeout",
+        "invalid_response",
+        "invalid_url",
+        "redirect",
+        "response_too_large",
+        "response_too_deep",
+        "binding_closed",
+    } or code.startswith("http_"):
+        code = "service_unavailable"
+    messages = {
+        "service_unavailable": (
+            "El servicio OpenCode existente no está disponible; no se ha iniciado "
+            "otro ni se ha enviado la tarea."
+        ),
+        "owner_mismatch": (
+            "La identidad del servicio OpenCode cambió; no se reenvía la tarea."
+        ),
+        "version_mismatch": (
+            "El servicio OpenCode existente no tiene la versión soportada."
+        ),
+        "host_context_unavailable": (
+            "No hay un contexto de host OpenCode disponible para esta sesión."
+        ),
+        "registration_untrusted": (
+            "El registro del servicio OpenCode no es confiable."
+        ),
+        "process_identity_unavailable": (
+            "No se pudo acreditar la identidad del servicio OpenCode."
+        ),
+    }
+    return DelegateError(
+        code, messages.get(code, "No se pudo usar el servicio OpenCode existente.")
+    )
 
 
 def run_task(
@@ -732,6 +748,9 @@ def run_task(
     reason: str | None = None,
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Ejecuta un único intento leyendo la tarea de un archivo."""
 
@@ -743,6 +762,8 @@ def run_task(
         reason=reason,
         agent=agent,
         timeout=timeout,
+        role=role,
+        _wait_seconds=_wait_seconds,
     )
 
 
@@ -754,12 +775,11 @@ def run_text_task(
     reason: str | None = None,
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
-    """Ejecuta un único intento con la tarea ya en memoria.
-
-    Comparte con `run_task` el mismo núcleo: mismas validaciones, mismos
-    bloqueos, mismo catálogo y ningún archivo intermedio.
-    """
+    """Ejecuta un único intento con la tarea ya en memoria."""
 
     return _run_core(
         cwd=cwd,
@@ -769,7 +789,16 @@ def run_text_task(
         reason=reason,
         agent=agent,
         timeout=timeout,
+        role=role,
+        _wait_seconds=_wait_seconds,
     )
+
+
+def _preflight_remaining(deadline: float) -> float:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise ServiceError("timeout", "Preflight agotado.")
+    return remaining
 
 
 def _prepare_run(
@@ -780,49 +809,98 @@ def _prepare_run(
     reason: str | None,
     agent: str,
     timeout: float,
-) -> tuple[list[str], Path, str, str | None, str, float]:
-    """Prepara un envío validado, compartido por run y el supervisor interno."""
+    *,
+    role: Role = "implementer",
+    context: HostContext | None = None,
+) -> BoundLaunch:
+    """Prepara un envío validado contra el servicio existente."""
+
     base_model, selected_variant = parse_model(model, variant)
     clean_reason = _validate_reason(reason)
     project = _validate_cwd(cwd)
-    task = task_loader()
+    task = _validate_task_text(task_loader())
+    try:
+        task_size = len(task.encode("utf-8"))
+    except UnicodeError:
+        raise DelegateError("invalid_task", "La tarea no es UTF8 valida.") from None
+    if task_size > 1024 * 1024:
+        raise DelegateError(
+            "task_too_large", "La tarea excede el limite del supervisor."
+        )
     load_policy()
     if agent not in AGENTS:
         raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
+    if role not in ("implementer", "reviewer"):
+        raise DelegateError("invalid_role", f"Rol no permitido: {role}")
     seconds = _validate_timeout(timeout)
 
-    exe = find_opencode()
-    if not exe:
-        raise DelegateError(
-            "opencode_missing",
-            "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
-        )
-    _check_version(exe, project, seconds)
-    catalog = _catalog(exe, project, seconds)
-    selected = next((item for item in catalog if item["model"] == base_model), None)
-    if selected is None:
-        raise DelegateError(
-            "model_unavailable",
-            f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
-        )
-    if selected_variant is not None and selected_variant not in selected["variant_ids"]:
-        available = ", ".join(selected["variant_ids"]) or "ninguna"
-        raise DelegateError(
-            "invalid_variant",
-            f"La variante '{selected_variant}' no existe para {base_model}. "
-            f"Variantes disponibles: {available}.",
-        )
+    binding: ManagedBinding | None = None
+    try:
+        host = context if context is not None else resolve_host_context()
+        deadline = time.monotonic() + min(10.0, seconds)
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        if not configuration_is_restricted(
+            binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        ):
+            raise DelegateError(
+                "unsafe_configuration",
+                "La configuración efectiva no acredita el bloqueo del proveedor "
+                "directo openai ni de la subdelegación interna de OpenCode.",
+            )
 
-    selected_model = base_model + ("#" + selected_variant if selected_variant else "")
-    _check_restrictions(exe, project, seconds)
-    return (
-        build_command(exe, selected_model, agent, task),
-        project,
-        base_model,
-        selected_variant,
-        clean_reason,
-        seconds,
-    )
+        catalog = _catalog_from_payload(
+            binding.model_catalog(project, timeout=_preflight_remaining(deadline)),
+            project,
+        )
+        selected = next((item for item in catalog if item["model"] == base_model), None)
+        if selected is None:
+            raise DelegateError(
+                "model_unavailable",
+                f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
+            )
+        if (
+            selected_variant is not None
+            and selected_variant not in selected["variant_ids"]
+        ):
+            available = ", ".join(selected["variant_ids"]) or "ninguna"
+            raise DelegateError(
+                "invalid_variant",
+                f"La variante '{selected_variant}' no existe para {base_model}. "
+                f"Variantes disponibles: {available}.",
+            )
+
+        exe = find_opencode()
+        if not exe:
+            raise DelegateError(
+                "opencode_missing",
+                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
+            )
+        selected_model = base_model + (
+            "#" + selected_variant if selected_variant else ""
+        )
+        return BoundLaunch(
+            binding=binding,
+            project=project,
+            argv=_build_bound_command(
+                exe, binding.registration.url, selected_model, agent, task
+            ),
+            model=base_model,
+            variant=selected_variant,
+            reason=clean_reason,
+            agent=agent,
+            timeout=seconds,
+            role=role,
+            task=task,
+            pricing=_pricing_label(selected),
+        )
+    except ServiceError as exc:
+        if binding is not None:
+            binding.close()
+        raise _service_failure(exc) from None
+    except BaseException:
+        if binding is not None:
+            binding.close()
+        raise
 
 
 def _run_core(
@@ -833,51 +911,36 @@ def _run_core(
     reason: str | None,
     agent: str,
     timeout: float,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Núcleo común de ejecución: valida antes de tocar procesos."""
 
     try:
-        command, project, base_model, selected_variant, clean_reason, seconds = (
-            _prepare_run(cwd, task_loader, model, variant, reason, agent, timeout)
+        prepared = _prepare_run(
+            cwd,
+            task_loader,
+            model,
+            variant,
+            reason,
+            agent,
+            timeout,
+            role=role,
         )
-        result = run_process(command, project, seconds)
+        import bound_execution
+
+        wait = prepared.timeout if _wait_seconds is None else _wait_seconds
+        return bound_execution.execute_bound(
+            prepared,
+            context=prepared.binding.context,
+            wait_seconds=wait,
+        )
     except DelegateError as exc:
         return _error(exc.code, exc.message)
-
-    stdout = result.stdout or ""
-    if _free_limit_reached(stdout):
-        return {
-            **_error(
-                "free_limit_reached",
-                "OpenCode ha agotado el uso gratuito; el coordinador debe evaluar "
-                "OpenCode Go y las alternativas adecuadas antes de recurrir a Codex.",
-            ),
-            "fallback": "reselect",
-        }
-    if result.returncode != 0:
-        return _error(
-            "opencode_failed",
-            f"OpenCode terminó con código {result.returncode}. Revisa los "
-            "registros locales de OpenCode para el detalle.",
-        )
-
-    summary, session, cost, errors = parse_events(stdout)
-    if errors:
-        return _error("opencode_event_error", "; ".join(errors))
-    if not summary:
-        return _error("empty_output", "OpenCode no devolvió texto de resumen.")
-
-    return {
-        "status": "ok",
-        "session": session,
-        "model": base_model,
-        "variant": selected_variant,
-        "effort": selected_variant or "provider_default",
-        "reason": clean_reason,
-        "agent": agent,
-        "summary": _cap(summary),
-        "cost": cost,
-    }
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
 
 
 def doctor(
@@ -885,8 +948,9 @@ def doctor(
     timeout: float = DEFAULT_TIMEOUT,
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Muestra versión y catálogo compacto, opcionalmente filtrado."""
+    """Consulta el catálogo del servicio existente, sin exigir certificado."""
 
+    binding: ManagedBinding | None = None
     try:
         project = _validate_cwd(cwd)
         seconds = _validate_timeout(timeout)
@@ -905,14 +969,16 @@ def doctor(
                 _reject_direct_openai(filter_model.partition("/")[0])
         policy = load_policy()
 
-        exe = find_opencode()
-        if not exe:
-            raise DelegateError(
-                "opencode_missing",
-                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
+        host = resolve_host_context()
+        deadline = time.monotonic() + min(10.0, seconds)
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        catalog = [
+            _public_model(item)
+            for item in _catalog_from_payload(
+                binding.model_catalog(project, timeout=_preflight_remaining(deadline)),
+                project,
             )
-        version = _check_version(exe, project, seconds)
-        catalog = [_public_model(item) for item in _catalog(exe, project, seconds)]
+        ]
         total = len(catalog)
 
         if policy["prefer_free"]:
@@ -936,12 +1002,18 @@ def doctor(
 
         return {
             "status": "ok",
-            "version": version,
+            "version": binding.registration.version,
             "catalog_count": total,
             "catalog": catalog,
         }
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
     except DelegateError as exc:
         return _error(exc.code, exc.message)
+    finally:
+        if binding is not None:
+            binding.close()
 
 
 def _positive_float(value: str) -> float:
@@ -982,6 +1054,12 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--variant", help="Variante real del modelo, sin '#'.")
     run_parser.add_argument("--reason", help="Motivo de selección no vacío.")
     run_parser.add_argument("--agent", choices=AGENTS, default="build")
+    run_parser.add_argument(
+        "--role",
+        choices=("implementer", "reviewer"),
+        default="implementer",
+        help="Rol explícito del intento; no se deduce de --agent.",
+    )
     run_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
     return parser
 
@@ -1000,6 +1078,7 @@ def main(argv: list[str] | None = None) -> int:
                 reason=args.reason,
                 agent=args.agent,
                 timeout=args.timeout,
+                role=args.role,
             )
     except Exception as exc:  # noqa: BLE001 - la CLI siempre devuelve JSON breve
         payload = _error("internal_error", str(exc))

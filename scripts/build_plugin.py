@@ -37,6 +37,14 @@ PACKAGE_FILES = (
     "skills/delegating-to-opencode/scripts/delegate.py",
     "skills/delegating-to-opencode/scripts/restrictions.py",
     "skills/delegating-to-opencode/scripts/mcp_server.py",
+    "skills/delegating-to-opencode/scripts/bound_execution.py",
+    "skills/delegating-to-opencode/scripts/service_identity.py",
+    "skills/delegating-to-opencode/scripts/service_connection.py",
+    "skills/delegating-to-opencode/scripts/session_store.py",
+    "skills/delegating-to-opencode/scripts/session_backend.py",
+    "skills/delegating-to-opencode/scripts/session_worker.py",
+    "skills/delegating-to-opencode/scripts/session_stream.py",
+    "skills/delegating-to-opencode/scripts/host_registry.py",
 )
 
 

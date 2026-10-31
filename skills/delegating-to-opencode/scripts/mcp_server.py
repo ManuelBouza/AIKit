@@ -28,6 +28,7 @@ import delegate  # noqa: E402  # se importa tras preparar la ruta de la skill
 
 SERVER_NAME = "aikit-opencode"
 DEFAULT_TIMEOUT = 300.0
+MAX_WAIT = 45.0
 INTERNAL_MESSAGE = "Fallo inesperado en el servidor MCP de AIKit."
 INSTRUCTIONS = (
     "Puente de AIKit hacia OpenCode v2. Consulta el catálogo con "
@@ -131,14 +132,17 @@ def create_server() -> FastMCP:
         reason: str,
         variant: str | None = None,
         agent: Literal["build", "plan"] = "build",
+        role: Literal["implementer", "reviewer"] = "implementer",
         timeout: float = DEFAULT_TIMEOUT,
     ) -> CallToolResult:
         """Ejecuta una tarea acotada en OpenCode con un modelo explícito.
 
         `cwd` es una ruta absoluta del proyecto, `task` el texto literal de la
         tarea, `model` el modelo `provider/model[#variante]` y `reason` el
-        motivo de la selección. `variant` es opcional y `agent` admite `build`
-        o `plan`. El timeout es finito, mayor que cero y máximo 3600 s.
+        motivo de la selección. `variant` es opcional, `agent` admite `build`
+        o `plan` y `role` registra procedencia sin deducirse de `agent`. El
+        timeout es finito, mayor que cero y máximo 3600 s; la espera MCP se
+        limita a 45 s y, si no hay terminal, devuelve seguimiento incierto.
 
         Es una ejecución con efectos: puede modificar archivos del proyecto y
         deja que OpenCode use shell o red arbitraria. No reintenta ni elige
@@ -156,7 +160,9 @@ def create_server() -> FastMCP:
                     variant=variant,
                     reason=reason,
                     agent=agent,
+                    role=role,
                     timeout=timeout,
+                    _wait_seconds=min(timeout, MAX_WAIT),
                 )
         except delegate.DelegateError as exc:
             payload = _error_payload(exc.code, exc.message)

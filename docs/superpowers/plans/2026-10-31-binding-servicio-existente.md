@@ -114,6 +114,15 @@ Tipos nuevos compartidos:
 - [ ] Mantener firmas públicas existentes; añadir `role` como keyword opcional en funciones y campo opcional en CLI/MCP. Añadir seguimiento task_id/attempt_id sin retirar campos de éxito. Una espera agotada o posible admisión devuelve `pending/uncertain`, nunca éxito ni cancelación por haber terminado el cliente. El wrapper síncrono espera el límite existente; MCP limita espera a 45 s y devuelve seguimiento. No implementar todavía resume/adopción ni reenvío de admisiones.
 - [ ] Congelar fuentes, pasar suite y controles; revisión independiente y commit `feat: unificar delegacion ligada para CLI y MCP`.
 
+## Seguimiento de revisión independiente (Tarea 3)
+
+- Revisión final: `.aikit/binding-task3/review-final.json`, verdict `accepted`.
+- Checks finales: `uv run pytest` 629 passed; `uv run ruff check .` OK;
+  `uv run ruff format --check .` OK; `uv run mypy` OK.
+- Hallazgo anterior ADDRESSED: hueco transitorio ReplaceFileW corregido con
+  FileRenameInfoEx por handle.
+- No se acreditan tareas 4 ni integración real con servicio.
+
 ## Tarea 4: paquete portable y evidencia integrada
 
 **Archivos:** modificar `scripts/build_plugin.py`, `tests/test_plugin_export.py`, `README.md`, `docs/sesiones-opencode.md`, skill/referencias pertinentes, `pyproject.toml`, `uv.lock`, `plugin.json` y plan de sesiones original para ajustar dependencias ya cubiertas. Evidencia privada en `.aikit/validation-managed-binding/`.

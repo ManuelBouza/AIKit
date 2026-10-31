@@ -5,11 +5,13 @@ import json
 import pytest
 
 from tests.conftest import Harness
-from tests.fakes import FakeTransport, text_event
+from tests.fakes import FakeTransport, finish_event, text_event
 
 
 @pytest.mark.parametrize("returncode", [0, 1, 7], ids=["event", "failure", "nonzero"])
-def test_free_limit_requests_reselection(harness: Harness, returncode: int) -> None:
+def test_free_limit_preserves_uncertainty_until_reconciled(
+    harness: Harness, returncode: int
+) -> None:
     output = json.dumps(
         {
             "type": "error",
@@ -19,9 +21,10 @@ def test_free_limit_requests_reselection(harness: Harness, returncode: int) -> N
     transport = FakeTransport(run_stdout=output, run_returncode=returncode)
     harness.fake(transport)
     result = harness.run()
-    assert result["status"] == "error"
+    assert result["status"] == "pending"
     assert result["code"] == "free_limit_reached"
-    assert result["fallback"] == "reselect"
+    assert result.get("fallback") != "reselect"
+    assert result["uncertain"] is True
     assert "Go" in result["message"]
     assert "private" not in json.dumps(result)
     assert len(transport.run_calls) == 1
@@ -40,7 +43,9 @@ def test_other_errors_do_not_authorize_native_fallback(
 
 
 def test_quota_text_in_a_successful_answer_is_not_a_fallback(harness: Harness) -> None:
-    output = text_event('{"error":{"type":"provider.free-limit"}}')
+    output = (
+        text_event('{"error":{"type":"provider.free-limit"}}') + "\n" + finish_event(0)
+    )
     harness.fake(FakeTransport(run_stdout=output))
     result = harness.run()
     assert result["status"] == "ok"

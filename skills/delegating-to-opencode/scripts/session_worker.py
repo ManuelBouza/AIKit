@@ -82,17 +82,24 @@ def _input(root: Path, record: TaskRecord) -> str:
         raise StoreError("invalid_task", "La entrada de tarea no es UTF8.") from exc
 
 
-def _prepare_command(record: TaskRecord, text: str) -> list[str]:
-    prepared = delegate._prepare_run(
-        cwd=record.cwd,
-        task_loader=lambda: text,
-        model=record.model,
-        variant=record.variant,
-        reason=record.reason,
-        agent="build",
-        timeout=_deadline(record),
-    )
-    return prepared[0]
+def _task_bytes(text: str) -> bytes:
+    try:
+        value = delegate._validate_task_text(text).encode("utf-8")
+    except UnicodeError as exc:
+        raise StoreError("invalid_task", "Entrada de tarea no valida.") from exc
+    if len(value) > MAX_ARTIFACT:
+        raise StoreError("task_too_large", "Entrada de tarea excede el limite.")
+    return value
+
+
+def _stdin_task() -> str:
+    raw = sys.stdin.buffer.read(MAX_ARTIFACT + 1)
+    if len(raw) > MAX_ARTIFACT:
+        raise StoreError("task_too_large", "Entrada de tarea excede el limite.")
+    try:
+        return delegate._validate_task_text(raw.decode("utf-8"))
+    except UnicodeError as exc:
+        raise StoreError("invalid_task", "Entrada de tarea no valida.") from exc
 
 
 def _identity(pid: int) -> ProcessIdentity | None:
@@ -122,24 +129,21 @@ def _bound_command(
     model, variant = delegate.parse_model(record.model, record.variant)
     delegate._validate_reason(record.reason)
     delegate.load_policy()
+    catalog = delegate._catalog_from_payload(
+        binding.model_catalog(Path(record.cwd), timeout=10), Path(record.cwd)
+    )
+    selected_model = next((item for item in catalog if item["model"] == model), None)
+    if selected_model is None:
+        raise delegate.DelegateError("model_unavailable", "Modelo no disponible.")
+    if variant is not None and variant not in selected_model["variant_ids"]:
+        raise delegate.DelegateError("invalid_variant", "Variante no disponible.")
     exe = delegate.find_opencode()
     if exe is None:
         raise delegate.DelegateError("opencode_missing", "CLI no disponible.")
     selected = model + ("#" + variant if variant else "")
-    return [
-        exe,
-        "run",
-        "--model",
-        selected,
-        "--agent",
-        attempt.agent,
-        "--server",
-        binding.registration.url,
-        "--format",
-        "json",
-        "--",
-        delegate.TASK_PREFIX + text,
-    ]
+    return delegate._build_bound_command(
+        exe, binding.registration.url, selected, attempt.agent, text
+    )
 
 
 def _deadline(record: TaskRecord) -> float:
@@ -161,6 +165,8 @@ def launch_worker(
     worker_command: CommandFactory | None = None,
     context: HostContext | None = None,
     agent: str = "build",
+    _host_reserved: bool = False,
+    _task: str | None = None,
 ) -> TaskRecord:
     """Reserva antes de lanzar. Una reserva incierta nunca se elimina ni repite."""
     with lock_task(root, task_id):
@@ -170,8 +176,10 @@ def launch_worker(
             raise StoreError("cwd_mismatch", "La raíz no corresponde a la tarea.")
         if context is None and record.server_identity is not None:
             context = resolve_host_context()
-        if context is not None:
+        if context is not None and not _host_reserved:
             reserve_host_attempt(context, record, agent=agent)
+        if context is not None:
+            verify_provenance(context, record)
         directory = _attempt_directory(root, record)
         if (directory / "supervisor.claim").exists():
             raise StoreError("attempt_reserved", "El intento ya está reservado.")
@@ -199,6 +207,10 @@ def launch_worker(
                 context.expected_version,
             ]
         )
+    if _task is not None:
+        _task_bytes(_task)
+        if worker_command is None:
+            argv.append("--task-stdin")
     with (
         open_artifact(directory / "supervisor.reply") as output,
         open_artifact(directory / "supervisor.errors") as errors,
@@ -212,13 +224,20 @@ def launch_worker(
         process = subprocess.Popen(
             argv,
             cwd=record.cwd,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE if _task is not None else subprocess.DEVNULL,
             stdout=output,
             stderr=errors,
             close_fds=True,
             **options,
         )
-        # No hay identidad SO acreditada: PID solo no se registra.
+        # El prompt cruza solo un pipe anonimo, sin manifiesto ni entorno.
+        if _task is not None:
+            assert process.stdin is not None
+            try:
+                process.stdin.write(_task_bytes(_task))
+                process.stdin.flush()
+            finally:
+                process.stdin.close()
         threading.Thread(target=process.wait, daemon=True).start()
     return record
 
@@ -231,6 +250,7 @@ def supervise(
     prepare_command: CommandFactory | None = None,
     grace_seconds: float = 1.0,
     context: HostContext | None = None,
+    _task: str | None = None,
 ) -> int:
     """Drena hasta EOF aunque venza ejecución o desaparezca el cliente externo."""
     if not math.isfinite(grace_seconds) or not 0 <= grace_seconds <= 10:
@@ -242,7 +262,11 @@ def supervise(
         seconds = _deadline(record)
         if Path(record.cwd).resolve() != root.resolve():
             raise StoreError("cwd_mismatch", "La raíz no corresponde a la tarea.")
-        text = _input(root, record)
+        text = (
+            _input(root, record)
+            if _task is None
+            else delegate._validate_task_text(_task)
+        )
         directory = _attempt_directory(root, record)
         if context is None and record.server_identity is not None:
             context = resolve_host_context()
@@ -261,10 +285,13 @@ def supervise(
             except BaseException:
                 binding.close()
                 raise
-        else:
-            argv = _prepare_command(record, text) if prepare_command is None else []
         if prepare_command is not None:
             argv = prepare_command(record)
+        elif context is None:
+            raise ServiceError(
+                "service_unavailable",
+                "El envío requiere el servicio OpenCode existente.",
+            )
         state_lock = threading.RLock()
         limitations = ["process_identity_unknown", "server_state_unknown"]
         provenance_failed = False
@@ -545,6 +572,7 @@ def main() -> int:
     parser.add_argument("--host-registration", type=Path)
     parser.add_argument("--host-state", type=Path)
     parser.add_argument("--host-version")
+    parser.add_argument("--task-stdin", action="store_true")
     args = parser.parse_args()
     context = None
     if any((args.host_registration, args.host_state, args.host_version)):
@@ -554,7 +582,8 @@ def main() -> int:
             args.host_registration, args.host_state, args.host_version
         )
     try:
-        return supervise(args.root, args.task_id, context=context)
+        task = _stdin_task() if args.task_stdin else None
+        return supervise(args.root, args.task_id, context=context, _task=task)
     except (
         StoreError,
         HostRegistryError,

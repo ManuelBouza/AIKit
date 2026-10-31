@@ -13,10 +13,12 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
+import host_registry as hr
 import pytest
+from service_identity import HostContext
 from session_store import StoreError, load_task, lock_task, save_task
 
-from tests.fakes import finish_event, text_event
+from tests.fakes import FakeBinding, finish_event, text_event
 from tests.test_session_store import TASK_ID, make_record
 
 
@@ -263,12 +265,18 @@ def test_detached_worker_survives_parent_disconnect_and_wait_timeout(
         wait_for(tmp_path / "parent-ready")
         with pytest.raises(subprocess.TimeoutExpired):
             parent.wait(0.02)
+        reserved = load_task(tmp_path, TASK_ID)
         parent.terminate()  # Solo el padre falso propio; no supervisor ni CLI.
         parent.wait(5)
         end = time.monotonic() + 8
         while load_task(tmp_path, TASK_ID).session is None and time.monotonic() < end:
             time.sleep(0.01)
-        assert load_task(tmp_path, TASK_ID).session == "ses_prueba"
+        observed = load_task(tmp_path, TASK_ID)
+        assert observed.session == "ses_prueba"
+        assert observed.task_id == reserved.task_id
+        assert observed.attempt_id == reserved.attempt_id
+        assert observed.previous_attempt_ids == reserved.previous_attempt_ids
+        assert observed.server_identity == reserved.server_identity
     finally:
         gate.touch()
         if parent.poll() is None:
@@ -314,20 +322,29 @@ def test_two_launcher_processes_only_send_one_task(tmp_path: Path) -> None:
 def test_supervisor_revalidates_before_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: dict[str, Any], code: str
 ) -> None:
-    from tests.conftest import Harness
-
-    directory = prepare(tmp_path)
-    Harness(tmp_path, directory / "task.txt", monkeypatch).fake()
-    record = replace(make_record(tmp_path), **change)
+    prepare(tmp_path)
+    context = HostContext(tmp_path / "registration", tmp_path / "state", "2.2.0")
+    binding = FakeBinding(context=context)
+    record = replace(
+        make_record(tmp_path),
+        server_identity=binding.token,
+        previous_attempt_ids=[],
+        **change,
+    )
     if code == "invalid_record":
         with pytest.raises(StoreError):
             save_task(tmp_path, record)
         return
     save_task(tmp_path, record)
+    hr.reserve_host_attempt(context, record, agent="build")
     import delegate
 
+    module = worker()
+    monkeypatch.setattr(module, "discover_existing", lambda _ctx: binding)
+    monkeypatch.setattr(delegate, "find_opencode", lambda: "C:/fake/opencode.exe")
+
     with pytest.raises(delegate.DelegateError) as caught:
-        worker().supervise(tmp_path, TASK_ID)
+        module.supervise(tmp_path, TASK_ID, context=context)
     assert caught.value.code == code
 
 

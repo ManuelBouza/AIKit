@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, BinaryIO, Literal, TypedDict, cast
 
 if sys.platform == "win32":
     import msvcrt
@@ -551,6 +551,154 @@ def _without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def _atomic_replace(source: Path, destination: Path) -> None:
+    """Publica un snapshot sin retirar transitoriamente el nombre anterior.
+
+    Win32 FileRenameInfoEx con POSIX semantics mantiene handles existentes y
+    publica el nombre nuevo en una operacion. ReplaceFileW tiene un hueco de
+    nombre observable por lectores. No se reintenta ni ignora ningun error.
+    """
+    if source.parent != destination.parent:
+        raise OSError("El reemplazo debe pertenecer al mismo directorio.")
+    _require_regular_file(source)
+    if destination.exists() or destination.is_symlink():
+        _require_regular_file(destination)
+    if sys.platform != "win32":
+        os.replace(source, destination)
+        return
+    import ctypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    security = ctypes.WinDLL("advapi32", use_last_error=True)
+    # Conservar DACL/proteccion del destino antes de publicar el temporal.
+    # El temporal sigue en el mismo directorio validado y solo pertenece a este intento.
+    if destination.exists():
+        security.GetFileSecurityW.argtypes = [
+            ctypes.c_wchar_p,
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+            ctypes.c_uint32,
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        security.GetFileSecurityW.restype = ctypes.c_int
+        security.SetFileSecurityW.argtypes = [
+            ctypes.c_wchar_p,
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+        ]
+        security.SetFileSecurityW.restype = ctypes.c_int
+        security.GetSecurityDescriptorControl.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_ushort),
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        security.GetSecurityDescriptorControl.restype = ctypes.c_int
+        size = ctypes.c_uint32()
+        security.GetFileSecurityW(str(destination), 4, None, 0, ctypes.byref(size))
+        if not 0 < size.value <= 128 * 1024:
+            raise ctypes.WinError(ctypes.get_last_error())
+        descriptor = ctypes.create_string_buffer(size.value)
+        if not security.GetFileSecurityW(
+            str(destination), 4, descriptor, size.value, ctypes.byref(size)
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        control, revision = ctypes.c_ushort(), ctypes.c_uint32()
+        if not security.GetSecurityDescriptorControl(
+            descriptor, ctypes.byref(control), ctypes.byref(revision)
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        protection = 0x80000000 if control.value & 0x1000 else 0x20000000
+        if not security.SetFileSecurityW(str(source), 4 | protection, descriptor):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    class RenameInfo(ctypes.Structure):
+        _fields_ = [
+            ("flags", ctypes.c_uint32),
+            ("root", ctypes.c_void_p),
+            ("length", ctypes.c_uint32),
+            ("name", ctypes.c_wchar * 1),
+        ]
+
+    target = str(destination).encode("utf-16-le")
+    buffer = ctypes.create_string_buffer(RenameInfo.name.offset + len(target) + 2)
+    info = ctypes.cast(buffer, ctypes.POINTER(RenameInfo)).contents
+    info.flags = 3  # REPLACE_IF_EXISTS | POSIX_SEMANTICS; no IGNORE_READONLY.
+    info.root = None
+    info.length = len(target)
+    ctypes.memmove(
+        ctypes.addressof(buffer) + RenameInfo.name.offset, target, len(target)
+    )
+    kernel.CreateFileW.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+    ]
+    kernel.CreateFileW.restype = ctypes.c_void_p
+    kernel.SetFileInformationByHandle.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+    ]
+    kernel.SetFileInformationByHandle.restype = ctypes.c_int
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel.CloseHandle.restype = ctypes.c_int
+    # DELETE access on the own temporary; share READ|WRITE|DELETE, OPEN_EXISTING.
+    handle = kernel.CreateFileW(str(source), 0x10000, 7, None, 3, 0x00200000, None)
+    if handle is None or handle == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        if not kernel.SetFileInformationByHandle(handle, 22, buffer, len(buffer)):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def _open_shared_read(path: Path) -> BinaryIO:
+    """Lector de snapshot: permite replace atomico mientras el handle sigue vivo.
+
+    En Windows fopen no concede FILE_SHARE_DELETE. Un lector de estado no debe
+    hacer fallar la escritura del supervisor; el handle conserva sus bytes viejos.
+    No omite validacion de rutas ni ACL del llamador.
+    """
+    _require_regular_file(path)
+    if sys.platform != "win32":
+        return path.open("rb")
+    import ctypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+    ]
+    kernel.CreateFileW.restype = ctypes.c_void_p
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel.CloseHandle.restype = ctypes.c_int
+    # GENERIC_READ; SHARE_READ|WRITE|DELETE; OPEN_EXISTING; OPEN_REPARSE_POINT.
+    handle = kernel.CreateFileW(str(path), 0x80000000, 7, None, 3, 0x00200000, None)
+    if handle is None or handle == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        descriptor = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+    except BaseException:
+        kernel.CloseHandle(handle)
+        raise
+    try:
+        return os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
 def load_task(root: Path, task_id: str) -> TaskRecord:
     """Carga una tarea sin modificar registros ausentes, corruptos o futuros."""
 
@@ -565,7 +713,8 @@ def load_task(root: Path, task_id: str) -> TaskRecord:
             ) from error
         raise
     try:
-        text = path.read_text(encoding="utf-8")
+        with _open_shared_read(path) as stream:
+            text = stream.read().decode("utf-8")
         data = json.loads(text, object_pairs_hook=_without_duplicate_keys)
     except (
         json.JSONDecodeError,
@@ -615,7 +764,7 @@ def save_task(root: Path, record: TaskRecord) -> None:
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        _atomic_replace(temporary, path)
         temporary = None
     except OSError as exc:
         raise StoreError("store_io", "No se pudo guardar el registro local.") from exc

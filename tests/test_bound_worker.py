@@ -59,6 +59,18 @@ class Binding:
             else {}
         )
 
+    def model_catalog(self, project: Path, **kwargs: Any) -> object:
+        from tests.fakes import api_model, variant
+
+        return {
+            "location": {"directory": str(project)},
+            "data": [
+                api_model(
+                    "kimi-k3.1-pro", provider="opencode-go", variants=[variant("high")]
+                )
+            ],
+        }
+
     def child_environment(self, base: Any) -> dict[str, str]:
         return {**base, "OPENCODE_PASSWORD": "test-secret"}
 

@@ -20,7 +20,9 @@ from session_store import (
     ProcessIdentity,
     StoreError,
     TaskRecord,
+    _atomic_replace,
     _managed_directory,
+    _open_shared_read,
     _process_identity_from_json,
     _require_directory,
     _require_regular_file,
@@ -285,7 +287,7 @@ def _read_host(context: HostContext, task_id: str) -> HostTask:
     try:
         _require_regular_file(path)
         _private(path)
-        with path.open("rb") as stream:
+        with _open_shared_read(path) as stream:
             raw = stream.read(MAX_HOST_BYTES + 1)
         if len(raw) > MAX_HOST_BYTES:
             raise HostRegistryError("host_too_large")
@@ -321,7 +323,7 @@ def _write_host(context: HostContext, task_id: str, host: HostTask) -> None:
             stream.flush()
             os.fsync(stream.fileno())
         _private(temporary)
-        os.replace(temporary, path)
+        _atomic_replace(temporary, path)
     except OSError as exc:
         raise HostRegistryError("host_io") from exc
     finally:

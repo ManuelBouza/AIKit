@@ -112,21 +112,22 @@ def test_subprocess_cp1252_stdout_still_emits_ascii_json(harness: Harness) -> No
 
 
 def test_doctor_version_count_and_calls(harness: Harness) -> None:
-    transport = harness.fake(
-        version="2.2.0", models=[api_model("uno"), api_model("dos")]
-    )
+    harness.fake(version="2.2.0", models=[api_model("uno"), api_model("dos")])
     result = harness.doctor()
     assert (result["status"], result["version"], result["catalog_count"]) == (
         "ok",
         "2.2.0",
         2,
     )
-    assert len(result["catalog"]) == len(transport.calls) == 2
+    assert harness.binding is not None
+    assert harness.binding.catalog_calls == [harness.project.resolve()]
+    assert harness.binding.config_calls == []
+    assert len(result["catalog"]) == 2
 
 
 def test_doctor_rejects_v1(harness: Harness) -> None:
     harness.fake(version="1.0.0")
-    assert harness.doctor()["code"] == "unsupported_version"
+    assert harness.doctor()["code"] == "version_mismatch"
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf"), 3601])

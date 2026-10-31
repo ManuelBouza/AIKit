@@ -7,6 +7,7 @@ import json
 import select
 import socket
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -26,6 +27,7 @@ from service_identity import (
     token_for,
 )
 from session_backend import OwnerIdentity
+from session_store import Pricing, Role
 
 MAX_HTTP_BODY_BYTES = 8 * 1024 * 1024
 DEFAULT_OPERATIONS = frozenset(
@@ -190,6 +192,37 @@ class ManagedBinding:
             f"ManagedBinding(registration_id={self.registration.registration_id!r}, "
             f"url={self.registration.url!r}, closed={self._closed})"
         )
+
+
+@dataclass
+class BoundLaunch:
+    """Envío ya validado; no expone prompt, motivo, argv ni credencial."""
+
+    binding: ManagedBinding = field(repr=False)
+    project: Path
+    argv: list[str] = field(repr=False)
+    model: str
+    variant: str | None
+    reason: str = field(repr=False)
+    agent: str
+    timeout: float
+    role: Role = "implementer"
+    task: str = field(default="", repr=False)
+    pricing: Pricing = "unknown"
+    _attempt_ids: tuple[str, str] | None = field(default=None, init=False, repr=False)
+    _claim_lock: Any = field(default_factory=threading.Lock, init=False, repr=False)
+
+    def metadata(self) -> dict[str, Any]:
+        """Solo seleccion/ubicacion; nunca binding, prompt, argv ni motivo."""
+        return {
+            "project": str(self.project),
+            "model": self.model,
+            "variant": self.variant,
+            "agent": self.agent,
+            "timeout": self.timeout,
+            "role": self.role,
+            "pricing": self.pricing,
+        }
 
 
 def _quote(value: str) -> str:

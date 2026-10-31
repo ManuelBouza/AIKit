@@ -5,11 +5,14 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import delegate
+from service_identity import HostContext, ServiceError
 
 DEFAULT_MODEL = "opencode/mimo-v2.6-flash-free"
 FREE_COST: dict[str, Any] = {
@@ -159,13 +162,16 @@ class FakeTransport:
                 args, self.config_returncode, stdout, self.config_stderr
             )
         if len(args) >= 2 and args[1] == "run":
-            assert len(args) == 11
+            assert len(args) == 12
             assert args[2] == "--model"
             assert args[3]
             assert args[4] == "--agent"
             assert args[5] in ("build", "plan")
-            assert args[6:10] == ["--standalone", "--format", "json", "--"]
-            assert args[10].startswith(delegate.TASK_PREFIX)
+            assert args[6] == "--server"
+            assert args[7].startswith("http://127.0.0.1:")
+            assert args[8:10] == ["--format", "json"]
+            assert args[10] == "--"
+            assert args[11].startswith(delegate.TASK_PREFIX)
             if self.timeout_error:
                 raise delegate.DelegateError("timeout", "OpenCode excedió el tiempo")
             if self.fail_run:
@@ -188,3 +194,104 @@ class FakeTransport:
             for call in self.calls
             if call.argv[1:4] == ["debug", "config", "--standalone"]
         ]
+
+
+@dataclass
+class FakeBinding:
+    """Binding falso con la misma superficie observable que ManagedBinding."""
+
+    context: HostContext
+    version: str = "2.2.0"
+    sources: list[dict[str, Any]] = field(default_factory=default_config_sources)
+    catalog: list[dict[str, Any]] = field(default_factory=lambda: [api_model()])
+    catalog_location: str | None = None
+    config_returncode: int = 0
+    config_stdout: str | None = None
+    config_stderr: str = ""
+    catalog_returncode: int = 0
+    catalog_stderr: str = ""
+    valid: bool = True
+    calls: list[tuple[str, Path]] = field(default_factory=list)
+    closed: bool = False
+    child_environments: list[dict[str, str]] = field(default_factory=list)
+    registration: Any = field(init=False)
+    token: str = field(init=False)
+    owner: Any = field(init=False)
+    expected_owner: Any = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.registration = SimpleNamespace(
+            registration_id="aikit-fake-registration",
+            url="http://127.0.0.1:4096/",
+            pid=4321,
+            version=self.version,
+            credential="fake-credential",
+        )
+        self.token = "aikit-owner-v1-" + "b" * 64
+        self.owner = SimpleNamespace(
+            identity=self.token,
+            pid=4321,
+            started_at="2026-10-31T00:00:00+00:00",
+            version=self.version,
+        )
+        self.expected_owner = self.owner
+
+    @property
+    def config_calls(self) -> list[Path]:
+        return [path for kind, path in self.calls if kind == "config"]
+
+    @property
+    def catalog_calls(self) -> list[Path]:
+        return [path for kind, path in self.calls if kind == "catalog"]
+
+    def verify_owner(self, *, timeout: float = 1.0) -> Any | None:
+        if self.closed or not self.valid:
+            return None
+        return self.owner
+
+    def _require_owner(self, timeout: float) -> None:
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if self.verify_owner(timeout=timeout) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+
+    def config_sources(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("config", Path(project)))
+        self._require_owner(timeout)
+        if self.config_returncode != 0:
+            raise delegate.DelegateError(
+                "config_check_failed",
+                "No se pudo comprobar la configuración efectiva de OpenCode en el destino.",
+            )
+        if self.config_stdout is not None:
+            try:
+                return json.loads(self.config_stdout)
+            except json.JSONDecodeError as exc:
+                raise delegate.DelegateError(
+                    "config_check_failed",
+                    "OpenCode no devolvió una configuración JSON legible para la "
+                    "comprobación de restricciones.",
+                ) from exc
+        return self.sources
+
+    def model_catalog(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("catalog", Path(project)))
+        self._require_owner(timeout)
+        if self.catalog_returncode != 0:
+            raise delegate.DelegateError(
+                "catalog_unavailable",
+                f"No se pudo obtener el catálogo (código {self.catalog_returncode}). "
+                "Revisa los registros locales de OpenCode.",
+            )
+        location = self.catalog_location or str(Path(project).resolve())
+        return {"location": {"directory": location}, "data": self.catalog}
+
+    def child_environment(self, base: Mapping[str, str]) -> dict[str, str]:
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        environment = {**base, "OPENCODE_PASSWORD": "fake-secret"}
+        self.child_environments.append(environment)
+        return environment
+
+    def close(self) -> None:
+        self.closed = True

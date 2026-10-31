@@ -22,7 +22,7 @@ pytestmark = pytest.mark.anyio
 
 @pytest.fixture
 def server_env(tmp_path: Path) -> dict[str, str]:
-    """Entorno sin OpenCode en PATH: el servidor no debe iniciar el backend."""
+    """Entorno sin host ni OpenCode: el servidor no debe iniciar el backend."""
 
     empty_bin = tmp_path / "bin"
     empty_bin.mkdir()
@@ -30,6 +30,12 @@ def server_env(tmp_path: Path) -> dict[str, str]:
     env["PATH"] = str(empty_bin)
     env["PATHEXT"] = os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD")
     env["PYTHONIOENCODING"] = "utf-8"
+    for name in (
+        "AIKIT_OPENCODE_REGISTRATION",
+        "AIKIT_STATE",
+        "AIKIT_EXPECTED_OPENCODE_VERSION",
+    ):
+        env.pop(name, None)
     return env
 
 
@@ -84,7 +90,7 @@ async def test_stdio_rejects_the_direct_openai_provider(
     assert _payload(result)["code"] == "provider_not_allowed"
 
 
-async def test_stdio_catalog_without_opencode_is_an_error(
+async def test_stdio_catalog_without_host_context_is_an_error(
     server_env: dict[str, str], tmp_path: Path
 ) -> None:
     params = StdioServerParameters(
@@ -95,7 +101,7 @@ async def test_stdio_catalog_without_opencode_is_an_error(
             await session.initialize()
             result = await session.call_tool("opencode_catalog", {"cwd": str(tmp_path)})
     assert result.isError is True
-    assert _payload(result)["code"] == "opencode_missing"
+    assert _payload(result)["code"] == "host_context_unavailable"
 
 
 def test_stdout_carries_only_json_rpc_messages(

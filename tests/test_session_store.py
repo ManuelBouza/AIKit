@@ -387,7 +387,7 @@ def test_replace_failure_preserves_previous_json(
     def fail_replace(source: object, destination: object) -> None:
         raise OSError("fallo simulado antes del reemplazo")
 
-    monkeypatch.setattr(os, "replace", fail_replace)
+    monkeypatch.setattr("session_store._atomic_replace", fail_replace)
     with pytest.raises(StoreError) as error:
         save_task(tmp_path, replace(make_record(tmp_path), variant=None))
 
@@ -540,3 +540,83 @@ def test_lock_contention_has_stable_error_and_releases_in_process(
 
     with lock_task(tmp_path, TASK_ID):
         pass
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Rename atomico Win32")
+def test_concurrent_metadata_reads_never_observe_a_missing_record(
+    tmp_path: Path,
+) -> None:
+    import threading
+    from dataclasses import replace
+
+    record = make_record(tmp_path)
+    save_task(tmp_path, record)
+    finished = threading.Event()
+    failures = []
+    writer_failures = []
+    observations = []
+
+    def writer() -> None:
+        try:
+            for index in range(300):
+                with lock_task(tmp_path, record.task_id):
+                    save_task(tmp_path, replace(record, reason=f"generation-{index}"))
+        except Exception as exc:
+            writer_failures.append(exc)
+        finally:
+            finished.set()
+
+    thread = threading.Thread(target=writer)
+    thread.start()
+    try:
+        while not finished.is_set():
+            try:
+                observed = load_task(tmp_path, record.task_id)
+                observations.append(observed.reason)
+                assert observed.task_id == record.task_id
+            except StoreError as exc:
+                failures.append((exc.code, getattr(exc.__cause__, "winerror", None)))
+    finally:
+        thread.join(10)
+    assert not thread.is_alive()
+    assert not writer_failures
+    assert observations
+    assert not failures, failures[:10]
+    assert load_task(tmp_path, record.task_id).reason == "generation-299"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="DACL Win32")
+def test_atomic_publication_preserves_destination_dacl(tmp_path: Path) -> None:
+    import ctypes
+    from dataclasses import replace
+
+    import host_registry as hr
+
+    record = make_record(tmp_path)
+    save_task(tmp_path, record)
+    path = record_path(tmp_path)
+    hr._private(
+        path, created=True
+    )  # DACL protegida mas restrictiva que herencia temporal.
+    api = ctypes.WinDLL("advapi32", use_last_error=True)
+    api.GetFileSecurityW.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.POINTER(ctypes.c_uint32),
+    ]
+
+    def dacl() -> bytes:
+        needed = ctypes.c_uint32()
+        api.GetFileSecurityW(str(path), 4, None, 0, ctypes.byref(needed))
+        data = ctypes.create_string_buffer(needed.value)
+        assert api.GetFileSecurityW(
+            str(path), 4, data, needed.value, ctypes.byref(needed)
+        )
+        return data.raw[: needed.value]
+
+    before = dacl()
+    save_task(tmp_path, replace(record, reason="new-snapshot"))
+    assert dacl() == before
+    assert load_task(tmp_path, record.task_id).reason == "new-snapshot"

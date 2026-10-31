@@ -325,31 +325,23 @@ def test_run_admite_un_destino_configurado_correctamente(harness: Harness) -> No
     assert len(transport.run_calls) == 1
 
 
-def test_la_comprobacion_ocurre_despues_del_catalogo_y_antes_de_la_ejecucion(
+def test_la_comprobacion_ocurre_antes_del_catalogo_y_de_la_ejecucion(
     harness: Harness,
 ) -> None:
     transport = harness.fake()
     assert harness.run()["status"] == "ok"
-    assert transport.config_calls[0].argv == [
-        "C:/fake/opencode.exe",
-        "debug",
-        "config",
-        "--standalone",
-    ]
-    assert transport.config_calls[0].cwd == str(harness.project.resolve())
-    assert transport.config_calls[0].timeout == 30
-    assert transport.calls.index(transport.config_calls[0]) < transport.calls.index(
-        transport.run_calls[0]
-    )
+    assert harness.binding is not None
+    assert [kind for kind, _path in harness.binding.calls] == ["config", "catalog"]
+    assert {path for _kind, path in harness.binding.calls} == {
+        harness.project.resolve()
+    }
+    assert len(transport.run_calls) == 1
 
 
 def test_la_comprobacion_conserva_los_errores_explicitos_de_seleccion(
     harness: Harness,
 ) -> None:
-    harness.fake(
-        models=[api_model(variants=[variant("high")])],
-        config_sources=[document({"policies": []})],
-    )
+    harness.fake(models=[api_model(variants=[variant("high")])])
     result = harness.run(model=DEFAULT_MODEL + "#inexistente")
     assert result["code"] == "invalid_variant"
 
@@ -369,7 +361,8 @@ def test_el_gpt_de_opencode_go_sigue_disponible(harness: Harness) -> None:
 
 
 def test_doctor_no_exige_certificado_de_restricciones(harness: Harness) -> None:
-    transport = harness.fake(config_sources=[document({"policies": []})])
+    harness.fake(config_sources=[document({"policies": []})])
     result = harness.doctor()
     assert result["status"] == "ok"
-    assert transport.config_calls == []
+    assert harness.binding is not None
+    assert harness.binding.config_calls == []

@@ -144,9 +144,10 @@ y límites en `docs/correcciones-revision-funcional.md`.
 
 ## Orquestación y verificación
 
-Codex conserva diseño, selección de modelo y coordinación; la revisión técnica y
-la verificación, incluidas comprobaciones de shell, se ejecutan en OpenCode con
-revisor independiente en sesión nueva.
+Codex conserva coordinación, decisiones del usuario, selección de modelo y
+validación de metadata; cuando hay capacidad adecuada, OpenCode ejecuta diseño,
+arquitectura, contratos, planes, revisión técnica y verificación, incluidas
+comprobaciones de shell, con revisor independiente en sesión nueva.
 Capacidad primero: Free suficiente -> Go -> otras alternativas adecuadas ->
 nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
 opciones. Sin bucles ilimitados: fija presupuesto razonado de intentos/tiempo

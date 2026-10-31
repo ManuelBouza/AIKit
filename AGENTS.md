@@ -61,12 +61,13 @@ la revisión técnica. Contrato de carga en
 
 ## Orquestación Codex/OpenCode
 
-Codex conserva conversación, diseño, arquitectura, contratos, plan y selección de
-modelo. OpenCode ejecuta exploración factual, diagnóstico, implementación,
-pruebas, correcciones, documentación, revisión independiente y verificación.
-Revisor en sesión nueva, sin redelegar ni modificar la entrega. Devuelve
-decisiones de diseño al coordinador. Codex valida la metadata de aceptación; no
-repite la revisión técnica independiente.
+Codex conserva conversación, coordinación, decisiones del usuario, selección de
+modelo y validación de metadata de aceptación. Cuando hay capacidad adecuada,
+OpenCode ejecuta diseño, arquitectura, contratos, planes, exploración factual,
+diagnóstico, implementación, pruebas, correcciones, documentación, revisión
+independiente y verificación. Revisor en sesión nueva, sin redelegar ni modificar
+la entrega; devuelve decisiones de diseño al coordinador. Codex no repite la
+revisión técnica independiente.
 
 Capacidad primero: Free adecuado -> Go -> otras alternativas adecuadas ->
 continuar en Codex nativo si no hay opción adecuada/disponible. No degradar para

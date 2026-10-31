@@ -1,9 +1,11 @@
 <!-- AIKIT:ROUTING:BEGIN -->
 # Orquestación Codex/OpenCode (AIKit)
 
-Codex conserva conversación, diseño, arquitectura, contratos, plan y selección de
-modelo. OpenCode ejecuta exploración factual, diagnóstico, implementación,
-pruebas, correcciones, documentación, revisión independiente y verificación.
+Codex conserva conversación, coordinación, decisiones del usuario, selección de
+modelo y validación de metadata de aceptación. Cuando hay capacidad adecuada,
+OpenCode ejecuta diseño, arquitectura, contratos, planes, exploración factual,
+diagnóstico, implementación, pruebas, correcciones, documentación, revisión
+independiente y verificación.
 
 Capacidad primero: Free adecuado -> Go -> otras alternativas adecuadas -> Codex
 nativo si no hay opción adecuada o disponible. No degradar para evitar Codex ni

@@ -1,8 +1,10 @@
 # Orquestación Codex/OpenCode
 
-Codex conserva conversación, diseño, arquitectura, contratos, plan y selección
-de modelo. OpenCode ejecuta exploración factual, diagnóstico, implementación,
-pruebas, correcciones, documentación, revisión independiente y verificación.
+Codex conserva conversación, coordinación, decisiones del usuario, selección de
+modelo y validación de metadata de aceptación. Cuando hay capacidad adecuada,
+OpenCode ejecuta diseño, arquitectura, contratos, planes, exploración factual,
+diagnóstico, implementación, pruebas, correcciones, documentación, revisión
+independiente y verificación.
 
 Roles y flujo: implementador en OpenCode; revisor en sesión nueva, sin
 redelegar ni modificar la entrega; Codex comprueba evidencias. Capacidad primero:

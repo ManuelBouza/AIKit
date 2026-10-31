@@ -12,16 +12,20 @@ Estado: borrador para aprobación del usuario. No implementa código.
 - Entre opciones adecuadas y disponibles, la prioridad es: todos los modelos gratuitos de cualquier proveedor conectado a OpenCode -> OpenCode Go -> otros modelos de pago conectados a OpenCode -> Codex nativo.
 - Los modelos gratuitos ofrecidos mediante Go también participan en el primer nivel. Si un nivel no tiene una opción adecuada y disponible, se pasa al siguiente sin degradar la tarea.
 - No se pregunta al usuario por cada fallo.
-- `reset_at` pasado exige reconsulta; no implica disponibilidad.
+- La tabla local compartida guía la selección del modelo y del esfuerzo. No se consulta el catálogo ni la cuota antes de cada ejecución.
+- `reset_at` pasado requiere verificación en una actualización de la tabla; no implica disponibilidad recuperada.
 - Scope compartido desconocido no autoriza ampliar el bloqueo.
 - Cambio de cuenta o conexión invalida la certeza previa sin persistir secretos.
 - Provider directo `openai` sigue bloqueado y `quota_resume` no cambia.
+- Un cambio de versión de OpenCode, Codex u otra herramienta se registra y no bloquea por sí mismo la operación. La compatibilidad se comprueba por capacidades y contrato.
 
 ## Fuente oficial verificada
 
 OpenCode 2.2.0 expone `GET /api/experimental/usage/limits`, con `location` opcional. La respuesta observada el 2026-10-31T14:53:45.967746Z incluye Go con `rolling`, `weekly` y `monthly`, cada uno con `percent`, `limited` y `resetsAt`. El schema incluye `workspace`, `go` y `budgets`. Los campos `workspace.id`, `name` y `usageURL` no se persisten. Los datos guardados son solo Go en lista blanca.
 
-El endpoint es experimental y versionado; si falla o cambia el contrato, el estado debe quedar `unknown`, no disponible.
+La ruta y la versión anteriores describen la observación verificada, no una restricción a OpenCode 2.2.0. El endpoint es experimental; si falla o cambia el contrato, se conserva la observación histórica y la cuota actual queda `unknown` hasta verificar una fuente compatible.
+
+AIKit consulta el servidor OpenCode existente en la misma PC mediante HTTP autenticado en loopback. Ese servidor puede consultar proveedores por Internet para completar datos. La lectura de catálogo o cuotas no ejecuta por sí misma una inferencia.
 
 ## Propuesta
 
@@ -39,7 +43,28 @@ El registro es compartido por todos los proyectos y chats de AIKit del mismo usu
 
 Se reutilizan locks y reemplazo atómico de `session_store`. No se crea infraestructura paralela. Esta decisión documenta la ubicación; todavía no crea el archivo ni modifica la configuración instalada.
 
-TTL propuesto (no aprobado por el usuario): 15 minutos para observación válida; 5 minutos de cooldown para error sin reset. Al llegar `reset_at`, reconsultar y no asumir disponibilidad.
+La tabla conserva el catálogo saneado necesario para elegir: proveedor, modelo, tarifa conocida, capacidades, variantes de esfuerzo y límites, junto con las observaciones de disponibilidad. El estado de cuentas es compartido; la habilitación de modelos conserva el contexto efectivo de cada proyecto y no se extrapola a otros proyectos.
+
+La antigüedad de una observación se muestra explícitamente. Se retira la propuesta anterior de TTL 15/5 minutos como disparador previo a cada ejecución. La frecuencia de actualización periódica y el cooldown de errores quedan pendientes de acordar; no se fijan implícitamente.
+
+## Selección y actualización de la tabla
+
+Flujo acordado: leer la tabla local -> escoger modelo y esfuerzo adecuados según prioridad -> ejecutar la tarea autorizada -> registrar el resultado observado. Leer la tabla no inicia consultas externas de catálogo o cuotas.
+
+Si la tabla indica disponibilidad y una ejecución confirma un rechazo de disponibilidad, se activa una actualización de la tabla completa: integraciones conectadas, modelos, tarifas, capacidades y cuotas que tengan fuente verificable. No se prueban modelos con inferencias. Cada fuente fallida conserva su última observación válida, con fecha y vigencia, y registra el intento fallido por separado; no se transforma en disponibilidad confirmada.
+
+Una sola actualización coordinada sirve a los proyectos y chats concurrentes, publicando una nueva generación mediante bloqueo y reemplazo atómico. Un fallo de compilación o de pruebas de la tarea no se interpreta como falta de cuota del modelo. Un intento vivo o con admisión incierta se conserva y observa; actualizar la tabla no autoriza reenviar la tarea ni lanzar otra inferencia en paralelo.
+
+Otros disparadores propuestos para acordar:
+
+- Primera inicialización, tabla ausente o ilegible.
+- Solicitud explícita de actualización del usuario.
+- Altas, bajas o cambios de cuenta/configuración que la herramienta notifique o el usuario comunique; no se sondea ese estado en cada ejecución.
+- Hora de recuperación comunicada por una fuente, para verificar si realmente se recuperó la capacidad.
+- Cambio de versión detectado al interactuar normalmente con una herramienta.
+- Actualización periódica configurable, con intervalo y condiciones de actividad pendientes de decidir.
+
+Cada resultado real actualiza la fila observada sin consultar todo el catálogo. Los cambios detectados en un refresco completo incorporan modelos nuevos, retiran los desconectados de la selección y reclasifican sus tarifas, conservando el historial. Si una herramienta no ofrece notificaciones de cambios, esa limitación se documenta y se utilizan los demás disparadores acordados.
 ## Esquema mínimo
 
 ```json
@@ -87,7 +112,13 @@ El alias debe derivarse de un identificador público de la fuente o de un alias 
 
 ## Enforcement mínimo
 
-Regla breve en AGENTS/routing, procedimiento en la skill y comprobación mínima en el camino CLI/MCP existente antes de inferir, reutilizando preflight y supervisor actuales. No se duplica infraestructura ni se interceptan subagentes nativos o Superpowers.
+Regla breve en el `AGENTS.md` global de Codex, distribuida mediante la plantilla `config/codex/routing.md`, y procedimiento en la skill. La comprobación del camino CLI/MCP lee la tabla local antes de inferir, reutilizando preflight y supervisor actuales. Se sustituirán las consultas de catálogo en cada preparación o envío por la generación de tabla aplicable. Se conservan las comprobaciones necesarias de identidad, procedencia y permisos: no son sondeos de capacidad. No se duplica infraestructura ni se interceptan subagentes nativos o Superpowers.
+
+## Compatibilidad ante actualizaciones
+
+Registrar versión observada y capacidades verificadas de las herramientas sin una lista de versiones exactas permitidas. Un número de versión distinto por sí solo no impide continuar. Se sustituirá la comprobación actual de igualdad con `expected_version`; cambiar únicamente esa configuración no acredita compatibilidad.
+
+Si cambia una versión, verificar las operaciones y estructuras necesarias mediante el contrato publicado o un mecanismo soportado, renovar los datos afectados de la tabla y continuar cuando sean compatibles. No se adivinan rutas, credenciales ni formatos. Si falta una capacidad imprescindible, registrar la incompatibilidad concreta y utilizar el retorno nativo autorizado para la función afectada; el trabajo general continúa. No se reenvían intentos vivos o inciertos. La misma regla se aplica a cambios de Codex y de otras herramientas utilizadas por AIKit.
 
 ## APIs propuestas
 
@@ -102,6 +133,9 @@ La consulta de disponibilidad no ejecuta inferencia. La salida saneada incluye f
 ## Criterios de aceptación
 
 - Tests con transporte falso para timestamps, scopes, fallos de cache, concurrencia, identidad, CLI/MCP, intentos pendientes y exportación limpia.
+- Selecciones sucesivas desde una tabla válida no consultan catálogo ni cuotas; un rechazo confirmado dispara un único refresco completo compartido.
+- Altas y bajas, cambios de tarifa/cuenta y nuevos modelos se reflejan tras los disparadores de actualización acordados.
+- Una versión nueva compatible continúa operando; una capacidad incompatible produce diagnóstico y retorno por función, sin rechazo basado únicamente en versión.
 - No hay secretos, PII ni estado mutable en el paquete exportado.
 - Los estados desconocidos usan un único intento real autorizado, registrado una vez con IDs existentes.
 - No se implementa hasta aprobación del usuario.

@@ -20,11 +20,28 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 import delegate
-from session_backend import worker_interrupt
+from host_registry import (
+    HostRegistryError,
+    record_host_observation,
+    record_host_processes,
+    record_host_session,
+    reserve_host_attempt,
+    verify_provenance,
+)
+from restrictions import configuration_is_restricted
+from service_connection import ManagedBinding, discover_existing
+from service_identity import (
+    HostContext,
+    ServiceError,
+    get_process_birth,
+    resolve_host_context,
+)
+from session_backend import interrupt_session, worker_interrupt
 from session_store import (
     DeliveryObservation,
     DeliveryState,
     ExecutionObservation,
+    ProcessIdentity,
     StoreError,
     TaskRecord,
     _managed_directory,
@@ -78,6 +95,53 @@ def _prepare_command(record: TaskRecord, text: str) -> list[str]:
     return prepared[0]
 
 
+def _identity(pid: int) -> ProcessIdentity | None:
+    birth = get_process_birth(pid)
+    return (
+        ProcessIdentity(pid, birth.started_at)
+        if birth is not None and birth.started_at is not None
+        else None
+    )
+
+
+def _bound_command(
+    record: TaskRecord, text: str, context: HostContext, binding: ManagedBinding
+) -> list[str]:
+    attempt = verify_provenance(context, record)
+    if (
+        binding.token != attempt.binding_token
+        or binding.verify_owner(timeout=1) is None
+    ):
+        raise ServiceError("owner_mismatch")
+    if not configuration_is_restricted(
+        binding.config_sources(Path(record.cwd), timeout=10)
+    ):
+        raise delegate.DelegateError(
+            "unsafe_configuration", "Configuracion efectiva no restringida."
+        )
+    model, variant = delegate.parse_model(record.model, record.variant)
+    delegate._validate_reason(record.reason)
+    delegate.load_policy()
+    exe = delegate.find_opencode()
+    if exe is None:
+        raise delegate.DelegateError("opencode_missing", "CLI no disponible.")
+    selected = model + ("#" + variant if variant else "")
+    return [
+        exe,
+        "run",
+        "--model",
+        selected,
+        "--agent",
+        attempt.agent,
+        "--server",
+        binding.registration.url,
+        "--format",
+        "json",
+        "--",
+        delegate.TASK_PREFIX + text,
+    ]
+
+
 def _deadline(record: TaskRecord) -> float:
     seconds = record.execution_timeout_seconds
     if seconds is None:
@@ -91,7 +155,12 @@ def _reserve_marker(directory: Path, name: str) -> None:
 
 
 def launch_worker(
-    root: Path, task_id: str, *, worker_command: CommandFactory | None = None
+    root: Path,
+    task_id: str,
+    *,
+    worker_command: CommandFactory | None = None,
+    context: HostContext | None = None,
+    agent: str = "build",
 ) -> TaskRecord:
     """Reserva antes de lanzar. Una reserva incierta nunca se elimina ni repite."""
     with lock_task(root, task_id):
@@ -99,6 +168,10 @@ def launch_worker(
         _deadline(record)
         if Path(record.cwd).resolve() != root.resolve():
             raise StoreError("cwd_mismatch", "La raíz no corresponde a la tarea.")
+        if context is None and record.server_identity is not None:
+            context = resolve_host_context()
+        if context is not None:
+            reserve_host_attempt(context, record, agent=agent)
         directory = _attempt_directory(root, record)
         if (directory / "supervisor.claim").exists():
             raise StoreError("attempt_reserved", "El intento ya está reservado.")
@@ -115,6 +188,17 @@ def launch_worker(
             task_id,
         ]
     )
+    if context is not None and worker_command is None:
+        argv.extend(
+            [
+                "--host-registration",
+                str(context.opencode_registration),
+                "--host-state",
+                str(context.aikit_state),
+                "--host-version",
+                context.expected_version,
+            ]
+        )
     with (
         open_artifact(directory / "supervisor.reply") as output,
         open_artifact(directory / "supervisor.errors") as errors,
@@ -146,6 +230,7 @@ def supervise(
     interrupt: Interrupt | None = None,
     prepare_command: CommandFactory | None = None,
     grace_seconds: float = 1.0,
+    context: HostContext | None = None,
 ) -> int:
     """Drena hasta EOF aunque venza ejecución o desaparezca el cliente externo."""
     if not math.isfinite(grace_seconds) or not 0 <= grace_seconds <= 10:
@@ -159,204 +244,324 @@ def supervise(
             raise StoreError("cwd_mismatch", "La raíz no corresponde a la tarea.")
         text = _input(root, record)
         directory = _attempt_directory(root, record)
+        if context is None and record.server_identity is not None:
+            context = resolve_host_context()
+        if context is not None:
+            verify_provenance(context, record)
         _reserve_marker(directory, "supervisor.claim")
     # Validación y probes reutilizan exactamente el núcleo existente.
-    argv = (
-        prepare_command(record) if prepare_command else _prepare_command(record, text)
-    )
-    state_lock = threading.RLock()
-    limitations = ["process_identity_unknown", "server_state_unknown"]
-    deadline_exceeded = False
-    interrupt_confirmed: bool | None = None
-    journal: BinaryIO
-
-    def observe(event: str) -> None:
-        try:
-            journal.write(
-                json.dumps(
-                    {"event": event, "observed_at": _now(), "session": record.session}
-                ).encode("utf-8")
-                + b"\n"
-            )
-        except OSError:
-            if "journal_save_failed" not in limitations:
-                limitations.append("journal_save_failed")
-
-    def persist() -> None:
-        try:
-            with lock_task(root, task_id):
-                save_task(root, record)
-        except (StoreError, OSError):
-            if "record_save_failed" not in limitations:
-                limitations.append("record_save_failed")
-
-    def session_seen(session: str) -> None:
-        with state_lock:
-            record.session = session
-            record.last_event_at = _now()
-            record.delivery = DeliveryObservation("partial", "cli_event", _now())
-            persist()
-            observe("session_seen")
-
-    events = EventStream(session_seen)
-    with (
-        open_artifact(directory / "stdout.partial") as out_file,
-        open_artifact(directory / "stderr.partial") as err_file,
-        open_artifact(directory / "observations.jsonl") as journal,
-    ):
-        stdout = Capture(out_file, events)
-        stderr = Capture(err_file)
-        try:
-            process = subprocess.Popen(
-                argv,
-                cwd=record.cwd,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                close_fds=True,
-                creationflags=subprocess.CREATE_NO_WINDOW
-                if sys.platform == "win32"
-                else 0,
-            )
-        except OSError as exc:
-            raise StoreError(
-                "client_start_failed", "No se pudo iniciar la CLI."
-            ) from exc
-        with state_lock:
-            record.execution = ExecutionObservation("active", "client_started", _now())
-            record.delivery = DeliveryObservation("pending", "client_started", _now())
-            persist()
-            observe("client_started")
-
-        def drain(pipe: BinaryIO, capture: Capture) -> None:
+    binding: ManagedBinding | None = None
+    child_env: dict[str, str] | None = None
+    try:
+        if context is not None:
+            binding = discover_existing(context)
             try:
-                while True:
-                    chunk = os.read(pipe.fileno(), 8192)
-                    if not chunk:
-                        break
-                    with state_lock:
-                        capture.feed(chunk)
-            except OSError:
-                with state_lock:
-                    limitations.append("stream_read_failed")
-            finally:
-                pipe.close()
+                argv = _bound_command(record, text, context, binding)
+                child_env = binding.child_environment(os.environ)
+            except BaseException:
+                binding.close()
+                raise
+        else:
+            argv = _prepare_command(record, text) if prepare_command is None else []
+        if prepare_command is not None:
+            argv = prepare_command(record)
+        state_lock = threading.RLock()
+        limitations = ["process_identity_unknown", "server_state_unknown"]
+        provenance_failed = False
+        deadline_exceeded = False
+        interrupt_confirmed: bool | None = None
+        journal: BinaryIO
 
-        assert process.stdout is not None
-        assert process.stderr is not None
-        readers = [
-            threading.Thread(target=drain, args=(process.stdout, stdout)),
-            threading.Thread(target=drain, args=(process.stderr, stderr)),
-        ]
-        for thread in readers:
-            thread.start()
-        end = time.monotonic() + seconds
-        grace_end: float | None = None
-        while process.poll() is None or any(thread.is_alive() for thread in readers):
-            now = time.monotonic()
-            if not deadline_exceeded and now >= end:
-                with state_lock:
-                    deadline_exceeded = True
-                    record.execution = ExecutionObservation(
-                        "unknown", "execution_deadline_exceeded", _now()
-                    )
-                    persist()
-                    observe("execution_deadline_exceeded")
+        def observe(event: str) -> None:
+            try:
+                journal.write(
+                    json.dumps(
+                        {
+                            "event": event,
+                            "observed_at": _now(),
+                            "session": record.session,
+                        }
+                    ).encode("utf-8")
+                    + b"\n"
+                )
+            except OSError:
+                if "journal_save_failed" not in limitations:
+                    limitations.append("journal_save_failed")
+
+        def persist() -> None:
+            nonlocal provenance_failed
+            try:
+                with lock_task(root, task_id):
+                    save_task(root, record)
+            except (StoreError, OSError):
+                if context is not None:
+                    provenance_failed = True
+                if "record_save_failed" not in limitations:
+                    limitations.append("record_save_failed")
+
+        def session_seen(session: str) -> None:
+            nonlocal provenance_failed
+            with state_lock:
+                if context is not None:
+                    try:
+                        record_host_session(context, record, session)
+                    except (HostRegistryError, OSError, StoreError):
+                        provenance_failed = True
+                        limitations.append("provenance_unavailable")
+                        observe("host_session_save_failed")
+                        return
+                record.session = session
+                record.last_event_at = _now()
+                record.delivery = DeliveryObservation("partial", "cli_event", _now())
+                persist()
+                observe("session_seen")
+
+        events = EventStream(session_seen)
+        with (
+            open_artifact(directory / "stdout.partial") as out_file,
+            open_artifact(directory / "stderr.partial") as err_file,
+            open_artifact(directory / "observations.jsonl") as journal,
+        ):
+            stdout = Capture(out_file, events)
+            stderr = Capture(err_file)
+            try:
+                if binding is not None:
+                    verify_provenance(context, record)  # type: ignore[arg-type]
+                    if binding.verify_owner(timeout=1) is None:
+                        raise ServiceError("owner_mismatch")
+                process = subprocess.Popen(
+                    argv,
+                    cwd=record.cwd,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    close_fds=True,
+                    env=child_env,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                    if sys.platform == "win32"
+                    else 0,
+                )
+            except OSError as exc:
+                raise StoreError(
+                    "client_start_failed", "No se pudo iniciar la CLI."
+                ) from exc
+            with state_lock:
+                record.client = _identity(process.pid)
+                record.supervisor = _identity(os.getpid())
+            if record.client is not None and record.supervisor is not None:
+                limitations.remove("process_identity_unknown")
+                if context is not None:
+                    try:
+                        record_host_processes(context, record)
+                    except (HostRegistryError, StoreError, OSError):
+                        provenance_failed = True
+                        limitations.append("provenance_unavailable")
+                record.execution = ExecutionObservation(
+                    "active", "client_started", _now()
+                )
+                record.delivery = DeliveryObservation(
+                    "pending", "client_started", _now()
+                )
+                persist()
+                observe("client_started")
+
+            def drain(pipe: BinaryIO, capture: Capture) -> None:
                 try:
-                    callback = worker_interrupt if interrupt is None else interrupt
-                    interrupt_confirmed = callback(record)
-                except Exception:
-                    limitations.append("interrupt_failed")
-                grace_end = time.monotonic() + grace_seconds
-            if grace_end is not None and now >= grace_end:
-                with state_lock:
-                    limitations.append("deadline_exceeded")
-                    if interrupt_confirmed is not True:
-                        limitations.append("interrupt_unconfirmed")
-                    persist()
-                grace_end = None
+                    while True:
+                        chunk = os.read(pipe.fileno(), 8192)
+                        if not chunk:
+                            break
+                        with state_lock:
+                            capture.feed(chunk)
+                except OSError:
+                    with state_lock:
+                        limitations.append("stream_read_failed")
+                finally:
+                    pipe.close()
+
+            assert process.stdout is not None
+            assert process.stderr is not None
+            readers = [
+                threading.Thread(target=drain, args=(process.stdout, stdout)),
+                threading.Thread(target=drain, args=(process.stderr, stderr)),
+            ]
             for thread in readers:
-                thread.join(0.005)
-        returncode = process.wait()
-        events.finish()
-        delivery: DeliveryState = "partial" if events.summary else "pending"
-        if returncode != 0 or events.error:
-            delivery = "failed"
-        elif (
-            events.terminal
-            and not events.error
-            and "stream_read_failed" not in limitations
-        ):
-            delivery = "completed"
-        elif deadline_exceeded and interrupt_confirmed is True:
-            delivery = "interrupted"
-        if events.invalid_json:
-            limitations.append("invalid_json")
-        if events.session_mismatch:
-            limitations.append("session_mismatch")
-        if stdout.write_failed or stderr.write_failed:
-            limitations.append("partial_save_failed")
-        if deadline_exceeded and "deadline_exceeded" not in limitations:
-            limitations.append("deadline_exceeded")
-        if (
-            deadline_exceeded
-            and interrupt_confirmed is not True
-            and "interrupt_unconfirmed" not in limitations
-        ):
-            limitations.append("interrupt_unconfirmed")
-        record.execution = ExecutionObservation(
-            "unknown",
-            "execution_deadline_exceeded" if deadline_exceeded else "client_exited",
-            _now(),
-        )
-        record.delivery = DeliveryObservation(
-            delivery,
-            "cli_terminal" if delivery == "completed" else "client_observation",
-            _now(),
-        )
-        record.last_event_at = _now()
-        persist()
-        observe("client_exited")
-        report: dict[str, Any] = {
-            "status": "ok"
-            if delivery == "completed"
-            else "error"
-            if delivery == "failed"
-            else "pending",
-            "task_id": task_id,
-            "attempt_id": record.attempt_id,
-            "session": record.session,
-            "delivery": delivery,
-            "execution": "unknown",
-            "client_exit_code": returncode,
-            "summary": events.summary,
-            "deadline_exceeded": deadline_exceeded,
-            "stdout_truncated": stdout.truncated,
-            "stderr_truncated": stderr.truncated,
-            "line_truncated": events.line_truncated,
-            "limitations": limitations,
-        }
-    try:
-        with open_artifact(directory / "result.json") as destination:
-            destination.write(json.dumps(report, ensure_ascii=True).encode("utf-8"))
-    except (OSError, StoreError):
-        limitations.append("result_save_failed")
-    try:
-        print(json.dumps(report, ensure_ascii=True), flush=True)
-    except (OSError, ValueError):
-        # El resultado separado ya está persistido aunque el consumidor se fuera.
-        pass
-    return 0 if delivery == "completed" else 1
+                thread.start()
+            end = time.monotonic() + seconds
+            grace_end: float | None = None
+            while process.poll() is None or any(
+                thread.is_alive() for thread in readers
+            ):
+                now = time.monotonic()
+                if not deadline_exceeded and now >= end:
+                    with state_lock:
+                        deadline_exceeded = True
+                        record.execution = ExecutionObservation(
+                            "unknown", "execution_deadline_exceeded", _now()
+                        )
+                        persist()
+                        observe("execution_deadline_exceeded")
+                    try:
+                        if interrupt is not None:
+                            interrupt_confirmed = interrupt(record)
+                        elif binding is not None and context is not None:
+                            verify_provenance(context, record)
+                            interrupt_confirmed = interrupt_session(
+                                record, binding=binding
+                            ).confirmed
+                        else:
+                            interrupt_confirmed = worker_interrupt(record)
+                    except Exception:
+                        limitations.append("interrupt_failed")
+                    grace_end = time.monotonic() + grace_seconds
+                if grace_end is not None and now >= grace_end:
+                    with state_lock:
+                        limitations.append("deadline_exceeded")
+                        if interrupt_confirmed is not True:
+                            limitations.append("interrupt_unconfirmed")
+                        persist()
+                    grace_end = None
+                for thread in readers:
+                    thread.join(0.005)
+            returncode = process.wait()
+            events.finish()
+            delivery: DeliveryState = "partial" if events.summary else "pending"
+            if returncode != 0 or events.error:
+                delivery = "failed"
+            elif (
+                events.terminal
+                and not events.error
+                and "stream_read_failed" not in limitations
+            ):
+                delivery = "completed"
+            elif deadline_exceeded and interrupt_confirmed is True:
+                delivery = "interrupted"
+            if events.invalid_json:
+                limitations.append("invalid_json")
+            if events.session_mismatch:
+                limitations.append("session_mismatch")
+            if stdout.write_failed or stderr.write_failed:
+                limitations.append("partial_save_failed")
+                if context is not None:
+                    provenance_failed = True
+            if context is not None and "journal_save_failed" in limitations:
+                provenance_failed = True
+            if deadline_exceeded and "deadline_exceeded" not in limitations:
+                limitations.append("deadline_exceeded")
+            if (
+                deadline_exceeded
+                and interrupt_confirmed is not True
+                and "interrupt_unconfirmed" not in limitations
+            ):
+                limitations.append("interrupt_unconfirmed")
+            if binding is not None and binding.verify_owner(timeout=1) is None:
+                provenance_failed = True
+                limitations.append("owner_mismatch")
+            if context is not None:
+                try:
+                    record_host_observation(
+                        context,
+                        record,
+                        terminal=False,
+                    )
+                except (HostRegistryError, StoreError, OSError):
+                    provenance_failed = True
+                    limitations.append("provenance_unavailable")
+            if provenance_failed:
+                delivery = "pending"
+            record.execution = ExecutionObservation(
+                "unknown",
+                "execution_deadline_exceeded" if deadline_exceeded else "client_exited",
+                _now(),
+            )
+            record.delivery = DeliveryObservation(
+                delivery,
+                "cli_terminal" if delivery == "completed" else "client_observation",
+                _now(),
+            )
+            record.last_event_at = _now()
+            persist()
+            if provenance_failed and context is not None:
+                delivery = "pending"
+                record.delivery = DeliveryObservation(
+                    "pending", "provenance_unavailable", _now()
+                )
+                try:
+                    record_host_observation(context, record, terminal=False)
+                except (HostRegistryError, StoreError, OSError):
+                    pass  # Existing reservation and artifacts still block another send.
+            observe("client_exited")
+            report: dict[str, Any] = {
+                "status": "ok"
+                if delivery == "completed"
+                else "error"
+                if delivery == "failed"
+                else "pending",
+                "task_id": task_id,
+                "attempt_id": record.attempt_id,
+                "session": record.session,
+                "delivery": delivery,
+                "execution": "unknown",
+                "client_exit_code": returncode,
+                "summary": events.summary,
+                "deadline_exceeded": deadline_exceeded,
+                "stdout_truncated": stdout.truncated,
+                "stderr_truncated": stderr.truncated,
+                "line_truncated": events.line_truncated,
+                "limitations": limitations,
+            }
+        try:
+            with open_artifact(directory / "result.json") as destination:
+                destination.write(json.dumps(report, ensure_ascii=True).encode("utf-8"))
+        except (OSError, StoreError):
+            limitations.append("result_save_failed")
+            if context is not None:
+                provenance_failed = True
+        if context is not None:
+            if not provenance_failed and delivery == "completed":
+                try:
+                    record_host_observation(context, record, terminal=True)
+                except (HostRegistryError, StoreError, OSError):
+                    provenance_failed = True
+                    limitations.append("provenance_unavailable")
+            if provenance_failed:
+                delivery = "pending"
+                report["status"], report["delivery"] = "pending", "pending"
+        try:
+            print(json.dumps(report, ensure_ascii=True), flush=True)
+        except (OSError, ValueError):
+            # El resultado separado ya está persistido aunque el consumidor se fuera.
+            pass
+        return 0 if delivery == "completed" else 1
+    finally:
+        if binding is not None:
+            binding.close()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
     parser.add_argument("task_id")
+    parser.add_argument("--host-registration", type=Path)
+    parser.add_argument("--host-state", type=Path)
+    parser.add_argument("--host-version")
     args = parser.parse_args()
+    context = None
+    if any((args.host_registration, args.host_state, args.host_version)):
+        if not all((args.host_registration, args.host_state, args.host_version)):
+            parser.error("Contexto host incompleto")
+        context = HostContext(
+            args.host_registration, args.host_state, args.host_version
+        )
     try:
-        return supervise(args.root, args.task_id)
-    except (StoreError, delegate.DelegateError, OSError):
+        return supervise(args.root, args.task_id, context=context)
+    except (
+        StoreError,
+        HostRegistryError,
+        ServiceError,
+        delegate.DelegateError,
+        OSError,
+    ):
         # No exponer mensajes que puedan contener entrada/configuración cruda.
         print(
             json.dumps(

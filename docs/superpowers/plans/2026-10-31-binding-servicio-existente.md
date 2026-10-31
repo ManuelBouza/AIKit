@@ -92,6 +92,14 @@ Tipos nuevos compartidos:
 - [ ] Mantener seams de procesos falsos solo desde código de tests, sin flags/env de bypass. Probar que el padre puede terminar y que otro cliente puede consultar la procedencia ya publicada, sin adoptar un servidor reiniciado ni una sesión ajena.
 - [ ] Pasar pruebas afectadas, revisar independientemente y commit `feat: registrar procedencia del host para sesiones propias`.
 
+## Seguimiento de revisión independiente (Tarea 2)
+
+- Revisión final: `.aikit/binding-task2/review.json`, verdict `accepted`.
+- Checks finales: `uv run pytest` 591 passed; `uv run ruff check .` OK;
+  `uv run ruff format --check .` OK; `uv run mypy` OK.
+- Evidencia: host privado con bloqueo SO, escritura atómica y validación estricta.
+- No se acreditan tareas 3-4 ni integración real con servicio.
+
 ## Tarea 3: preflight común y envío CLI/MCP sobre el supervisor
 
 **Archivos:** crear `bound_execution.py`, `tests/test_bound_execution.py` y `tests/test_bound_cli_mcp.py`; modificar `delegate.py`, `session_worker.py`, `mcp_server.py`, `tests/fakes.py` y pruebas de CLI/catálogo/ejecución afectadas. Actualizar también `scripts/build_plugin.py` y su smoke de exportación cuando las nuevas dependencias pasen a ser imports del camino público. No alterar el algoritmo del parser `restrictions.py`.

@@ -65,6 +65,18 @@ Tipos nuevos compartidos:
 - [ ] Implementar mapeo cerrado de operaciones v2.2.0, incluido `config.get`/`GET /api/config` y `GET /api/model` con `location[directory]` explícito. No construir paths desde datos de registro de tarea. No añadir modelo/permisos mutadores ni consumidor de logs.
 - [ ] Pasar tests, Ruff y mypy de los cambios; revisor nuevo independiente antes de commit `feat: conectar al servicio existente sin autoarranque`.
 
+## Seguimiento de revisión independiente (Tarea 1)
+
+- Revisión final: `.aikit/binding-task1/review-final.json`, verdict `accepted`.
+- Checks finales: `uv run pytest` 554 passed; `uv run ruff check .` OK;
+  `uv run ruff format --check .` OK; `uv run mypy` OK.
+- Evidencia: ACL real con `icacls` sobre archivo temporal propio; deadline total
+  verificado para cabeceras y cuerpo lentos (0,503 s para 0,5 s); verify_owner
+  antes y después; representación sin credencial.
+- Desvío histórico TDD: no hay evidencia independiente del ciclo rojo inicial;
+  las garantías se acreditan por la suite verde actual y sondas propias.
+- No se acreditan tareas 2-4 ni integración real con servicio.
+
 ## Tarea 2: procedencia del host y supervisor ligado
 
 **Archivos:** crear `host_registry.py`, `tests/test_host_registry.py` y `tests/test_bound_worker.py`; modificar `session_worker.py`. Reutilizar `session_store.py` sin cambiar su esquema salvo necesidad documentada.

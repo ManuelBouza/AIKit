@@ -48,6 +48,7 @@ class PricingTier:
     output: float
     cache_read: float = 0.0
     cache_write: float = 0.0
+    context_size: float | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,7 @@ class QueryAttempt:
     at: datetime
     result: str
     error_code: str | None
+    attempt_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +113,8 @@ class ModelEntry:
     metadata: ModelMetadata
     quota: QuotaObservation | None
     context_key: str
+    query_attempt: QueryAttempt | None = None
+    outcome_attempt_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -121,6 +125,13 @@ class DataSourceStatus:
 
 
 @dataclass(frozen=True)
+class AggregateObservation:
+    provider: str
+    scope: str
+    observation: QuotaObservation
+
+
+@dataclass(frozen=True)
 class AvailabilitySnapshot:
     schema_version: int
     generation: int
@@ -128,6 +139,7 @@ class AvailabilitySnapshot:
     catalog_contexts: tuple[CatalogContext, ...]
     models: dict[str, ModelEntry]
     data_sources: tuple[DataSourceStatus, ...]
+    aggregates: tuple[AggregateObservation, ...] = ()
 
 
 def state_path(state_dir: Path) -> Path:
@@ -194,7 +206,11 @@ def read_snapshot(path: Path) -> AvailabilitySnapshot | None:
 
 
 def write_snapshot(
-    path: Path, snapshot: AvailabilitySnapshot, *, fail_before_replace: bool = False
+    path: Path,
+    snapshot: AvailabilitySnapshot,
+    *,
+    fail_before_replace: bool = False,
+    timeout: float = 10.0,
 ) -> None:
     """Escribe con bloqueo y reemplazo atómico; nunca deja bytes a medias."""
     _ensure_state_directory(path.parent)
@@ -202,7 +218,7 @@ def write_snapshot(
     def action() -> None:
         _write_snapshot_locked(path, snapshot, fail_before_replace=fail_before_replace)
 
-    _with_state_lock(path, action)
+    _with_state_lock(path, action, timeout=timeout)
 
 
 def update_snapshot(
@@ -220,9 +236,11 @@ def update_snapshot(
     return cast(AvailabilitySnapshot, _with_state_lock(path, action))
 
 
-def _with_state_lock(path: Path, action: Callable[[], Any]) -> Any:
+def _with_state_lock(
+    path: Path, action: Callable[[], Any], *, timeout: float = 10.0
+) -> Any:
     """Reintenta de forma acotada si otro proceso mantiene el bloqueo breve."""
-    deadline = time.monotonic() + 10.0
+    deadline = time.monotonic() + max(0.0, timeout)
     lock_path = path.parent / (STATE_FILENAME + ".lock")
     while True:
         try:
@@ -231,7 +249,7 @@ def _with_state_lock(path: Path, action: Callable[[], Any]) -> Any:
         except StoreError as error:
             if error.code != "lock_contended" or time.monotonic() >= deadline:
                 raise
-            time.sleep(0.02)
+            time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
 
 
 def _write_snapshot_locked(
@@ -415,12 +433,23 @@ def _snapshot_to_json(snapshot: AvailabilitySnapshot) -> dict[str, Any]:
                 "metadata": _metadata_to_json(entry.metadata),
                 "quota": _observation_to_json(entry.quota),
                 "context_key": entry.context_key,
+                "query_attempt": _query_attempt_to_json(entry.query_attempt),
+                "outcome_attempt_ids": list(entry.outcome_attempt_ids),
             }
             for key, entry in snapshot.models.items()
         },
         "data_sources": [
             {"name": s.name, "status": s.status, "error_code": s.error_code}
             for s in snapshot.data_sources
+        ],
+        "aggregates": [
+            {
+                "provider": item.provider,
+                "scope": item.scope,
+                "observation": _observation_to_json(item.observation),
+            }
+            for item in snapshot.aggregates
+            if item.observation is not None
         ],
     }
 
@@ -435,6 +464,7 @@ def _metadata_to_json(metadata: ModelMetadata) -> dict[str, Any]:
                 "output": tier.output,
                 "cache_read": tier.cache_read,
                 "cache_write": tier.cache_write,
+                "context_size": tier.context_size,
             }
             for tier in metadata.pricing
         ],
@@ -494,6 +524,10 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
     if not isinstance(sources_raw, list):
         raise _corrupt()
     sources = tuple(_source_from_json(item) for item in sources_raw)
+    aggregates_raw = data.get("aggregates", [])
+    if not isinstance(aggregates_raw, list):
+        raise _corrupt()
+    aggregates = tuple(_aggregate_from_json(item) for item in aggregates_raw)
     return AvailabilitySnapshot(
         schema_version=version,
         generation=generation,
@@ -501,6 +535,7 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
         catalog_contexts=contexts,
         models=models,
         data_sources=sources,
+        aggregates=aggregates,
     )
 
 
@@ -526,7 +561,15 @@ def _entry_from_json(data: object) -> ModelEntry:
     quota_raw = data.get("quota")
     quota = None if quota_raw is None else _observation_from_json(quota_raw)
     context_key = _text(data.get("context_key"))
-    return ModelEntry(metadata=metadata, quota=quota, context_key=context_key or "")
+    attempt_raw = data.get("query_attempt")
+    attempt = None if attempt_raw is None else _query_attempt_from_json(attempt_raw)
+    return ModelEntry(
+        metadata=metadata,
+        quota=quota,
+        context_key=context_key or "",
+        query_attempt=attempt,
+        outcome_attempt_ids=_string_tuple(data.get("outcome_attempt_ids", [])),
+    )
 
 
 def _metadata_from_json(data: object) -> ModelMetadata:
@@ -570,6 +613,9 @@ def _tier_from_json(data: object) -> PricingTier:
         output=_float(data.get("output")),
         cache_read=_float(data.get("cache_read")),
         cache_write=_float(data.get("cache_write")),
+        context_size=None
+        if data.get("context_size") is None
+        else _float(data["context_size"]),
     )
 
 
@@ -630,6 +676,44 @@ def _source_from_json(data: object) -> DataSourceStatus:
     return DataSourceStatus(
         name=name, status=_data_state(data.get("status")), error_code=error
     )
+
+
+def _query_attempt_to_json(attempt: QueryAttempt | None) -> dict[str, Any] | None:
+    if attempt is None:
+        return None
+    return {
+        "at": attempt.at.isoformat(),
+        "result": attempt.result,
+        "error_code": attempt.error_code,
+        "attempt_id": attempt.attempt_id,
+    }
+
+
+def _query_attempt_from_json(data: object) -> QueryAttempt:
+    if not isinstance(data, dict):
+        raise _corrupt()
+    result = _text(data.get("result"))
+    if result is None:
+        raise _corrupt()
+    error_raw = data.get("error_code")
+    error = None if error_raw is None else _text(error_raw)
+    return QueryAttempt(
+        at=_timestamp_required(data.get("at")),
+        result=result,
+        error_code=error,
+        attempt_id=_text(data.get("attempt_id"), optional=True),
+    )
+
+
+def _aggregate_from_json(data: object) -> AggregateObservation:
+    if not isinstance(data, dict):
+        raise _corrupt()
+    provider = _text(data.get("provider"))
+    scope = _text(data.get("scope"))
+    if provider is None or scope is None:
+        raise _corrupt()
+    observation = _observation_from_json(data.get("observation"))
+    return AggregateObservation(provider=provider, scope=scope, observation=observation)
 
 
 def _validate_snapshot(snapshot: AvailabilitySnapshot) -> None:

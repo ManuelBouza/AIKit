@@ -205,6 +205,24 @@ class FakeBinding:
     sources: list[dict[str, Any]] = field(default_factory=default_config_sources)
     catalog: list[dict[str, Any]] = field(default_factory=lambda: [api_model()])
     catalog_location: str | None = None
+    openapi: object | None = None
+    openapi_returncode: int = 0
+    usage_limits_data: object | None = field(
+        default_factory=lambda: {
+            "go": {
+                "rolling": {"percent": 0, "limited": False, "resetsAt": 1793476425740},
+                "weekly": {"percent": 0, "limited": False, "resetsAt": 1793577600000},
+                "monthly": {"percent": 0, "limited": False, "resetsAt": 1795887585000},
+            }
+        }
+    )
+    usage_limits_error: str | None = None
+    integrations_data: object | None = field(
+        default_factory=lambda: [
+            {"id": "opencode", "name": "OpenCode", "connections": 1}
+        ]
+    )
+    integrations_returncode: int = 0
     config_returncode: int = 0
     config_stdout: str | None = None
     config_stderr: str = ""
@@ -285,6 +303,31 @@ class FakeBinding:
             )
         location = self.catalog_location or str(Path(project).resolve())
         return {"location": {"directory": location}, "data": self.catalog}
+
+    def openapi_schema(self, *, timeout: float) -> object:
+        self._require_owner(timeout)
+        if self.openapi_returncode != 0:
+            raise delegate.DelegateError("openapi_unavailable", "No OpenAPI.")
+        if self.openapi is None:
+            return {"paths": {"/api/experimental/usage/limits": {"get": {}}}}
+        return self.openapi
+
+    def usage_limits(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("usage", Path(project)))
+        self._require_owner(timeout)
+        if self.usage_limits_error is not None:
+            raise ServiceError(self.usage_limits_error, "Fallo de uso.")
+        if self.usage_limits_data is not None:
+            return self.usage_limits_data
+        return {"go": None}
+
+    def integrations(self, *, timeout: float) -> object:
+        self._require_owner(timeout)
+        if self.integrations_returncode != 0:
+            raise ServiceError("http_error", "Fallo de integraciones.")
+        if self.integrations_data is None:
+            return [{"id": "opencode", "name": "OpenCode", "connections": 1}]
+        return self.integrations_data
 
     def child_environment(self, base: Mapping[str, str]) -> dict[str, str]:
         if self.closed:

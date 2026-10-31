@@ -170,3 +170,12 @@ Proportion: plan defines decisions and signatures, not implementation bodies.
 - La validación efectiva de capacidades del servicio corresponde a la tarea de refresh; no se acredita todavía por aceptar una versión diferente.
 - Fuente de aceptación: `.aikit/availability-note001/implementation/phase1-review.json`, 35 pruebas acotadas y Ruff/formato/mypy correctos; snapshot y sesión acreditados por `review_evidence.py`.
 - Aún faltan refresh, política, perfil de rendimiento, CLI/MCP/supervisor, exportación, routing y automatización.
+
+## Seguimiento: segunda unidad aceptada
+
+- Refresh, política y perfil de rendimiento puro aceptados tras la ronda 1 de correcciones. Implementación inicial en OpenCode, correcciones en respaldo nativo por rate limit y revisión independiente nuevamente en OpenCode.
+- Evidencia: `.aikit/availability-note001/implementation/phase2-review-fix1.json`; snapshot y sesión validados por `review_evidence.py`. 696 pruebas, Ruff/formato y mypy acotado del revisor pasan; el implementador también ejecutó mypy global de 53 fuentes.
+- Contratos reales para la integración: `coalesced_refresh`, `RefreshBinding`, `should_refresh`, `sort_candidates`, `eligible_for_attempt`, `record_outcome`; rendimiento con `aggregate_comparable` y deduplicación por identidad estable.
+- `QueryAttempt.attempt_id`, `ModelEntry.outcome_attempt_ids` y `PricingTier.context_size` son campos opcionales compatibles con schema 1.
+- El cooldown permanece optativo, desactivado por defecto. La evaluación diaria se alinea con las 09:00 de Madrid; el reset pasado requiere verificación.
+- Aún faltan integración CLI/MCP/supervisor, comando actualizador, exportación, routing y activación programada. No instalado globalmente.

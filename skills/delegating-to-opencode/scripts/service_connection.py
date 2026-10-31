@@ -176,6 +176,67 @@ class ManagedBinding:
             raise ServiceError("http_error", "Error HTTP.")
         return body
 
+    def openapi_schema(self, *, timeout: float) -> object:
+        if self._closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if self.verify_owner(timeout=min(timeout, 1.0)) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        url = self.registration.url.rstrip("/") + "/openapi.json"
+        deadline = time.monotonic() + max(0.0, timeout)
+        status, body = _http_request(
+            url=url,
+            method="GET",
+            credential=self._credential,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        if self.verify_owner(timeout=0.5) is None:
+            raise ServiceError("owner_mismatch", "Propietario cambió.")
+        if status != 200:
+            raise ServiceError("http_error", "Error HTTP.")
+        return body
+
+    def usage_limits(self, project: Path, *, timeout: float) -> object:
+        if self._closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if self.verify_owner(timeout=min(timeout, 1.0)) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        url = self.registration.url.rstrip("/") + "/api/experimental/usage/limits"
+        params = f"?directory={_quote(str(project))}"
+        deadline = time.monotonic() + max(0.0, timeout)
+        status, body = _http_request(
+            url=url + params,
+            method="GET",
+            credential=self._credential,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        if self.verify_owner(timeout=0.5) is None:
+            raise ServiceError("owner_mismatch", "Propietario cambió.")
+        if status != 200:
+            raise ServiceError("http_error", "Error HTTP.")
+        return body
+
+    def integrations(self, *, timeout: float) -> object:
+        if self._closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if self.verify_owner(timeout=min(timeout, 1.0)) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        url = self.registration.url.rstrip("/") + "/api/integration"
+        deadline = time.monotonic() + max(0.0, timeout)
+        status, body = _http_request(
+            url=url,
+            method="GET",
+            credential=self._credential,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        if self.verify_owner(timeout=0.5) is None:
+            raise ServiceError("owner_mismatch", "Propietario cambió.")
+        if status != 200:
+            raise ServiceError("http_error", "Error HTTP.")
+        return body
+
     def child_environment(self, base: Mapping[str, str]) -> dict[str, str]:
         if self._closed:
             raise ServiceError("binding_closed", "Binding cerrado.")

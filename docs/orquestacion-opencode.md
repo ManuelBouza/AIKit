@@ -8,10 +8,11 @@ independiente y verificación.
 
 Roles y flujo: implementador en OpenCode; revisor en sesión nueva, sin
 redelegar ni modificar la entrega; Codex comprueba evidencias. Capacidad primero:
-Free adecuado -> Go -> otras alternativas adecuadas -> Codex nativo si no hay
-opción adecuada/disponible. No degradar para evitar Codex ni agotar Free
-inadecuados. Si falta modelo adecuado o disponibilidad adecuada, retornar
-automáticamente por función, anunciando y registrando motivo, sin nueva
+Go de pago -> otros de pago adecuados -> todos los gratuitos conectados
+(incluido GoFree) -> Codex nativo si no hay opción adecuada/disponible. Primero
+tabla local; no sondeo global por elección. No degradar para evitar Codex ni
+agotar Free inadecuados. Si falta modelo adecuado o disponibilidad adecuada,
+retornar automáticamente por función, anunciando y registrando motivo, sin nueva
 aprobación; mantener revisión independiente. Solo bloquea proveedor directo
 `openai`; GPT de otros proveedores sigue permitido.
 

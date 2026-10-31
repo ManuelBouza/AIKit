@@ -7,7 +7,9 @@ OpenCode ejecuta diseño, arquitectura, contratos, planes, exploración factual,
 diagnóstico, implementación, pruebas, correcciones, documentación, revisión
 independiente y verificación.
 
-Capacidad primero: Free adecuado -> Go -> otras alternativas adecuadas -> Codex
+Primero lee la tabla local (`availability status --cwd <proyecto> --json`); no
+consultes catálogo/cuota por rutina. Capacidad primero: Go de pago -> otros de
+pago adecuados -> todos los gratuitos conectados (incluido GoFree) -> Codex
 nativo si no hay opción adecuada o disponible. No degradar para evitar Codex ni
 agotar Free inadecuados. Si falta modelo adecuado o disponibilidad adecuada,
 retornar automáticamente por función, anunciando y registrando motivo, sin nueva

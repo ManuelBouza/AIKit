@@ -34,9 +34,12 @@ No intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
 `run` comprueba en el destino, global o proyecto, `provider.use openai deny` y
 `tool.use subagent:* deny`. Sin certificado rechaza la inferencia; `doctor` no
 lo exige. Consulta `docs/correcciones-revision-funcional.md` para sus límites.
-Escoge modelo y esfuerzo según la tarea: gratuitos suficientes, después Go y
-otras alternativas conectadas. Bloquea solo el proveedor directo `openai`; GPT de
-otros proveedores siguen permitidos. Usa variantes publicadas o el predeterminado.
+Escoge modelo y esfuerzo según la tarea. Capacidad primero: Go de pago ->
+otros de pago conectados -> todos los gratuitos conectados (incluido GoFree) ->
+Codex nativo si no hay opción adecuada/disponible. Lee primero la tabla local
+(`availability status --cwd <proyecto> --json`); no consultes catálogo/cuota por
+rutina. Bloquea solo el proveedor directo `openai`; GPT de otros proveedores
+siguen permitidos. Usa variantes publicadas o el predeterminado.
 Antes de cada tarea o reintento en OpenCode, anuncia su objetivo, modelo,
 esfuerzo y condición gratuita o de pago; indica cuando la tarifa sea desconocida.
 
@@ -69,12 +72,13 @@ independiente y verificación. Revisor en sesión nueva, sin redelegar ni modifi
 la entrega; devuelve decisiones de diseño al coordinador. Codex no repite la
 revisión técnica independiente.
 
-Capacidad primero: Free adecuado -> Go -> otras alternativas adecuadas ->
-continuar en Codex nativo si no hay opción adecuada/disponible. No degradar para
-evitar Codex ni agotar Free inadecuados. Si falta modelo adecuado o
-disponibilidad adecuada, retornar automáticamente por función, anunciando y
-registrando motivo, sin nueva aprobación; mantener revisión independiente. Solo
-bloquea proveedor directo `openai`; GPT de otros proveedores sigue permitido.
+Capacidad primero: Go de pago -> otros de pago adecuados -> todos los gratuitos
+conectados (incluido GoFree) -> continuar en Codex nativo si no hay opción
+adecuada/disponible. No degradar para evitar Codex ni agotar Free inadecuados.
+Si falta modelo adecuado o disponibilidad adecuada, retornar automáticamente por
+función, anunciando y registrando motivo, sin nueva aprobación; mantener revisión
+independiente. Solo bloquea proveedor directo `openai`; GPT de otros proveedores
+sigue permitido. Primero tabla local; no sondeo global por cada elección.
 
 Formato `review.json`: `role: reviewer`, `session`, `snapshot`,
 `verdict: accepted|needs_corrections`, `checks[]` (`id`, `command`, `cwd`,

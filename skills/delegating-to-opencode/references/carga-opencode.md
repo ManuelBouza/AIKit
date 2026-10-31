@@ -25,10 +25,14 @@ Pruebas: comando y resultado resumido.
 
 Riesgos pendientes o cambios parciales.
 
-## Catálogo
+## Tabla y catálogo
 
-Consultarlo al seleccionar modelo y reutilizarlo en el mismo contexto mientras
-no haya señal de cambio. No es caché garantizada ni cuota.
+Lee primero la tabla local (`availability status --cwd <proyecto> --json`);
+reutilízala en el mismo contexto mientras no haya señal de cambio. No es caché
+garantizada ni cuota. `doctor`/catálogo solo cuando la tabla no baste; el
+refresh es explícito y no arranca el servicio. Conservar sesión/contexto y
+reanudar solo donde el backend/CLI oficial lo soporte. No reenviar por
+EOF/cliente pendiente; revisar vivo/admisión/inbox/parcial antes de reintentar.
 
 ## Registro de coordinación
 

@@ -22,9 +22,9 @@ implementación + pruebas/lint/tipos + correcciones/documentación. Antes de
 delegar: exploración mínima local para seguridad, skills y alcance; no
 inspección exhaustiva del coordinador. Sin ejecución externalizable no se
 llama al backend. `run` inicia inferencia; `doctor` solo
-consulta versión y catálogo. Los defectos vuelven al worker (misma sesión solo
-si el backend lo permite; hoy no ofrece reanudación, por lo que se crea tarea
-acotada nueva). No se parchea en Codex por ser "dos líneas". Codex conserva
+consulta versión y catálogo. Los defectos vuelven al worker; la reanudación se usa solo si el backend o la
+CLI oficial expuesta por el adaptador la soportan. No prometas reanudación
+genérica ni asumas soporte de la fuente. Codex conserva
 comprensión, decisiones del usuario y roles nativos/Superpowers; comprueba la
 aceptación de metadata sin repetir la revisión técnica independiente. No delegar deliberaciones ni
 solicitudes solo de conversación.
@@ -82,18 +82,30 @@ los casos.
 
 Antes de ejecutar:
 
-1. Clasifica la tarea: mecánica, integración o compleja.
-2. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
-   variantes con `doctor`.
-3. Entre opciones suficientes para la tarea y su esfuerzo, prioriza gratuitos de
-   OpenCode (también los servidos por Go), después OpenCode Go, después otras
-   alternativas adecuadas de proveedores conectados y, si ninguna sirve,
-   continúa con Codex nativo. Otros proveedores
-   conectados siguen permitidos si aportan una alternativa adecuada. No se
-   confirma cada uso de Go o pago dentro del alcance autorizado.
-4. Elige una variante acorde con la complejidad solo si su ID aparece en
+1. Lee primero la tabla local con `availability status --cwd <proyecto> --json`
+   (`HostContext.aikit_state`), sin consultas externas. Si falta, está ilegible
+   o el contexto no está acreditado, puede hacerse un único refresh coalescente;
+   no sondees por rutina.
+2. Clasifica la tarea: mecánica, integración o compleja.
+3. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
+   variantes con `doctor` solo cuando la tabla no baste para la elección.
+4. Entre opciones suficientes para la tarea y su esfuerzo, prioriza Go de pago,
+   después otros proveedores de pago conectados, después todos los gratuitos
+   conectados (incluidos los servidos por Go) y, si ninguna sirve, continúa con
+   Codex nativo. No degrades la tarea para evitar Codex ni agotes Free
+   inadecuados. Otros proveedores conectados siguen permitidos si aportan una
+   alternativa adecuada.
+5. Elige una variante acorde con la complejidad solo si su ID aparece en
    metadatos; sin variante, registra el ajuste predeterminado.
-5. Registra en `--reason` por qué modelo y variante bastan.
+6. Registra en `--reason` por qué modelo y variante bastan.
+
+Usa `availability refresh --cwd <proyecto> --json` solo como actualización
+explícita: servicio registrado ya encendido, sin arrancarlo ni inferir. Los
+disparadores son inicialización ausente/ilegible, contexto no acreditado, petición
+manual, rechazo real confirmado, cambio notificado/config/version detectado o
+verificación de recuperación. No hay TTL por ejecución ni programación diaria
+activada. `ok` con `errors` no equivale a catálogo/cuota válidos; una fuente
+fallida conserva su observación válida anterior y el intento fallido separado.
 
 Antes de cada tarea o reintento con inferencia, avisa al usuario qué se delega,
 el modelo/proveedor elegido, el esfuerzo (variante publicada o predeterminado)
@@ -148,8 +160,8 @@ Codex conserva coordinación, decisiones del usuario, selección de modelo y
 validación de metadata; cuando hay capacidad adecuada, OpenCode ejecuta diseño,
 arquitectura, contratos, planes, revisión técnica y verificación, incluidas
 comprobaciones de shell, con revisor independiente en sesión nueva.
-Capacidad primero: Free suficiente -> Go -> otras alternativas adecuadas ->
-nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
+Capacidad primero: Go de pago -> otros de pago adecuados -> todos los gratuitos
+conectados (incluido GoFree) -> nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
 opciones. Sin bucles ilimitados: fija presupuesto razonado de intentos/tiempo
 por tarea, revisa parciales y, si se agota, reevalúa adecuación y justifica
 cualquier retorno nativo. Si OpenCode agota el uso gratuito, `free_limit_reached`

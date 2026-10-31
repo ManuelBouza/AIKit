@@ -190,3 +190,12 @@ Proportion: plan defines decisions and signatures, not implementation bodies.
 - Compuertas de revisión: 726 pruebas, Ruff check, formato de 100 archivos y mypy de 57 fuentes correctos. Pruebas con transporte falso y procesos propios en Windows; no se acredita aún funcionamiento con el servicio real ni ramas POSIX.
 - Ruling: los campos de contexto que el brief daba por existentes no estaban implementados; se añadieron como opcionales schema 1. Se conserva metadata por proyecto y un pin de admisión cuya equivalencia no se invalida por una generación de otro proyecto. La firma usa solo contrato público saneado, nunca secretos ni hashes de credenciales.
 - Aún pendientes: regla/procedimiento en routing y skill, validación real del actualizador y configuración del host, y automatización diaria de Codex. No instalado, sin push; la tarea 4 de binding sigue pausada.
+
+## Seguimiento: instrucciones alineadas con la tabla local
+
+- El usuario priorizó actualizar skill y routing antes de continuar la primera tabla real. Fuente alineada en `SKILL.md`, `references/carga-opencode.md`, plantilla `config/codex/routing.md`, `AGENTS.md`, README y guía de orquestación. No se creó una skill adicional ni se modificó Superpowers.
+- Revisión independiente aceptada: `.aikit/availability-note001/instructions/review.json`; seis hashes y sesión real acreditados por `review_evidence.py`. Ocho escenarios operativos acotados registrados por el revisor; baseline del autor documental, no prueba exhaustiva de agentes/modelos.
+- Prioridad adecuada en todos los niveles: Go de pago -> otros de pago -> todos los gratuitos -> respaldo nativo. Tabla primero, refresh por disparadores, sin consultas por rutina ni promesa de cuota a partir del catálogo. Reanudación solo donde backend y adaptador la soporten.
+- Advertencia factual del informe sobre disponibilidad de skill-creator corregida en metadata, preservando el original; sin cambiar la entrega revisada.
+- No instalado ni propagado al entorno global. Host configurado solo en el proceso del primer refresco real: creó generación 1, pero integraciones/catálogo/cuotas devolvieron unavailable. No es una tabla de modelos utilizable. Bootstrap pausado por prioridad explícita del usuario; no se ejecutaron inferencias para probar modelos.
+- Pendientes: diagnóstico del refresco real, configuración persistente del host, despliegue y automatización de Codex. Sin push; tarea 4 de binding continúa pausada.

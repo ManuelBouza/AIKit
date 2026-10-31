@@ -224,14 +224,15 @@ motivo.
 
 Antes de ejecutar, clasifica la tarea como mecánica, integración o compleja y
 consulta capacidades, herramientas, modalidades, límites, tarifas y variantes.
-Determina primero las capacidades y el esfuerzo necesarios. Entre opciones
-suficientes, el coordinador prioriza gratuitos de OpenCode (incluidos los de
-Go), después OpenCode Go, después otras alternativas adecuadas de proveedores
-conectados y, si ninguna sirve, continúa con Codex nativo. Otros proveedores
-conectados siguen permitidos si ofrecen una alternativa adecuada; no se
-confirma cada uso dentro del alcance autorizado. El proveedor directo `openai`
-está bloqueado; los GPT de otros proveedores siguen disponibles según su
-conexión y tarifas.
+Lee primero la tabla local (`availability status --cwd <proyecto> --json`); no
+consultes catálogo/cuota por rutina. Determina primero las capacidades y el
+esfuerzo necesarios. Entre opciones suficientes, el coordinador prioriza Go de
+pago, después otros proveedores de pago conectados, después todos los gratuitos
+conectados (incluidos los de Go) y, si ninguna sirve, continúa con Codex
+nativo. Otros proveedores conectados siguen permitidos si ofrecen una
+alternativa adecuada; no se confirma cada uso dentro del alcance autorizado. El
+proveedor directo `openai` está bloqueado; los GPT de otros proveedores siguen
+disponibles según su conexión y tarifas.
 
 La variante debe existir en los metadatos. Si no hay variantes o conviene el
 ajuste predeterminado, regístralo en `--reason`; no inventes equivalencias con

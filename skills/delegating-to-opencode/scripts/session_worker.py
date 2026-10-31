@@ -20,8 +20,19 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 import delegate
+from availability_policy import ResultCode, eligible_for_attempt, record_outcome
+from availability_state import (
+    AvailabilitySnapshot,
+    admission_for,
+    configuration_signature,
+    model_entry,
+    read_snapshot,
+    state_path,
+    update_snapshot,
+)
 from host_registry import (
     HostRegistryError,
+    record_host_admission,
     record_host_observation,
     record_host_processes,
     record_host_session,
@@ -120,22 +131,57 @@ def _bound_command(
         or binding.verify_owner(timeout=1) is None
     ):
         raise ServiceError("owner_mismatch")
-    if not configuration_is_restricted(
-        binding.config_sources(Path(record.cwd), timeout=10)
-    ):
+    config = binding.config_sources(Path(record.cwd), timeout=10)
+    if not configuration_is_restricted(config):
         raise delegate.DelegateError(
             "unsafe_configuration", "Configuracion efectiva no restringida."
         )
     model, variant = delegate.parse_model(record.model, record.variant)
     delegate._validate_reason(record.reason)
     delegate.load_policy()
-    catalog = delegate._catalog_from_payload(
-        binding.model_catalog(Path(record.cwd), timeout=10), Path(record.cwd)
-    )
-    selected_model = next((item for item in catalog if item["model"] == model), None)
-    if selected_model is None:
-        raise delegate.DelegateError("model_unavailable", "Modelo no disponible.")
-    if variant is not None and variant not in selected_model["variant_ids"]:
+
+    snapshot = read_snapshot(state_path(context.aikit_state))
+    project_key = delegate._project_key(Path(record.cwd))
+    signature = configuration_signature(config)
+    if snapshot is None or not any(
+        item.project_key == project_key
+        and item.config_signature == signature
+        and item.service_version == binding.registration.version
+        and {"config.get", "model.catalog"}.issubset(item.capabilities)
+        for item in snapshot.catalog_contexts
+    ):
+        raise delegate.DelegateError(
+            "availability_context_unavailable",
+            "Contrato del contexto ausente o cambiado; no se envia.",
+        )
+    admission = admission_for(snapshot, project_key, model, variant)
+    if attempt.admission is None:
+        record_host_admission(context, record, admission)
+    elif (
+        attempt.admission.project_key,
+        attempt.admission.config_signature,
+        attempt.admission.service_version,
+        attempt.admission.model,
+        attempt.admission.variant,
+        attempt.admission.metadata_signature,
+    ) != (
+        admission.project_key,
+        admission.config_signature,
+        admission.service_version,
+        admission.model,
+        admission.variant,
+        admission.metadata_signature,
+    ):
+        raise delegate.DelegateError(
+            "availability_context_changed",
+            "Seleccion del intento ya no acreditada; no se envia.",
+        )
+    entry = model_entry(snapshot, project_key, model)
+    if entry is None or not eligible_for_attempt(entry, record.attempt_id):
+        raise delegate.DelegateError(
+            "model_unavailable", "Modelo no disponible para este intento."
+        )
+    if variant is not None and variant not in entry.metadata.variants:
         raise delegate.DelegateError("invalid_variant", "Variante no disponible.")
     exe = delegate.find_opencode()
     if exe is None:
@@ -351,9 +397,12 @@ def supervise(
         ):
             stdout = Capture(out_file, events)
             stderr = Capture(err_file)
+            task_started = time.monotonic()
             try:
                 if binding is not None:
-                    verify_provenance(context, record)  # type: ignore[arg-type]
+                    if context is None:
+                        raise ServiceError("host_context_unavailable")
+                    verify_provenance(context, record)
                     if binding.verify_owner(timeout=1) is None:
                         raise ServiceError("owner_mismatch")
                 process = subprocess.Popen(
@@ -375,8 +424,8 @@ def supervise(
             with state_lock:
                 record.client = _identity(process.pid)
                 record.supervisor = _identity(os.getpid())
-            if record.client is not None and record.supervisor is not None:
-                limitations.remove("process_identity_unknown")
+                if record.client is not None and record.supervisor is not None:
+                    limitations.remove("process_identity_unknown")
                 if context is not None:
                     try:
                         record_host_processes(context, record)
@@ -518,6 +567,52 @@ def supervise(
                 except (HostRegistryError, StoreError, OSError):
                     pass  # Existing reservation and artifacts still block another send.
             observe("client_exited")
+            try:
+                stdout_text = (directory / "stdout.partial").read_text(
+                    encoding="utf-8", errors="replace"
+                )
+            except OSError:
+                stdout_text = ""
+            free_limit_reached = delegate._free_limit_reached(stdout_text)
+            availability_errors = ["opencode_event_error"] if events.error else []
+            outcome_code: ResultCode | None = None
+            if context is not None and delivery in {"completed", "failed"}:
+                try:
+                    outcome_code = _record_availability_outcome(
+                        context,
+                        record,
+                        stdout_text,
+                        availability_errors,
+                        delivery,
+                        free_limit_reached,
+                        task_seconds=time.monotonic() - task_started,
+                    )
+                except Exception:  # noqa: BLE001
+                    if "availability_outcome_failed" not in limitations:
+                        limitations.append("availability_outcome_failed")
+            if (
+                context is not None
+                and outcome_code in {"quota_exhausted", "balance_exhausted"}
+                and binding is not None
+            ):
+                try:
+                    from availability_refresh import coalesced_refresh
+
+                    current_admission = verify_provenance(context, record).admission
+                    coalesced_refresh(
+                        state_path(context.aikit_state),
+                        binding,
+                        Path(record.cwd),
+                        10.0,
+                        force=True,
+                        context_signature=current_admission.config_signature
+                        if current_admission is not None
+                        else None,
+                        service_version=binding.registration.version,
+                    )
+                except Exception:  # noqa: BLE001
+                    if "availability_refresh_failed" not in limitations:
+                        limitations.append("availability_refresh_failed")
             report: dict[str, Any] = {
                 "status": "ok"
                 if delivery == "completed"
@@ -563,6 +658,148 @@ def supervise(
     finally:
         if binding is not None:
             binding.close()
+
+
+def _result_code_for_outcome(
+    stdout: str, errors: list[str], delivery: str, free_limit: bool
+) -> ResultCode:
+    if free_limit:
+        return "quota_exhausted"
+    if delivery == "completed" and not errors:
+        return "success"
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(event, dict) or event.get("type") != "error":
+            continue
+        error = event.get("error")
+        if not isinstance(error, dict):
+            continue
+        code = str(error.get("type", error.get("code", ""))).lower().replace("_", "-")
+        status = error.get("statusCode", error.get("status"))
+        if code in {
+            "provider.free-limit",
+            "provider.quota-exhausted",
+            "quota-exhausted",
+        }:
+            return "quota_exhausted"
+        if code in {
+            "provider.insufficient-credits",
+            "provider.balance-exhausted",
+            "insufficient-credits",
+        }:
+            return "balance_exhausted"
+        if code in {"provider.rate-limit", "rate-limited"} or status == 429:
+            return "rate_limited"
+        if code in {"provider.auth", "authentication-error"} or status in (401, 403):
+            return "auth_error"
+        if code in {
+            "provider.output-budget",
+            "unaffordable-output",
+            "max-output-unaffordable",
+        }:
+            return "unaffordable_output"
+        if (
+            code in {"provider.transport", "provider.timeout", "connection-error"}
+            or type(status) is int
+            and status >= 500
+        ):
+            return "service_error"
+        if code in {"task.compilation", "task.tests", "task.failed", "tool.error"}:
+            return "task_failed"
+    return "unknown"
+
+
+def _record_availability_outcome(
+    context: HostContext,
+    record: TaskRecord,
+    stdout: str,
+    errors: list[str],
+    delivery: str,
+    free_limit: bool,
+    *,
+    task_seconds: float | None = None,
+) -> ResultCode | None:
+    from dataclasses import replace
+
+    from availability_performance import (
+        PerformanceModelKey,
+        PerformanceSample,
+        PerformanceWindow,
+        add_sample,
+        extract_samples_from_events,
+    )
+
+    now = datetime.now(timezone.utc)
+    code = _result_code_for_outcome(stdout, errors, delivery, free_limit)
+    recorded = False
+
+    def mutate(snapshot: AvailabilitySnapshot) -> AvailabilitySnapshot:
+        nonlocal recorded
+        project_key = delegate._project_key(Path(record.cwd))
+        entry = model_entry(snapshot, project_key, record.model)
+        models = dict(snapshot.models)
+        projects = {
+            project: dict(entries)
+            for project, entries in snapshot.project_models.items()
+        }
+        if entry is not None:
+            recorded = record.attempt_id not in entry.outcome_attempt_ids
+            updated = record_outcome(entry, code, now, attempt_id=record.attempt_id)
+            projects.setdefault(project_key, {})[record.model] = updated
+            if (
+                record.model in models
+                and models[record.model].context_key == project_key
+            ):
+                models[record.model] = updated
+        window = PerformanceWindow(max_samples=1000)
+        for sample in snapshot.performance_samples:
+            window = add_sample(window, sample)
+        key = PerformanceModelKey(
+            record.model.split("/")[0], record.model, record.variant
+        )
+        events = []
+        for line in stdout.splitlines():
+            try:
+                events.append(json.loads(line))
+            except (ValueError, RecursionError):
+                continue
+        samples = extract_samples_from_events(
+            events,
+            task_id=record.task_id,
+            attempt_id=record.attempt_id,
+            key=key,
+            source="supervisor_stdout",
+            role=record.role,
+            observed_at=now,
+            measurement_kind="model",
+        )
+        for sample in samples:
+            window = add_sample(window, sample)
+        if task_seconds is not None:
+            sample = PerformanceSample(
+                key,
+                record.task_id,
+                record.attempt_id,
+                "supervisor_clock",
+                "task",
+                now,
+                event_id="supervisor-task-total",
+                role=record.role,
+                task_seconds=task_seconds,
+            )
+            window = add_sample(window, sample)
+        return replace(
+            snapshot,
+            models=models,
+            project_models=projects,
+            performance_samples=window.samples,
+        )
+
+    update_snapshot(state_path(context.aikit_state), mutate)
+    return code if recorded else None
 
 
 def main() -> int:

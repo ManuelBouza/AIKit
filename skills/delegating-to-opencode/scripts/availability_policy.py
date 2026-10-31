@@ -44,6 +44,8 @@ ResultCode = Literal[
     "service_error",
     "unaffordable_output",
     "unknown",
+    "balance_exhausted",
+    "task_failed",
 ]
 
 
@@ -146,7 +148,7 @@ def record_outcome(
             limited=False,
         )
         pass
-    elif result_code in ("quota_exhausted", "rate_limited"):
+    elif result_code in ("quota_exhausted", "balance_exhausted"):
         observation = QuotaObservation(
             status="exhausted",
             source="inference_result",
@@ -159,7 +161,13 @@ def record_outcome(
             percent=100 if result_code == "quota_exhausted" else None,
             limited=True,
         )
-    elif result_code in ("auth_error", "service_error", "unaffordable_output"):
+    elif result_code in (
+        "auth_error",
+        "service_error",
+        "unaffordable_output",
+        "rate_limited",
+        "task_failed",
+    ):
         observation = None
         pass
     else:

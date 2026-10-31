@@ -179,3 +179,14 @@ Proportion: plan defines decisions and signatures, not implementation bodies.
 - `QueryAttempt.attempt_id`, `ModelEntry.outcome_attempt_ids` y `PricingTier.context_size` son campos opcionales compatibles con schema 1.
 - El cooldown permanece optativo, desactivado por defecto. La evaluación diaria se alinea con las 09:00 de Madrid; el reset pasado requiere verificación.
 - Aún faltan integración CLI/MCP/supervisor, comando actualizador, exportación, routing y activación programada. No instalado globalmente.
+
+## Seguimiento: integración CLI/MCP/supervisor aceptada
+
+- Unidad de integración aceptada el 2026-11-01 tras FIX ROUND1: `.aikit/availability-note001/implementation/phase3-review-fix1.json`. Los 26 hashes y la sesión independiente real fueron validados por `review_evidence.py`.
+- CLI, MCP y supervisor usan catálogo por contexto y admisión acreditada; las ejecuciones sucesivas con tabla válida no consultan catálogo, integraciones, OpenAPI ni cuota. La ausencia o cambio acreditado de contexto permite un refresh coalescente.
+- El supervisor registra outcomes y muestras tipadas acotadas con identidad estable; recuperar el mismo evento no duplica las muestras. Cuota/saldo confirmados, rate limit, autenticación, presupuesto de salida y fallos de tarea se distinguen.
+- Nuevos comandos: `delegate.py availability status|refresh --cwd <proyecto> --json`. Status solo lee el registro del host configurado; refresh usa únicamente el servicio registrado ya encendido. No configura el host ni arranca OpenCode.
+- La exportación incluye los módulos nuevos. Política distribuida `prefer_free: false` para Go de pago -> otros de pago -> gratuitos; un override explícito se respeta.
+- Compuertas de revisión: 726 pruebas, Ruff check, formato de 100 archivos y mypy de 57 fuentes correctos. Pruebas con transporte falso y procesos propios en Windows; no se acredita aún funcionamiento con el servicio real ni ramas POSIX.
+- Ruling: los campos de contexto que el brief daba por existentes no estaban implementados; se añadieron como opcionales schema 1. Se conserva metadata por proyecto y un pin de admisión cuya equivalencia no se invalida por una generación de otro proyecto. La firma usa solo contrato público saneado, nunca secretos ni hashes de credenciales.
+- Aún pendientes: regla/procedimiento en routing y skill, validación real del actualizador y configuración del host, y automatización diaria de Codex. No instalado, sin push; la tarea 4 de binding sigue pausada.

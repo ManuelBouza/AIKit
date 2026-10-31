@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from availability_state import CatalogAdmission, admission_from_json
 from service_identity import HostContext, _windows_registration_trusted
 from session_store import (
     ProcessIdentity,
@@ -72,6 +73,7 @@ class HostAttempt:
     supervisor: ProcessIdentity | None = None
     source: str = "host_reservation"
     observed_at: str = ""
+    admission: CatalogAdmission | None = None
 
 
 @dataclass
@@ -236,9 +238,14 @@ def _parse(data: Any) -> HostTask:
         attempts = []
         for raw in data["attempts"]:
             keys = set(HostAttempt.__dataclass_fields__)
-            if not isinstance(raw, dict) or set(raw) != keys:
+            if (
+                not isinstance(raw, dict)
+                or set(raw) - keys
+                or keys - {"admission"} - set(raw)
+            ):
                 raise ValueError
             item = dict(raw)
+            item["admission"] = admission_from_json(item.get("admission"))
             _uuid(item["attempt_id"])
             _uuid(item["launch_nonce"])
             if not isinstance(item["binding_token"], str) or not _TOKEN.fullmatch(
@@ -403,7 +410,11 @@ def _match(
 
 
 def reserve_host_attempt(
-    context: HostContext, record: TaskRecord, *, agent: str = "build"
+    context: HostContext,
+    record: TaskRecord,
+    *,
+    agent: str = "build",
+    admission: CatalogAdmission | None = None,
 ) -> HostAttempt:
     from datetime import datetime, timezone
 
@@ -438,6 +449,7 @@ def reserve_host_attempt(
             "reserved",
             root,
             observed_at=datetime.now(timezone.utc).isoformat(),
+            admission=admission,
         )
         _write_host(
             context,
@@ -500,4 +512,21 @@ def record_host_observation(
         current.phase = "terminal_observed" if terminal else "uncertain"
         current.source = "cli_terminal" if terminal else "client_observation"
         current.observed_at = datetime.now(timezone.utc).isoformat()
+        _write_host(context, record.task_id, host)
+
+
+def record_host_admission(
+    context: HostContext, record: TaskRecord, admission: CatalogAdmission
+) -> None:
+    """Completa solo una reserva propia aun no enviada; no adopta intentos vivos."""
+    with _lock_host(context, record.task_id):
+        host = _read_host(context, record.task_id)
+        current = _match(host, record)
+        if current.admission is not None:
+            if current.admission != admission:
+                raise HostRegistryError("admission_mismatch")
+            return
+        if current.phase != "reserved" or current.session_id is not None:
+            raise HostRegistryError("admission_unavailable")
+        current.admission = admission
         _write_host(context, record.task_id, host)

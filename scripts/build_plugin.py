@@ -45,6 +45,10 @@ PACKAGE_FILES = (
     "skills/delegating-to-opencode/scripts/session_worker.py",
     "skills/delegating-to-opencode/scripts/session_stream.py",
     "skills/delegating-to-opencode/scripts/host_registry.py",
+    "skills/delegating-to-opencode/scripts/availability_state.py",
+    "skills/delegating-to-opencode/scripts/availability_refresh.py",
+    "skills/delegating-to-opencode/scripts/availability_policy.py",
+    "skills/delegating-to-opencode/scripts/availability_performance.py",
 )
 
 

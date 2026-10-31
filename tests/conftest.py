@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
 import bound_execution
 import delegate
 import pytest
-from service_identity import HostContext, ServiceError
+from service_identity import HostContext
 from session_store import DeliveryState, Role
 
 from tests.fakes import (
@@ -101,6 +101,8 @@ class Harness:
     task: Path
     monkeypatch: pytest.MonkeyPatch
     binding: FakeBinding | None = None
+    context: HostContext | None = None
+    bindings: list[FakeBinding] = field(default_factory=list)
 
     def fake(
         self,
@@ -153,9 +155,9 @@ class Harness:
         )
         catalog = models if models is not None else [api_model()]
 
+        self.context = context
+
         def discover(_context: HostContext, **kwargs: Any) -> FakeBinding:
-            if version != "2.2.0":
-                raise ServiceError("version_mismatch", "Versión no soportada.")
             binding = FakeBinding(
                 context=_context,
                 version=version,
@@ -168,6 +170,7 @@ class Harness:
                 catalog_stderr=catalog_stderr,
             )
             self.binding = binding
+            self.bindings.append(binding)
             return binding
 
         def launch(prepared: Any, record: Any, *, context: HostContext) -> None:

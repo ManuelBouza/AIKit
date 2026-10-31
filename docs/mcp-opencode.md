@@ -243,3 +243,21 @@ ya no depende de la `.venv` del checkout. La skill manual y su configuración
 quedaron respaldadas. Consulta [instalación](plugin-aikit.md) y
 [validación del complemento](validacion-plugin.md); el apartado anterior conserva
 la evidencia de la primera instalación del MCP independiente.
+
+## Tabla local de disponibilidad
+
+`delegate.py availability status --cwd <proyecto> --json` solo lee el estado del
+host configurado. Si falta `HostContext`, devuelve un diagnóstico; no busca una
+tabla alternativa dentro del proyecto. `availability refresh` consulta únicamente
+el servicio registrado y publica metadatos, sin ejecutar modelos ni arrancarlo.
+
+La distribución usa `prefer_free: false`: Go de pago, otros de pago y gratuitos,
+siempre entre modelos adecuados. Un archivo de usuario con `prefer_free: true`
+sigue mostrando los gratuitos primero; el runtime no lo reescribe. Para adoptar
+voluntariamente la prioridad nueva, el usuario puede cambiar ese valor a `false`.
+
+La firma de contexto cubre selección y permisos publicados por lista blanca,
+no credenciales ni identidades de cuenta. Un cambio privado de cuenta requiere
+la notificación o actualización explícita acordada; no se detecta almacenando
+hashes de secretos. Las muestras de rendimiento conservan IDs y medidas tipadas,
+sin prompts/respuestas. Un intento pendiente no se reenvía al leer la tabla.

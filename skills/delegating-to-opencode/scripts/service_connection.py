@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from availability_state import CatalogAdmission
 from service_identity import (
     HostContext,
     ServiceError,
@@ -270,6 +271,7 @@ class BoundLaunch:
     role: Role = "implementer"
     task: str = field(default="", repr=False)
     pricing: Pricing = "unknown"
+    admission: CatalogAdmission | None = field(default=None, repr=False)
     _attempt_ids: tuple[str, str] | None = field(default=None, init=False, repr=False)
     _claim_lock: Any = field(default_factory=threading.Lock, init=False, repr=False)
 

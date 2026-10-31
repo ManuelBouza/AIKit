@@ -312,10 +312,13 @@ def test_two_launcher_processes_only_send_one_task(tmp_path: Path) -> None:
     [
         ({"model": "openai/gpt-falso"}, "provider_not_allowed"),
         ({"reason": " "}, "invalid_record"),
-        ({"model": "opencode/inexistente", "variant": None}, "model_unavailable"),
+        (
+            {"model": "opencode/inexistente", "variant": None},
+            "availability_context_unavailable",
+        ),
         (
             {"model": "opencode/kimi-k2.5-free", "variant": "inexistente"},
-            "model_unavailable",
+            "availability_context_unavailable",
         ),
     ],
 )

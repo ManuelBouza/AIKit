@@ -331,8 +331,14 @@ def test_la_comprobacion_ocurre_antes_del_catalogo_y_de_la_ejecucion(
     transport = harness.fake()
     assert harness.run()["status"] == "ok"
     assert harness.binding is not None
-    assert [kind for kind, _path in harness.binding.calls] == ["config", "catalog"]
-    assert {path for _kind, path in harness.binding.calls} == {
+    assert [kind for kind, _path in harness.binding.calls] == [
+        "config",
+        "openapi",
+        "integrations",
+        "catalog",
+        "usage",
+    ]
+    assert {path for _kind, path in harness.binding.calls if path is not None} == {
         harness.project.resolve()
     }
     assert len(transport.run_calls) == 1
@@ -365,4 +371,4 @@ def test_doctor_no_exige_certificado_de_restricciones(harness: Harness) -> None:
     result = harness.doctor()
     assert result["status"] == "ok"
     assert harness.binding is not None
-    assert harness.binding.config_calls == []
+    assert harness.binding.config_calls == [harness.project.resolve()]

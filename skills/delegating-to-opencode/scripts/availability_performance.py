@@ -988,53 +988,105 @@ def _sample_to_dict(sample: PerformanceSample) -> dict[str, Any]:
 
 
 def _sample_from_dict(data: Mapping[str, Any]) -> PerformanceSample:
-    mapping = _mapping(data)
-    key_data = _mapping(mapping.get("key"))
+    allowed = {
+        "key",
+        "task_id",
+        "attempt_id",
+        "event_id",
+        "source",
+        "measurement_kind",
+        "observed_at",
+        "role",
+        "context_bucket",
+        "ttft_seconds",
+        "generation_seconds",
+        "model_seconds",
+        "task_seconds",
+        "tool_seconds",
+        "tokens",
+        "tokens_per_second",
+        "limitations",
+    }
+    required = {
+        "key",
+        "task_id",
+        "attempt_id",
+        "source",
+        "measurement_kind",
+        "observed_at",
+    }
+    if set(data) - allowed or not required.issubset(data):
+        raise ValueError("Campos de muestra no permitidos.")
+
+    def text(value: object) -> str:
+        parsed = _text(value)
+        if parsed is None:
+            raise ValueError("Identidad ausente.")
+        return parsed
+
+    key_data = _mapping(data["key"])
+    if set(key_data) - {"provider", "model", "variant", "account_alias"}:
+        raise ValueError("Clave no permitida.")
     key = PerformanceModelKey(
-        provider=str(key_data.get("provider")),
-        model=str(key_data.get("model")),
+        provider=text(key_data.get("provider")),
+        model=text(key_data.get("model")),
         variant=key_data.get("variant"),
         account_alias=key_data.get("account_alias"),
     )
-    observed_raw = mapping.get("observed_at")
-    if not isinstance(observed_raw, str):
-        raise ValueError("observed_at debe ser texto ISO.")
-    observed_at = datetime.fromisoformat(observed_raw)
-    observed_at = _require_aware(observed_at, "observed_at")
-    tokens_raw = mapping.get("tokens")
-    tokens = TokenStats()
-    if isinstance(tokens_raw, Mapping):
-        tokens = TokenStats(
-            input_tokens=tokens_raw.get("input_tokens"),
-            output_tokens=tokens_raw.get("output_tokens"),
-            total_tokens=tokens_raw.get("total_tokens"),
-            cache_read_tokens=tokens_raw.get("cache_read_tokens"),
-            cache_write_tokens=tokens_raw.get("cache_write_tokens"),
-        )
-    limitations_raw = mapping.get("limitations", [])
-    if not isinstance(limitations_raw, Sequence) or isinstance(
-        limitations_raw, (str, bytes)
-    ):
-        raise ValueError("limitations debe ser una lista.")
-    limitations = tuple(str(item) for item in limitations_raw)
+    observed_at = _require_aware(datetime.fromisoformat(text(data["observed_at"])))
+    raw = data.get("tokens", {})
+    tokens_raw = _mapping(raw)
+    if set(tokens_raw) - {
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "cache_read_tokens",
+        "cache_write_tokens",
+    }:
+        raise ValueError("Contadores no permitidos.")
+    tokens = TokenStats(
+        input_tokens=tokens_raw.get("input_tokens"),
+        output_tokens=tokens_raw.get("output_tokens"),
+        total_tokens=tokens_raw.get("total_tokens"),
+        cache_read_tokens=tokens_raw.get("cache_read_tokens"),
+        cache_write_tokens=tokens_raw.get("cache_write_tokens"),
+    )
+    limitations_raw = data.get("limitations", [])
+    if not isinstance(limitations_raw, list) or len(limitations_raw) > MAX_LIMITATIONS:
+        raise ValueError("Limitaciones fuera de contrato.")
+    kind = data["measurement_kind"]
+    if kind == "model":
+        measurement: MeasurementKind = "model"
+    elif kind == "task":
+        measurement = "task"
+    elif kind == "ttft":
+        measurement = "ttft"
+    elif kind == "generation":
+        measurement = "generation"
+    elif kind == "tool":
+        measurement = "tool"
+    elif kind == "total":
+        measurement = "total"
+    else:
+        raise ValueError("Tipo de muestra no permitido.")
     return PerformanceSample(
         key=key,
-        task_id=str(mapping.get("task_id")),
-        attempt_id=str(mapping.get("attempt_id")),
-        source=str(mapping.get("source")),
-        measurement_kind=str(mapping.get("measurement_kind", "model")),  # type: ignore[arg-type]
+        task_id=text(data["task_id"]),
+        attempt_id=text(data["attempt_id"]),
+        source=text(data["source"]),
+        measurement_kind=measurement,
         observed_at=observed_at,
-        event_id=mapping.get("event_id"),
-        role=mapping.get("role"),
-        context_bucket=mapping.get("context_bucket"),
-        ttft_seconds=mapping.get("ttft_seconds"),
-        generation_seconds=mapping.get("generation_seconds"),
-        model_seconds=mapping.get("model_seconds"),
-        task_seconds=mapping.get("task_seconds"),
-        tool_seconds=mapping.get("tool_seconds"),
+        event_id=data.get("event_id"),
+        role=data.get("role"),
+        context_bucket=data.get("context_bucket"),
+        ttft_seconds=data.get("ttft_seconds"),
+        generation_seconds=data.get("generation_seconds"),
+        model_seconds=data.get("model_seconds"),
+        task_seconds=data.get("task_seconds"),
+        tool_seconds=data.get("tool_seconds"),
         tokens=tokens,
-        tokens_per_second=mapping.get("tokens_per_second"),
-        limitations=limitations,
+        tokens_per_second=data.get("tokens_per_second"),
+        limitations=tuple(text(item) for item in limitations_raw),
     )
 
 

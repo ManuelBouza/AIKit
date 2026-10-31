@@ -144,10 +144,18 @@ def test_prepare_returns_bound_launch_and_uses_one_binding_project(
     prepared = prepare(project, context, task="prompt-privado", reason="motivo-privado")
 
     assert isinstance(prepared, BoundLaunch)
-    assert prepared.binding is binding  # type: ignore[comparison-overlap]
+    assert id(prepared.binding) == id(binding)
     assert prepared.project == project.resolve()
-    assert [kind for kind, _ in binding.calls] == ["config", "catalog"]
-    assert {path for _, path in binding.calls} == {project.resolve()}
+    assert [kind for kind, _ in binding.calls] == [
+        "config",
+        "openapi",
+        "integrations",
+        "catalog",
+        "usage",
+    ]
+    assert {path for _, path in binding.calls if path is not None} == {
+        project.resolve()
+    }
     assert prepared.argv[6:10] == [
         "--server",
         binding.registration.url,
@@ -216,7 +224,7 @@ def test_catalog_location_must_match_the_project(
     with pytest.raises(delegate.DelegateError) as error:
         prepare(project, context)
 
-    assert error.value.code == "project_mismatch"
+    assert error.value.code == "catalog_capability_unavailable"
     assert binding.closed is True
 
 
@@ -240,7 +248,7 @@ def test_doctor_queries_without_certificate_but_run_rejects_unsafe(
 
     assert catalog["status"] == "ok"
     assert [item["model"] for item in catalog["catalog"]] == ["opencode/seguro"]
-    assert binding.config_calls == []
+    assert binding.config_calls == [project.resolve()]
 
     fresh = FakeBinding(context=context, sources=[], catalog=binding.catalog)
     monkeypatch.setattr(delegate, "discover_existing", lambda _context, **kwargs: fresh)
@@ -850,7 +858,7 @@ sw.supervise(Path({str(project)!r}),sys.argv[1],context=ctx,_task=text,prepare_c
         assert recovered["summary"] == "literal-ok"
         assert submissions == [prompt]
         assert requests.count("/api/config") == 2
-        assert requests.count("/api/model") == 2
+        assert requests.count("/api/model") == 1
         assert (
             be.execute_bound(prepared, context=ctx, wait_seconds=0)["task_id"]
             == first["task_id"]

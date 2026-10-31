@@ -15,7 +15,7 @@ from tests.conftest import Harness
 
 
 def test_policy_only_contains_preferences() -> None:
-    assert delegate.load_policy() == {"prefer_free": True}
+    assert delegate.load_policy() == {"prefer_free": False}
 
 
 def test_policy_rejects_invalid_shape(tmp_path: Path) -> None:

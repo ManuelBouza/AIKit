@@ -89,12 +89,17 @@ def _capabilities_from_schema(schema: object) -> set[str]:
 def _metadata_from_public(public: dict[str, Any]) -> ModelMetadata:
     limits = public.get("limits")
     context_limit = None
+    input_limit = None
     output_limit = None
     if isinstance(limits, dict):
         if isinstance(limits.get("context"), int) and not isinstance(
             limits.get("context"), bool
         ):
             context_limit = limits["context"]
+        if isinstance(limits.get("input"), int) and not isinstance(
+            limits.get("input"), bool
+        ):
+            input_limit = limits["input"]
         if isinstance(limits.get("output"), int) and not isinstance(
             limits.get("output"), bool
         ):
@@ -142,6 +147,7 @@ def _metadata_from_public(public: dict[str, Any]) -> ModelMetadata:
         input_modalities=input_modalities,
         output_modalities=output_modalities,
         context_limit=context_limit,
+        input_limit=input_limit,
         output_limit=output_limit,
         free_candidate=free_candidate if isinstance(free_candidate, bool) else None,
         may_use_openai_quota=may_use_openai_quota
@@ -207,6 +213,9 @@ def _refresh_once(
     project: Path,
     timeout: float,
     current: AvailabilitySnapshot,
+    *,
+    context_signature: str | None = None,
+    service_version: str | None = None,
 ) -> tuple[AvailabilitySnapshot, tuple[str, ...]]:
     deadline = time.monotonic() + timeout
     errors: list[str] = []
@@ -251,7 +260,7 @@ def _refresh_once(
         for record in models:
             public = _public_model(record)
             key = str(public["model"])
-            previous = current.models.get(key)
+            previous = current.project_models.get(context_key, current.models).get(key)
             if previous is not None and previous.context_key != context_key:
                 previous = None
             new_models[key] = ModelEntry(
@@ -294,6 +303,11 @@ def _refresh_once(
 
     contexts = list(current.catalog_contexts)
     merged_models = dict(current.models)
+    project_models = {
+        project: dict(entries) for project, entries in current.project_models.items()
+    }
+    for model, entry in current.models.items():
+        project_models.setdefault(entry.context_key, {}).setdefault(model, entry)
     if catalog_ok:
         previous_context = next(
             (item for item in contexts if item.project_key == context_key), None
@@ -305,7 +319,13 @@ def _refresh_once(
             else previous_context.config_sources
             if previous_context is not None
             else (),
+            config_signature=context_signature,
+            service_version=service_version,
+            capabilities=("config.get", "model.catalog")
+            if context_signature is not None
+            else ("model.catalog",),
         )
+        project_models[context_key] = dict(new_models)
         contexts = [item for item in contexts if item.project_key != context_key] + [
             new_context
         ]
@@ -340,6 +360,11 @@ def _refresh_once(
         models=merged_models,
         data_sources=sources,
         aggregates=tuple(aggregates),
+        performance_samples=current.performance_samples,
+        project_models=project_models,
+        last_refresh=CatalogContext(
+            context_key, (), context_signature, service_version
+        ),
     )
     return snapshot, tuple(errors)
 
@@ -351,6 +376,8 @@ def coalesced_refresh(
     timeout: float,
     *,
     force: bool = False,
+    context_signature: str | None = None,
+    service_version: str | None = None,
 ) -> RefreshResult:
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Timeout debe ser finito y positivo.")
@@ -364,7 +391,14 @@ def coalesced_refresh(
                 current = read_snapshot(state_path) or empty_snapshot()
                 # Una generacion que aparecio mientras esperabamos ya satisface
                 # este disparador, incluso si algunas fuentes fallaron.
-                if current.generation > baseline_generation:
+                same_request = (
+                    context_signature is None
+                    or current.last_refresh is not None
+                    and current.last_refresh.project_key == _project_key(project)
+                    and current.last_refresh.config_signature == context_signature
+                    and current.last_refresh.service_version == service_version
+                )
+                if current.generation > baseline_generation and same_request:
                     return RefreshResult(current, False, current.generation, ())
                 if not force:
                     from availability_policy import should_refresh
@@ -376,7 +410,14 @@ def coalesced_refresh(
                     return RefreshResult(
                         current, False, current.generation, ("refresh_timeout",)
                     )
-                snapshot, errors = _refresh_once(binding, project, remaining, current)
+                snapshot, errors = _refresh_once(
+                    binding,
+                    project,
+                    remaining,
+                    current,
+                    context_signature=context_signature,
+                    service_version=service_version,
+                )
                 try:
                     write_snapshot(
                         state_path,

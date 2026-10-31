@@ -129,19 +129,20 @@ def test_nonzero_exit_hides_transport_output(harness: Harness) -> None:
         assert secret not in result["message"]
 
 
-def test_version_mismatch_hides_transport_details(harness: Harness) -> None:
-    harness.fake(version="1.0.0", version_stderr="TOKEN=secreto-version")
+def test_unsupported_catalog_contract_hides_transport_details(harness: Harness) -> None:
+    harness.fake(
+        version="1.0.0", catalog_returncode=1, version_stderr="TOKEN=secreto-version"
+    )
     result = harness.run()
-    assert result["code"] == "version_mismatch"
-    assert "soportada" in result["message"]
+    assert result["code"] == "catalog_capability_unavailable"
+    assert "requerido" in result["message"]
     assert "secreto-version" not in result["message"]
 
 
 def test_catalog_failure_hides_stderr(harness: Harness) -> None:
     harness.fake(catalog_returncode=5, catalog_stderr="TOKEN=secreto-catalogo")
     result = harness.run()
-    assert result["code"] == "catalog_unavailable"
-    assert "5" in result["message"]
+    assert result["code"] == "catalog_capability_unavailable"
     assert "secreto-catalogo" not in result["message"]
 
 

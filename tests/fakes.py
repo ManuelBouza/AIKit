@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import delegate
+from availability_state import AvailabilitySnapshot
 from service_identity import HostContext, ServiceError
 
 DEFAULT_MODEL = "opencode/mimo-v2.6-flash-free"
@@ -229,7 +230,7 @@ class FakeBinding:
     catalog_returncode: int = 0
     catalog_stderr: str = ""
     valid: bool = True
-    calls: list[tuple[str, Path]] = field(default_factory=list)
+    calls: list[tuple[str, Path | None]] = field(default_factory=list)
     closed: bool = False
     child_environments: list[dict[str, str]] = field(default_factory=list)
     registration: Any = field(init=False)
@@ -256,11 +257,15 @@ class FakeBinding:
 
     @property
     def config_calls(self) -> list[Path]:
-        return [path for kind, path in self.calls if kind == "config"]
+        return [
+            path for kind, path in self.calls if kind == "config" and path is not None
+        ]
 
     @property
     def catalog_calls(self) -> list[Path]:
-        return [path for kind, path in self.calls if kind == "catalog"]
+        return [
+            path for kind, path in self.calls if kind == "catalog" and path is not None
+        ]
 
     def verify_owner(self, *, timeout: float = 1.0) -> Any | None:
         if self.closed or not self.valid:
@@ -305,6 +310,7 @@ class FakeBinding:
         return {"location": {"directory": location}, "data": self.catalog}
 
     def openapi_schema(self, *, timeout: float) -> object:
+        self.calls.append(("openapi", None))
         self._require_owner(timeout)
         if self.openapi_returncode != 0:
             raise delegate.DelegateError("openapi_unavailable", "No OpenAPI.")
@@ -322,6 +328,7 @@ class FakeBinding:
         return {"go": None}
 
     def integrations(self, *, timeout: float) -> object:
+        self.calls.append(("integrations", None))
         self._require_owner(timeout)
         if self.integrations_returncode != 0:
             raise ServiceError("http_error", "Fallo de integraciones.")
@@ -338,3 +345,53 @@ class FakeBinding:
 
     def close(self) -> None:
         self.closed = True
+
+
+def seed_availability(
+    context: HostContext,
+    project: Path,
+    models: list[dict[str, Any]],
+    *,
+    sources: object | None = None,
+    version: str = "2.2.0",
+) -> AvailabilitySnapshot:
+    from datetime import datetime, timezone
+
+    from availability_refresh import _metadata_from_public
+    from availability_state import (
+        AvailabilitySnapshot,
+        CatalogContext,
+        ModelEntry,
+        configuration_signature,
+        state_path,
+        write_snapshot,
+    )
+
+    project_key = delegate._project_key(project)
+    entries = {}
+    for item in models:
+        model = delegate._model_record(item)
+        assert model is not None
+        public = delegate._public_model(model)
+        entries[public["model"]] = ModelEntry(
+            _metadata_from_public(public), None, project_key
+        )
+    config = sources if sources is not None else default_config_sources()
+    context_record = CatalogContext(
+        project_key,
+        (),
+        configuration_signature(config),
+        version,
+        ("config.get", "model.catalog"),
+    )
+    snapshot = AvailabilitySnapshot(
+        1,
+        1,
+        datetime.now(timezone.utc),
+        (context_record,),
+        entries,
+        (),
+        project_models={project_key: entries},
+    )
+    write_snapshot(state_path(context.aikit_state), snapshot)
+    return snapshot

@@ -411,7 +411,9 @@ def execute_bound(
         return _recover(context, record, agent=prepared.agent)
     try:
         try:
-            reserve_host_attempt(context, record, agent=prepared.agent)
+            reserve_host_attempt(
+                context, record, agent=prepared.agent, admission=prepared.admission
+            )
         except (HostRegistryError, StoreError, OSError) as exc:
             return _tracked_error(
                 getattr(exc, "code", "host_reservation_failed"),

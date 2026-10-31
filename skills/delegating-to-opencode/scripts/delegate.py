@@ -21,10 +21,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from availability_state import AvailabilitySnapshot
 from restrictions import configuration_is_restricted
 from service_connection import BoundLaunch, ManagedBinding, discover_existing
 from service_identity import HostContext, ServiceError, resolve_host_context
 from session_store import Pricing, Role
+from session_store import StoreError as AvailabilityStoreError
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 POLICY_PATH = SKILL_DIR / "policy.json"
@@ -801,6 +803,63 @@ def _preflight_remaining(deadline: float) -> float:
     return remaining
 
 
+def _availability_snapshot(
+    binding: ManagedBinding,
+    host: HostContext,
+    project: Path,
+    config: object,
+    deadline: float,
+) -> AvailabilitySnapshot:
+    from availability_refresh import coalesced_refresh
+    from availability_state import configuration_signature, read_snapshot, state_path
+
+    signature = configuration_signature(config)
+    project_key = _project_key(project)
+
+    def valid(snapshot: AvailabilitySnapshot | None) -> bool:
+        return snapshot is not None and any(
+            item.project_key == project_key
+            and item.config_signature == signature
+            and item.service_version == binding.registration.version
+            and {"config.get", "model.catalog"}.issubset(item.capabilities)
+            for item in snapshot.catalog_contexts
+        )
+
+    try:
+        snapshot = read_snapshot(state_path(host.aikit_state))
+        if not valid(snapshot):
+            result = coalesced_refresh(
+                state_path(host.aikit_state),
+                binding,
+                project,
+                _preflight_remaining(deadline),
+                force=True,
+                context_signature=signature,
+                service_version=binding.registration.version,
+            )
+            snapshot = result.snapshot
+            if not valid(snapshot):
+                code = (
+                    "catalog_capability_unavailable"
+                    if "catalog_unavailable" in result.errors
+                    else "availability_context_unavailable"
+                )
+                raise DelegateError(
+                    code,
+                    "La tabla no acredita el contrato de catalogo requerido para este contexto.",
+                )
+        if snapshot is None:
+            raise DelegateError(
+                "availability_state_unavailable", "No hay tabla acreditada."
+            )
+        return snapshot
+    except (AvailabilityStoreError, OSError, ValueError) as exc:
+        raise DelegateError(
+            "availability_state_unavailable",
+            "No se pudo consultar o actualizar la tabla compartida.",
+        ) from exc
+
+
 def _prepare_run(
     cwd: Path | str,
     task_loader: Callable[[], str],
@@ -839,35 +898,42 @@ def _prepare_run(
         host = context if context is not None else resolve_host_context()
         deadline = time.monotonic() + min(10.0, seconds)
         binding = discover_existing(host, timeout=_preflight_remaining(deadline))
-        if not configuration_is_restricted(
-            binding.config_sources(project, timeout=_preflight_remaining(deadline))
-        ):
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        if not configuration_is_restricted(config):
             raise DelegateError(
                 "unsafe_configuration",
                 "La configuración efectiva no acredita el bloqueo del proveedor "
                 "directo openai ni de la subdelegación interna de OpenCode.",
             )
 
-        catalog = _catalog_from_payload(
-            binding.model_catalog(project, timeout=_preflight_remaining(deadline)),
-            project,
-        )
-        selected = next((item for item in catalog if item["model"] == base_model), None)
-        if selected is None:
+        from availability_policy import eligible_for_attempt
+        from availability_state import admission_for, model_entry
+
+        snapshot = _availability_snapshot(binding, host, project, config, deadline)
+        project_key = _project_key(project)
+        entry = model_entry(snapshot, project_key, base_model)
+        if entry is None or entry.context_key != project_key:
             raise DelegateError(
                 "model_unavailable",
-                f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
+                f"El modelo no aparece disponible en la tabla actual: {base_model}",
+            )
+        if not eligible_for_attempt(entry):
+            raise DelegateError(
+                "model_unavailable",
+                f"El modelo no está disponible actualmente: {base_model}",
             )
         if (
             selected_variant is not None
-            and selected_variant not in selected["variant_ids"]
+            and selected_variant not in entry.metadata.variants
         ):
-            available = ", ".join(selected["variant_ids"]) or "ninguna"
+            available = ", ".join(entry.metadata.variants) or "ninguna"
             raise DelegateError(
                 "invalid_variant",
                 f"La variante '{selected_variant}' no existe para {base_model}. "
                 f"Variantes disponibles: {available}.",
             )
+
+        selected = {"free_candidate": entry.metadata.free_candidate}
 
         exe = find_opencode()
         if not exe:
@@ -892,6 +958,9 @@ def _prepare_run(
             role=role,
             task=task,
             pricing=_pricing_label(selected),
+            admission=admission_for(
+                snapshot, project_key, base_model, selected_variant
+            ),
         )
     except ServiceError as exc:
         if binding is not None:
@@ -941,6 +1010,11 @@ def _run_core(
     except ServiceError as exc:
         failure = _service_failure(exc)
         return _error(failure.code, failure.message)
+    except (AvailabilityStoreError, OSError):
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
+        )
 
 
 def doctor(
@@ -967,35 +1041,101 @@ def doctor(
                 )
             if "/" in filter_model:
                 _reject_direct_openai(filter_model.partition("/")[0])
-        policy = load_policy()
+        load_policy()
 
         host = resolve_host_context()
         deadline = time.monotonic() + min(10.0, seconds)
         binding = discover_existing(host, timeout=_preflight_remaining(deadline))
-        catalog = [
-            _public_model(item)
-            for item in _catalog_from_payload(
-                binding.model_catalog(project, timeout=_preflight_remaining(deadline)),
-                project,
-            )
-        ]
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        project_key = _project_key(project)
+        snapshot = _availability_snapshot(binding, host, project, config, deadline)
+        catalog: list[dict[str, Any]] = []
+        if snapshot is not None:
+            from availability_state import model_entry
+
+            candidates = snapshot.project_models.get(project_key, snapshot.models)
+            for model_name in candidates:
+                entry = model_entry(snapshot, project_key, model_name)
+                if entry is None:
+                    continue
+                if entry.context_key != project_key:
+                    continue
+                meta = entry.metadata
+                tiers = [
+                    {
+                        "input": tier.input,
+                        "output": tier.output,
+                        "cache": {"read": tier.cache_read, "write": tier.cache_write},
+                        "tier": (
+                            {"type": "context", "size": tier.context_size}
+                            if tier.context_size is not None
+                            else None
+                        ),
+                    }
+                    for tier in meta.pricing
+                ]
+                # Eliminar tiers sin tier para mantener la forma saneada.
+                for tier in tiers:
+                    if tier["tier"] is None:
+                        del tier["tier"]
+                catalog.append(
+                    {
+                        "model": meta.model,
+                        "name": meta.name,
+                        "pricing": tiers[0] if tiers else None,
+                        "pricing_tiers": tiers or None,
+                        "variants": [
+                            {"id": variant_id} for variant_id in meta.variants
+                        ],
+                        "tools": meta.tools,
+                        "input": list(meta.input_modalities),
+                        "output": list(meta.output_modalities),
+                        "limits": (
+                            {
+                                key: value
+                                for key, value in {
+                                    "context": meta.context_limit,
+                                    "input": meta.input_limit,
+                                    "output": meta.output_limit,
+                                }.items()
+                                if value is not None
+                            }
+                            or None
+                        ),
+                        "free_candidate": meta.free_candidate,
+                        "may_use_openai_quota": meta.may_use_openai_quota,
+                    }
+                )
         total = len(catalog)
 
-        if policy["prefer_free"]:
+        def _priority_key(item: dict[str, Any]) -> tuple[int, str]:
+            free = item.get("free_candidate")
+            paid = free is False
+            go = str(item.get("model", "")).startswith("opencode-go/")
+            if paid and go:
+                return (0, str(item.get("model", "")).lower())
+            if paid:
+                return (1, str(item.get("model", "")).lower())
+            if free is True:
+                return (2, str(item.get("model", "")).lower())
+            return (3, str(item.get("model", "")).lower())
+
+        policy = load_policy()
+        if policy.get("prefer_free") is True:
             catalog.sort(
                 key=lambda item: (
                     0
-                    if item["free_candidate"] is True
+                    if item.get("free_candidate") is True
                     else 1
-                    if item["model"].partition("/")[0] == "opencode-go"
+                    if str(item.get("model", "")).startswith("opencode-go/")
                     else 2
-                    if item["free_candidate"] is None
+                    if item.get("free_candidate") is None
                     else 3,
-                    item["model"].lower(),
+                    str(item.get("model", "")).lower(),
                 )
             )
         else:
-            catalog.sort(key=lambda item: item["model"].lower())
+            catalog.sort(key=_priority_key)
 
         if filter_model is not None:
             catalog = [item for item in catalog if item["model"] == filter_model]
@@ -1009,6 +1149,81 @@ def doctor(
     except ServiceError as exc:
         failure = _service_failure(exc)
         return _error(failure.code, failure.message)
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+    finally:
+        if binding is not None:
+            binding.close()
+
+
+def availability_status(cwd: Path | str) -> dict[str, Any]:
+    """Solo estado del host configurado; nunca adivina una ruta de proyecto."""
+    from availability_state import _snapshot_to_json, read_snapshot, state_path
+
+    try:
+        _validate_cwd(cwd)
+        path = state_path(resolve_host_context().aikit_state)
+        snapshot = read_snapshot(path)
+        return {
+            "status": "ok",
+            "state_path": str(path),
+            "exists": snapshot is not None,
+            "snapshot": _snapshot_to_json(snapshot) if snapshot is not None else None,
+        }
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except (AvailabilityStoreError, OSError, ValueError):
+        return _error(
+            "availability_state_unavailable", "No se pudo leer la tabla compartida."
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+
+
+def availability_refresh_command(
+    cwd: Path | str, timeout: float = DEFAULT_TIMEOUT
+) -> dict[str, Any]:
+    """Refresca la tabla usando solo un servicio ya registrado."""
+
+    project = _validate_cwd(cwd)
+    seconds = _validate_timeout(timeout)
+    deadline = time.monotonic() + min(10.0, seconds)
+    binding = None
+    try:
+        host = resolve_host_context()
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        from availability_refresh import coalesced_refresh
+        from availability_state import configuration_signature, state_path
+
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        result = coalesced_refresh(
+            state_path(host.aikit_state),
+            binding,
+            project,
+            _preflight_remaining(deadline),
+            force=True,
+            context_signature=configuration_signature(config),
+            service_version=binding.registration.version,
+        )
+        return {
+            "status": "ok",
+            "refreshed": result.refreshed,
+            "generation": result.generation,
+            "errors": list(result.errors),
+        }
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
+        )
     except DelegateError as exc:
         return _error(exc.code, exc.message)
     finally:
@@ -1061,6 +1276,26 @@ def _parser() -> argparse.ArgumentParser:
         help="Rol explícito del intento; no se deduce de --agent.",
     )
     run_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
+
+    availability_parser = subparsers.add_parser(
+        "availability", help="Inspecciona o refresca la tabla local de disponibilidad."
+    )
+    availability_subparsers = availability_parser.add_subparsers(
+        dest="availability_command", required=True
+    )
+    status_parser = availability_subparsers.add_parser(
+        "status", help="Lee la tabla local sin consultas externas."
+    )
+    status_parser.add_argument("--cwd", required=True)
+    status_parser.add_argument("--json", action="store_true")
+    refresh_parser = availability_subparsers.add_parser(
+        "refresh", help="Refresca la tabla usando el servicio ya registrado."
+    )
+    refresh_parser.add_argument("--cwd", required=True)
+    refresh_parser.add_argument("--json", action="store_true")
+    refresh_parser.add_argument(
+        "--timeout", type=_positive_float, default=DEFAULT_TIMEOUT
+    )
     return parser
 
 
@@ -1069,6 +1304,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "doctor":
             payload = doctor(cwd=args.cwd, timeout=args.timeout, model=args.model)
+        elif args.command == "availability":
+            if args.availability_command == "status":
+                payload = availability_status(cwd=args.cwd)
+            else:
+                payload = availability_refresh_command(
+                    cwd=args.cwd, timeout=args.timeout
+                )
         else:
             payload = run_task(
                 cwd=args.cwd,

@@ -39,7 +39,9 @@ TOKEN = "aikit-owner-v1-" + "a" * 64
 
 class Binding:
     token = TOKEN
-    registration = type("Registration", (), {"url": "http://127.0.0.1:9876/"})()
+    registration = type(
+        "Registration", (), {"url": "http://127.0.0.1:9876/", "version": "2.2.0"}
+    )()
     expected_owner = object()
 
     def __init__(self) -> None:
@@ -97,6 +99,17 @@ def prepared(
     binding = Binding()
     monkeypatch.setattr(sw, "discover_existing", lambda ctx: binding)
     monkeypatch.setattr(delegate, "find_opencode", lambda: "fake-opencode")
+    from tests.fakes import api_model, seed_availability, variant
+
+    seed_availability(
+        context,
+        root,
+        [
+            api_model(
+                "kimi-k3.1-pro", provider="opencode-go", variants=[variant("high")]
+            )
+        ],
+    )
     return context, record, binding
 
 

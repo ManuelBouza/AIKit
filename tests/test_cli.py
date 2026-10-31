@@ -121,13 +121,13 @@ def test_doctor_version_count_and_calls(harness: Harness) -> None:
     )
     assert harness.binding is not None
     assert harness.binding.catalog_calls == [harness.project.resolve()]
-    assert harness.binding.config_calls == []
+    assert harness.binding.config_calls == [harness.project.resolve()]
     assert len(result["catalog"]) == 2
 
 
-def test_doctor_rejects_v1(harness: Harness) -> None:
-    harness.fake(version="1.0.0")
-    assert harness.doctor()["code"] == "version_mismatch"
+def test_doctor_rejects_an_unavailable_required_catalog(harness: Harness) -> None:
+    harness.fake(version="1.0.0", catalog_returncode=1)
+    assert harness.doctor()["code"] == "catalog_capability_unavailable"
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf"), 3601])

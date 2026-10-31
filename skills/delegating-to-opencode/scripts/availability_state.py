@@ -6,16 +6,19 @@ mutable fuera de Git, reutilizando locks y reemplazo atómico del almacén.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import tempfile
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, NewType, TypeAlias, cast
 
+from availability_performance import PerformanceSample, sample_from_dict, sample_to_dict
 from session_store import (
     StoreError,
     _atomic_replace,
@@ -64,12 +67,16 @@ class ModelMetadata:
     output_limit: int | None
     free_candidate: bool | None
     may_use_openai_quota: bool | None
+    input_limit: int | None = None
 
 
 @dataclass(frozen=True)
 class CatalogContext:
     project_key: str
     config_sources: tuple[str, ...]
+    config_signature: str | None = None
+    service_version: str | None = None
+    capabilities: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -140,6 +147,186 @@ class AvailabilitySnapshot:
     models: dict[str, ModelEntry]
     data_sources: tuple[DataSourceStatus, ...]
     aggregates: tuple[AggregateObservation, ...] = ()
+    performance_samples: tuple[PerformanceSample, ...] = ()
+    project_models: dict[str, dict[str, ModelEntry]] = field(default_factory=dict)
+    last_refresh: CatalogContext | None = None
+
+
+@dataclass(frozen=True)
+class CatalogAdmission:
+    generation: int
+    project_key: str
+    config_signature: str
+    service_version: str
+    model: str
+    variant: str | None
+    metadata_signature: str
+
+
+def configuration_signature(payload: object) -> str:
+    """Huella SOLO del contrato publico de seleccion/permisos; no identidad de cuenta.
+
+    Cambios privados de credencial requieren notificacion/refresco explicito.
+    Nunca se serializa ni se deriva una huella de esos valores.
+    """
+    allowed = {
+        "type",
+        "info",
+        "policies",
+        "experimental",
+        "action",
+        "resource",
+        "effect",
+        "permission",
+        "permissions",
+        "pattern",
+        "model",
+        "models",
+        "provider",
+        "providers",
+        "enabled",
+        "disabled",
+        "variants",
+        "tools",
+        "capabilities",
+        "limit",
+        "limits",
+        "context",
+        "input",
+        "output",
+        "agent",
+        "agents",
+        "default",
+    }
+    model_maps = {"models", "providers", "agents", "variants"}
+
+    def project(value: object, *, dynamic: bool = False, depth: int = 0) -> object:
+        if depth > 32:
+            raise ValueError("Contrato de configuracion demasiado profundo.")
+        if isinstance(value, dict):
+            result = {}
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    continue
+                if key in {
+                    "password",
+                    "token",
+                    "credential",
+                    "apiKey",
+                    "api_key",
+                    "headers",
+                    "env",
+                    "auth",
+                    "name",
+                    "email",
+                    "path",
+                    "url",
+                    "workspace",
+                }:
+                    continue
+                if (
+                    key in allowed
+                    or dynamic
+                    and re.fullmatch(r"[A-Za-z0-9_./:#*-]{1,256}", key)
+                ):
+                    result[key] = project(
+                        item, dynamic=key in model_maps, depth=depth + 1
+                    )
+            return result
+        if isinstance(value, list):
+            return [project(item, depth=depth + 1) for item in value]
+        if isinstance(value, (str, bool, int, float)) or value is None:
+            return value
+        raise ValueError("Contrato de configuracion invalido.")
+
+    raw = json.dumps(
+        project(payload),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    ).encode()
+    return "selection-v1-" + hashlib.sha256(raw).hexdigest()
+
+
+def model_entry(
+    snapshot: AvailabilitySnapshot, project_key: str, model: str
+) -> ModelEntry | None:
+    entries = snapshot.project_models.get(project_key)
+    if entries is not None:
+        return entries.get(model)
+    entry = snapshot.models.get(model)
+    return entry if entry is not None and entry.context_key == project_key else None
+
+
+def metadata_signature(metadata: ModelMetadata) -> str:
+    payload = _metadata_to_json(metadata)
+    payload.pop("name", None)
+    return hashlib.sha256(
+        json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
+
+
+def admission_for(
+    snapshot: AvailabilitySnapshot, project_key: str, model: str, variant: str | None
+) -> CatalogAdmission:
+    context = next(
+        (item for item in snapshot.catalog_contexts if item.project_key == project_key),
+        None,
+    )
+    entry = model_entry(snapshot, project_key, model)
+    if (
+        context is None
+        or context.config_signature is None
+        or context.service_version is None
+        or not {"config.get", "model.catalog"}.issubset(context.capabilities)
+        or entry is None
+    ):
+        raise StoreError(
+            "availability_context_unavailable", "Contrato de catalogo no acreditado."
+        )
+    return CatalogAdmission(
+        snapshot.generation,
+        project_key,
+        context.config_signature,
+        context.service_version,
+        model,
+        variant,
+        metadata_signature(entry.metadata),
+    )
+
+
+def admission_from_json(value: object) -> CatalogAdmission | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != set(
+        CatalogAdmission.__dataclass_fields__
+    ):
+        raise _corrupt()
+    generation = _int(value["generation"])
+    if generation <= 0:
+        raise _corrupt()
+    project_key = _text(value["project_key"])
+    signature = _text(value["config_signature"])
+    version = _text(value["service_version"])
+    model = _text(value["model"])
+    variant = _text(value["variant"], optional=True)
+    metadata = _text(value["metadata_signature"])
+    if (
+        project_key is None
+        or signature is None
+        or version is None
+        or model is None
+        or metadata is None
+        or re.fullmatch(r"selection-v1-[0-9a-f]{64}", signature) is None
+        or re.fullmatch(r"[0-9a-f]{64}", metadata) is None
+    ):
+        raise _corrupt()
+    return CatalogAdmission(
+        generation, project_key, signature, version, model, variant, metadata
+    )
 
 
 def state_path(state_dir: Path) -> Path:
@@ -425,8 +612,7 @@ def _snapshot_to_json(snapshot: AvailabilitySnapshot) -> dict[str, Any]:
         "generation": snapshot.generation,
         "published_at": snapshot.published_at.isoformat(),
         "catalog_contexts": [
-            {"project_key": c.project_key, "config_sources": list(c.config_sources)}
-            for c in snapshot.catalog_contexts
+            _context_to_json(item) for item in snapshot.catalog_contexts
         ],
         "models": {
             key: {
@@ -451,6 +637,36 @@ def _snapshot_to_json(snapshot: AvailabilitySnapshot) -> dict[str, Any]:
             for item in snapshot.aggregates
             if item.observation is not None
         ],
+        "performance_samples": [
+            sample_to_dict(item) for item in snapshot.performance_samples
+        ],
+        "project_models": {
+            project: {key: _entry_to_json(entry) for key, entry in entries.items()}
+            for project, entries in snapshot.project_models.items()
+        },
+        "last_refresh": _context_to_json(snapshot.last_refresh)
+        if snapshot.last_refresh is not None
+        else None,
+    }
+
+
+def _context_to_json(context: CatalogContext) -> dict[str, Any]:
+    return {
+        "project_key": context.project_key,
+        "config_sources": list(context.config_sources),
+        "config_signature": context.config_signature,
+        "service_version": context.service_version,
+        "capabilities": list(context.capabilities),
+    }
+
+
+def _entry_to_json(entry: ModelEntry) -> dict[str, Any]:
+    return {
+        "metadata": _metadata_to_json(entry.metadata),
+        "quota": _observation_to_json(entry.quota),
+        "context_key": entry.context_key,
+        "query_attempt": _query_attempt_to_json(entry.query_attempt),
+        "outcome_attempt_ids": list(entry.outcome_attempt_ids),
     }
 
 
@@ -473,6 +689,7 @@ def _metadata_to_json(metadata: ModelMetadata) -> dict[str, Any]:
         "input_modalities": list(metadata.input_modalities),
         "output_modalities": list(metadata.output_modalities),
         "context_limit": metadata.context_limit,
+        "input_limit": metadata.input_limit,
         "output_limit": metadata.output_limit,
         "free_candidate": metadata.free_candidate,
         "may_use_openai_quota": metadata.may_use_openai_quota,
@@ -528,6 +745,42 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
     if not isinstance(aggregates_raw, list):
         raise _corrupt()
     aggregates = tuple(_aggregate_from_json(item) for item in aggregates_raw)
+    performance_raw = data.get("performance_samples", [])
+    if not isinstance(performance_raw, list):
+        raise _corrupt()
+    performance_samples_list: list[PerformanceSample] = []
+    for item in performance_raw:
+        if not isinstance(item, dict):
+            raise _corrupt()
+        try:
+            sample = sample_from_dict(item)
+        except (ValueError, TypeError, KeyError, RecursionError) as exc:
+            raise _corrupt() from exc
+        performance_samples_list.append(sample)
+    if len(performance_samples_list) > 1000:
+        raise _corrupt()
+    performance_samples = tuple(performance_samples_list)
+    raw_projects = data.get("project_models", {})
+    if not isinstance(raw_projects, dict):
+        raise _corrupt()
+    projects: dict[str, dict[str, ModelEntry]] = {}
+    for project, raw_entries in raw_projects.items():
+        if (
+            not isinstance(project, str)
+            or len(project) > MAX_TEXT_CHARS
+            or not isinstance(raw_entries, dict)
+        ):
+            raise _corrupt()
+        entries = {}
+        for key, raw_entry in raw_entries.items():
+            if not isinstance(key, str) or len(key) > MAX_TEXT_CHARS:
+                raise _corrupt()
+            entry = _entry_from_json(raw_entry)
+            if entry.context_key != project or entry.metadata.model != key:
+                raise _corrupt()
+            entries[key] = entry
+        projects[project] = entries
+    last = data.get("last_refresh")
     return AvailabilitySnapshot(
         schema_version=version,
         generation=generation,
@@ -536,6 +789,9 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
         models=models,
         data_sources=sources,
         aggregates=aggregates,
+        performance_samples=performance_samples,
+        project_models=projects,
+        last_refresh=_context_from_json(last) if last is not None else None,
     )
 
 
@@ -551,7 +807,13 @@ def _context_from_json(data: object) -> CatalogContext:
         value = _text(item)
         assert value is not None
         cleaned.append(value)
-    return CatalogContext(project_key=project_key or "", config_sources=tuple(cleaned))
+    return CatalogContext(
+        project_key=project_key or "",
+        config_sources=tuple(cleaned),
+        config_signature=_text(data.get("config_signature"), optional=True),
+        service_version=_text(data.get("service_version"), optional=True),
+        capabilities=_string_tuple(data.get("capabilities", [])),
+    )
 
 
 def _entry_from_json(data: object) -> ModelEntry:
@@ -587,6 +849,7 @@ def _metadata_from_json(data: object) -> ModelMetadata:
     input_modalities = _string_tuple(data.get("input_modalities"))
     output_modalities = _string_tuple(data.get("output_modalities"))
     context_limit = _optional_int(data.get("context_limit"))
+    input_limit = _optional_int(data.get("input_limit"))
     output_limit = _optional_int(data.get("output_limit"))
     free_candidate = _optional_bool(data.get("free_candidate"))
     may_use_openai_quota = _optional_bool(data.get("may_use_openai_quota"))
@@ -599,6 +862,7 @@ def _metadata_from_json(data: object) -> ModelMetadata:
         input_modalities=input_modalities,
         output_modalities=output_modalities,
         context_limit=context_limit,
+        input_limit=input_limit,
         output_limit=output_limit,
         free_candidate=free_candidate,
         may_use_openai_quota=may_use_openai_quota,
@@ -717,14 +981,9 @@ def _aggregate_from_json(data: object) -> AggregateObservation:
 
 
 def _validate_snapshot(snapshot: AvailabilitySnapshot) -> None:
-    if snapshot.schema_version != STATE_SCHEMA_VERSION:
-        raise StoreError("availability_corrupt", "Esquema no soportado.")
-    if isinstance(snapshot.generation, bool) or snapshot.generation < 0:
-        raise StoreError("availability_corrupt", "Generación inválida.")
-    if snapshot.published_at.tzinfo is None:
-        raise StoreError("availability_corrupt", "Timestamp sin zona.")
-    for key, entry in snapshot.models.items():
-        if not isinstance(key, str) or len(key) > MAX_TEXT_CHARS:
-            raise StoreError("availability_corrupt", "Clave de modelo inválida.")
-        if len(entry.context_key) > MAX_TEXT_CHARS:
-            raise StoreError("availability_corrupt", "Contexto inválido.")
+    try:
+        _snapshot_from_json(_snapshot_to_json(snapshot))
+    except (ValueError, TypeError, AttributeError, KeyError, RecursionError) as exc:
+        raise StoreError(
+            "availability_corrupt", "Snapshot o muestras fuera de contrato."
+        ) from exc

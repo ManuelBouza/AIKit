@@ -93,16 +93,29 @@ def test_registration_trusted_reparse(tmp_path: Path) -> None:
     assert isinstance(si.registration_trusted(p), bool)
 
 
-def test_validate_registration_version(tmp_path: Path) -> None:
+def test_validate_registration_rejects_missing_id(tmp_path: Path) -> None:
     ctx = si.HostContext(
         opencode_registration=tmp_path / "r.json",
         aikit_state=tmp_path,
         expected_version="2.2.0",
     )
-    with pytest.raises(si.ServiceError):
+    with pytest.raises(si.ServiceError) as exc:
         si.validate_registration(
-            {"id": "r", "url": "http://127.0.0.1:1/", "pid": 1, "version": "9.9.9"}, ctx
+            {"url": "http://127.0.0.1:1/", "pid": 1, "version": "2.2.0"}, ctx
         )
+    assert exc.value.code == "registration_invalid"
+
+
+def test_validate_registration_accepts_different_version(tmp_path: Path) -> None:
+    ctx = si.HostContext(
+        opencode_registration=tmp_path / "r.json",
+        aikit_state=tmp_path,
+        expected_version="2.2.0",
+    )
+    registration = si.validate_registration(
+        {"id": "r", "url": "http://127.0.0.1:1/", "pid": 1, "version": "2.3.0"}, ctx
+    )
+    assert registration.version == "2.3.0"
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows ACL")

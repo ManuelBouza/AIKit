@@ -65,6 +65,23 @@ class ProcessBirth:
     started_at: str | None
 
 
+@dataclass(frozen=True)
+class CapabilitySnapshot:
+    """Contrato mínimo que la fase de refresh validará contra OpenAPI.
+
+    No autoriza envío por sí mismo: solo registra versión observada y las
+    operaciones que el servicio deberá confirmar antes de usarse.
+    """
+
+    service_version: str
+    operations: frozenset[str]
+    schema_version: int | None = None
+    source: str = "registration"
+
+
+MAX_SERVICE_VERSION_CHARS = 64
+
+
 def resolve_host_context() -> HostContext:
     registration = os.environ.get("AIKIT_OPENCODE_REGISTRATION")
     state = os.environ.get("AIKIT_STATE")
@@ -206,8 +223,12 @@ def validate_registration(
         raise ServiceError("registration_invalid", "URL inválida.")
     if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
         raise ServiceError("registration_invalid", "PID inválido.")
-    if not isinstance(version, str) or version != context.expected_version:
-        raise ServiceError("version_mismatch", "Versión no soportada.")
+    if (
+        not isinstance(version, str)
+        or not version
+        or len(version) > MAX_SERVICE_VERSION_CHARS
+    ):
+        raise ServiceError("version_invalid", "Versión observada inválida.")
     url = canonical_url(url_raw)
     if not isinstance(credential, str):
         raise ServiceError("registration_invalid", "Credencial inválida.")

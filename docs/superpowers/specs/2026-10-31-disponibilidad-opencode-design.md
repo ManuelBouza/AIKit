@@ -8,7 +8,9 @@ Estado: borrador para aprobación del usuario. No implementa código.
 - Si no hay API de consulta, se permite un único intento de tarea real ya autorizada, nunca una inferencia de prueba.
 - Fuente inaccesible no acredita cuota cero ni reset.
 - Se conserva la última observación válida separada del último intento fallido.
-- Se mantiene capacidad primero: Free adecuado -> Go -> otros -> Codex nativo sin opción adecuada.
+- La adecuación del modelo y del esfuerzo a la tarea se exige en todos los niveles, incluido Codex. La tarifa no justifica reducir la capacidad necesaria.
+- Entre opciones adecuadas y disponibles, la prioridad es: todos los modelos gratuitos de cualquier proveedor conectado a OpenCode -> OpenCode Go -> otros modelos de pago conectados a OpenCode -> Codex nativo.
+- Los modelos gratuitos ofrecidos mediante Go también participan en el primer nivel. Si un nivel no tiene una opción adecuada y disponible, se pasa al siguiente sin degradar la tarea.
 - No se pregunta al usuario por cada fallo.
 - `reset_at` pasado exige reconsulta; no implica disponibilidad.
 - Scope compartido desconocido no autoriza ampliar el bloqueo.

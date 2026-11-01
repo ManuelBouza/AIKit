@@ -1140,11 +1140,22 @@ def doctor(
         if filter_model is not None:
             catalog = [item for item in catalog if item["model"] == filter_model]
 
+        public_terms = snapshot.public_terms if snapshot is not None else ()
         return {
             "status": "ok",
             "version": binding.registration.version,
             "catalog_count": total,
             "catalog": catalog,
+            "price_zero_count": sum(
+                1 for item in catalog if item.get("free_candidate") is True
+            ),
+            "conditional_access_count": sum(
+                1 for term in public_terms if term.access_kind == "conditional_access"
+            ),
+            "public_terms_count": len(public_terms),
+            "listed_price_zero_count": sum(
+                1 for item in catalog if item.get("free_candidate") is True
+            ),
         }
     except ServiceError as exc:
         failure = _service_failure(exc)
@@ -1231,6 +1242,52 @@ def availability_refresh_command(
             binding.close()
 
 
+def availability_import_public_terms_command(
+    cwd: Path | str,
+    file: Path | str,
+    *,
+    timeout: float = DEFAULT_TIMEOUT,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Incorpora hechos públicos validados al estado compartido."""
+    try:
+        _validate_cwd(cwd)
+        state_path_value = resolve_host_context().aikit_state
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+    path = Path(file)
+    try:
+        from availability_public_terms import (
+            import_public_terms_state,
+            read_public_terms_file,
+        )
+        from availability_state import state_path
+
+        terms = read_public_terms_file(path)
+        snapshot = import_public_terms_state(
+            state_path(state_path_value), terms, replace=replace
+        )
+        return {
+            "status": "ok",
+            "imported": len(terms),
+            "generation": snapshot.generation,
+            "state_path": str(state_path(state_path_value)),
+        }
+    except (OSError, ValueError) as exc:
+        return _error("public_terms_invalid", str(exc))
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo actualizar el estado compartido.",
+        )
+    except ServiceError as exc:
+        return _error(exc.code, exc.message)
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+
+
 def _positive_float(value: str) -> float:
     try:
         number = float(value)
@@ -1296,6 +1353,21 @@ def _parser() -> argparse.ArgumentParser:
     refresh_parser.add_argument(
         "--timeout", type=_positive_float, default=DEFAULT_TIMEOUT
     )
+
+    for command_name, help_text in (
+        ("import", "Incorpora hechos públicos validados al estado compartido."),
+        (
+            "import-public-terms",
+            "Incorpora hechos públicos validados al estado compartido.",
+        ),
+    ):
+        sub = availability_subparsers.add_parser(command_name, help=help_text)
+        sub.add_argument("--cwd", required=True)
+        sub.add_argument("--file", required=True)
+        sub.add_argument("--json", action="store_true")
+        sub.add_argument("--replace", action="store_true")
+        sub.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
+
     return parser
 
 
@@ -1307,6 +1379,16 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "availability":
             if args.availability_command == "status":
                 payload = availability_status(cwd=args.cwd)
+            elif args.availability_command in {
+                "import",
+                "import-public-terms",
+            }:
+                payload = availability_import_public_terms_command(
+                    cwd=args.cwd,
+                    file=args.file,
+                    timeout=args.timeout,
+                    replace=getattr(args, "replace", False),
+                )
             else:
                 payload = availability_refresh_command(
                     cwd=args.cwd, timeout=args.timeout

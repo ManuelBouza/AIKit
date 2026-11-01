@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Literal, NewType, TypeAlias, cast
 
 from availability_performance import PerformanceSample, sample_from_dict, sample_to_dict
+from availability_public_terms import PublicTerm
 from session_store import (
     StoreError,
     _atomic_replace,
@@ -150,6 +151,62 @@ class AvailabilitySnapshot:
     performance_samples: tuple[PerformanceSample, ...] = ()
     project_models: dict[str, dict[str, ModelEntry]] = field(default_factory=dict)
     last_refresh: CatalogContext | None = None
+    public_terms: tuple[PublicTerm, ...] = ()
+
+    def __init__(
+        self,
+        schema_version: int,
+        generation: int,
+        published_at: datetime,
+        catalog_contexts: tuple[CatalogContext, ...],
+        models: dict[str, ModelEntry],
+        data_sources: tuple[DataSourceStatus, ...],
+        aggregates: tuple[AggregateObservation, ...] = (),
+        performance_samples: tuple[PerformanceSample, ...] = (),
+        project_models: dict[str, dict[str, ModelEntry]] | None = None,
+        last_refresh: CatalogContext | None = None,
+        public_terms: tuple[PublicTerm, ...] = (),
+        **kwargs: object,
+    ) -> None:
+        canonical = public_terms
+        for alias in (
+            "public_facts",
+            "public_access",
+            "public_access_terms",
+            "conditional_access",
+        ):
+            candidate = kwargs.get(alias)
+            if not canonical and isinstance(candidate, tuple):
+                canonical = candidate
+        if project_models is None:
+            project_models = {}
+        object.__setattr__(self, "schema_version", schema_version)
+        object.__setattr__(self, "generation", generation)
+        object.__setattr__(self, "published_at", published_at)
+        object.__setattr__(self, "catalog_contexts", catalog_contexts)
+        object.__setattr__(self, "models", models)
+        object.__setattr__(self, "data_sources", data_sources)
+        object.__setattr__(self, "aggregates", aggregates)
+        object.__setattr__(self, "performance_samples", performance_samples)
+        object.__setattr__(self, "project_models", project_models)
+        object.__setattr__(self, "last_refresh", last_refresh)
+        object.__setattr__(self, "public_terms", canonical)
+
+    @property
+    def public_facts(self) -> tuple[PublicTerm, ...]:
+        return self.public_terms
+
+    @property
+    def public_access(self) -> tuple[PublicTerm, ...]:
+        return self.public_terms
+
+    @property
+    def public_access_terms(self) -> tuple[PublicTerm, ...]:
+        return self.public_terms
+
+    @property
+    def conditional_access(self) -> tuple[PublicTerm, ...]:
+        return self.public_terms
 
 
 @dataclass(frozen=True)
@@ -647,6 +704,11 @@ def _snapshot_to_json(snapshot: AvailabilitySnapshot) -> dict[str, Any]:
         "last_refresh": _context_to_json(snapshot.last_refresh)
         if snapshot.last_refresh is not None
         else None,
+        "public_terms": [item.to_dict() for item in snapshot.public_terms],
+        "public_facts": [item.to_dict() for item in snapshot.public_terms],
+        "public_access": [item.to_dict() for item in snapshot.public_terms],
+        "public_access_terms": [item.to_dict() for item in snapshot.public_terms],
+        "conditional_access": [item.to_dict() for item in snapshot.public_terms],
     }
 
 
@@ -709,6 +771,30 @@ def _observation_to_json(observation: QuotaObservation | None) -> dict[str, Any]
         "percent": observation.percent,
         "limited": observation.limited,
     }
+
+
+def _public_terms_from_json(value: object) -> tuple[PublicTerm, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise _corrupt()
+    result: list[PublicTerm] = []
+    seen: set[tuple[str, str]] = set()
+    for item in value:
+        if not isinstance(item, dict):
+            raise _corrupt()
+        try:
+            term = PublicTerm.from_dict(item)
+        except (ValueError, TypeError, KeyError) as exc:
+            raise _corrupt() from exc
+        key = (term.provider, term.model)
+        if key in seen:
+            raise _corrupt()
+        seen.add(key)
+        result.append(term)
+    if len(result) > 1000:
+        raise _corrupt()
+    return tuple(result)
 
 
 def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
@@ -781,6 +867,31 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
             entries[key] = entry
         projects[project] = entries
     last = data.get("last_refresh")
+    public_raw = None
+    for key in (
+        "public_terms",
+        "public_facts",
+        "public_access",
+        "public_access_terms",
+        "conditional_access",
+    ):
+        candidate = data.get(key)
+        if isinstance(candidate, list) and candidate:
+            public_raw = candidate
+            break
+    if public_raw is None:
+        # Soporta alias aunque venga vacío.
+        for key in (
+            "public_terms",
+            "public_facts",
+            "public_access",
+            "public_access_terms",
+            "conditional_access",
+        ):
+            if key in data:
+                public_raw = data.get(key)
+                break
+    public_terms = _public_terms_from_json(public_raw)
     return AvailabilitySnapshot(
         schema_version=version,
         generation=generation,
@@ -792,6 +903,7 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
         performance_samples=performance_samples,
         project_models=projects,
         last_refresh=_context_from_json(last) if last is not None else None,
+        public_terms=public_terms,
     )
 
 

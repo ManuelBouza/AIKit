@@ -99,6 +99,8 @@ Antes de ejecutar:
    metadatos; sin variante, registra el ajuste predeterminado.
 6. Registra en `--reason` por qué modelo y variante bastan.
 
+Los hechos públicos se incorporan con `availability import --cwd <proyecto> --file <artefacto.json>`; ver `references/terminos-publicos.md`.
+
 Usa `availability refresh --cwd <proyecto> --json` solo como actualización
 explícita: servicio registrado ya encendido, sin arrancarlo ni inferir. Los
 disparadores son inicialización ausente/ilegible, contexto no acreditado, petición

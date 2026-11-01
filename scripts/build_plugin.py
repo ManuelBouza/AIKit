@@ -32,6 +32,7 @@ PACKAGE_FILES = (
     "skills/delegating-to-opencode/SKILL.md",
     "skills/delegating-to-opencode/references/carga-opencode.md",
     "skills/delegating-to-opencode/references/revision-opencode.md",
+    "skills/delegating-to-opencode/references/terminos-publicos.md",
     "skills/delegating-to-opencode/policy.json",
     "scripts/review_evidence.py",
     "skills/delegating-to-opencode/scripts/delegate.py",
@@ -49,6 +50,7 @@ PACKAGE_FILES = (
     "skills/delegating-to-opencode/scripts/availability_refresh.py",
     "skills/delegating-to-opencode/scripts/availability_policy.py",
     "skills/delegating-to-opencode/scripts/availability_performance.py",
+    "skills/delegating-to-opencode/scripts/availability_public_terms.py",
 )
 
 

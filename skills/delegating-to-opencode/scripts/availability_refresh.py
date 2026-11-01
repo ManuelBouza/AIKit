@@ -380,6 +380,7 @@ def _refresh_once(
         last_refresh=CatalogContext(
             context_key, (), context_signature, service_version
         ),
+        public_terms=current.public_terms,
     )
     return snapshot, tuple(errors)
 

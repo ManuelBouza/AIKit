@@ -428,6 +428,35 @@ def test_conflicting_or_invalid_session_identities_never_complete(
     assert report["session"] == "ses_a"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="flags especificas de Windows")
+def test_windows_supervisor_creationflags_no_detached_process(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepare(tmp_path)
+    module = worker()
+    captured: dict[str, Any] = {}
+
+    class FakeProcess:
+        pid = 1234
+        stdin = None
+
+        def wait(self, timeout: float | None = None) -> int:
+            return 0
+
+    def fake_popen(*args: Any, **kwargs: Any) -> FakeProcess:
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return FakeProcess()
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+    module.launch_worker(
+        tmp_path, TASK_ID, worker_command=lambda r: [sys.executable, "-c", "pass"]
+    )
+    flags = int(captured["kwargs"].get("creationflags", 0))
+    assert flags & subprocess.CREATE_NO_WINDOW
+    assert not (flags & getattr(subprocess, "DETACHED_PROCESS", 0))
+
+
 def test_matching_session_aliases_can_complete(tmp_path: Path) -> None:
     directory = prepare(tmp_path)
     terminal = {

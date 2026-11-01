@@ -264,7 +264,7 @@ def launch_worker(
         open_artifact(directory / "supervisor.errors") as errors,
     ):
         options: dict[str, Any] = (
-            {"creationflags": subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS}
+            {"creationflags": subprocess.CREATE_NO_WINDOW}
             if sys.platform == "win32"
             else {"start_new_session": True}
         )

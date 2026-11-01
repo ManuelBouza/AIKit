@@ -1275,16 +1275,22 @@ def test_transport_tool_adapter_boundaries_with_fakes(
         from tests.fakes import finish_event, text_event
 
         code = f"print({text_event('transport-ok')!r}); print({finish_event(0)!r})"
-        child = subprocess.Popen(
+        options = (
+            {"creationflags": subprocess.CREATE_NO_WINDOW}
+            if sys.platform == "win32"
+            else {}
+        )
+        child = subprocess.Popen(  # type: ignore[call-overload, attr-defined, arg-type, unused-ignore]
             [sys.executable, "-c", code],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            **options,
         )
         stdout, _ = child.communicate(timeout=5)
         # Simulate supervisor writing result.json
         write_terminal(record, stdout)
-        return child
+        return child  # type: ignore[no-any-return]
 
     monkeypatch.setattr(be, "_launch_supervisor", real_child_launch)
 
@@ -1394,6 +1400,9 @@ def test_supervisor_returns_early_while_process_still_alive(
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         check=False,
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                        if sys.platform == "win32"
+                        else 0,
                     )
                 else:
                     child_proc.terminate()

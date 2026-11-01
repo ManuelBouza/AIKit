@@ -563,10 +563,7 @@ def import_public_terms_state(
             project_models=snapshot.project_models,
             last_refresh=snapshot.last_refresh,
             public_terms=merged,
-            public_facts=merged,
-            public_access=merged,
-            public_access_terms=merged,
-            conditional_access=merged,
+            retired_models=snapshot.retired_models,
         )
 
     return state.update_snapshot(state_path, mutate)

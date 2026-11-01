@@ -1226,6 +1226,11 @@ def availability_refresh_command(
             "refreshed": result.refreshed,
             "generation": result.generation,
             "errors": list(result.errors),
+            "changes": result.changes,
+            "added": list(result.added),
+            "removed": list(result.removed),
+            "changed": list(result.changed),
+            "unchanged": list(result.unchanged),
         }
     except ServiceError as exc:
         failure = _service_failure(exc)

@@ -152,6 +152,7 @@ class AvailabilitySnapshot:
     project_models: dict[str, dict[str, ModelEntry]] = field(default_factory=dict)
     last_refresh: CatalogContext | None = None
     public_terms: tuple[PublicTerm, ...] = ()
+    retired_models: dict[str, dict[str, ModelEntry]] = field(default_factory=dict)
 
     def __init__(
         self,
@@ -166,6 +167,7 @@ class AvailabilitySnapshot:
         project_models: dict[str, dict[str, ModelEntry]] | None = None,
         last_refresh: CatalogContext | None = None,
         public_terms: tuple[PublicTerm, ...] = (),
+        retired_models: dict[str, dict[str, ModelEntry]] | None = None,
         **kwargs: object,
     ) -> None:
         canonical = public_terms
@@ -180,6 +182,8 @@ class AvailabilitySnapshot:
                 canonical = candidate
         if project_models is None:
             project_models = {}
+        if retired_models is None:
+            retired_models = {}
         object.__setattr__(self, "schema_version", schema_version)
         object.__setattr__(self, "generation", generation)
         object.__setattr__(self, "published_at", published_at)
@@ -191,6 +195,7 @@ class AvailabilitySnapshot:
         object.__setattr__(self, "project_models", project_models)
         object.__setattr__(self, "last_refresh", last_refresh)
         object.__setattr__(self, "public_terms", canonical)
+        object.__setattr__(self, "retired_models", retired_models)
 
     @property
     def public_facts(self) -> tuple[PublicTerm, ...]:
@@ -701,6 +706,10 @@ def _snapshot_to_json(snapshot: AvailabilitySnapshot) -> dict[str, Any]:
             project: {key: _entry_to_json(entry) for key, entry in entries.items()}
             for project, entries in snapshot.project_models.items()
         },
+        "retired_models": {
+            project: {key: _entry_to_json(entry) for key, entry in entries.items()}
+            for project, entries in snapshot.retired_models.items()
+        },
         "last_refresh": _context_to_json(snapshot.last_refresh)
         if snapshot.last_refresh is not None
         else None,
@@ -866,6 +875,27 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
                 raise _corrupt()
             entries[key] = entry
         projects[project] = entries
+
+    retired_raw = data.get("retired_models", {})
+    if not isinstance(retired_raw, dict):
+        raise _corrupt()
+    retired: dict[str, dict[str, ModelEntry]] = {}
+    for project, raw_entries in retired_raw.items():
+        if (
+            not isinstance(project, str)
+            or len(project) > MAX_TEXT_CHARS
+            or not isinstance(raw_entries, dict)
+        ):
+            raise _corrupt()
+        entries = {}
+        for key, raw_entry in raw_entries.items():
+            if not isinstance(key, str) or len(key) > MAX_TEXT_CHARS:
+                raise _corrupt()
+            entry = _entry_from_json(raw_entry)
+            if entry.context_key != project or entry.metadata.model != key:
+                raise _corrupt()
+            entries[key] = entry
+        retired[project] = entries
     last = data.get("last_refresh")
     public_raw = None
     for key in (
@@ -904,6 +934,7 @@ def _snapshot_from_json(data: object) -> AvailabilitySnapshot:
         project_models=projects,
         last_refresh=_context_from_json(last) if last is not None else None,
         public_terms=public_terms,
+        retired_models=retired,
     )
 
 

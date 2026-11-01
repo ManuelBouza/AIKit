@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
@@ -43,6 +43,50 @@ class RefreshResult:
     refreshed: bool
     generation: int
     errors: tuple[str, ...]
+    changes: dict[str, tuple[str, ...]] = field(
+        default_factory=lambda: {
+            "added": (),
+            "removed": (),
+            "changed": (),
+            "unchanged": (),
+        }
+    )
+
+    @property
+    def delta(self) -> dict[str, tuple[str, ...]]:
+        return self.changes
+
+    @property
+    def added(self) -> tuple[str, ...]:
+        return self.changes.get("added", ())
+
+    @property
+    def removed(self) -> tuple[str, ...]:
+        return self.changes.get("removed", ())
+
+    @property
+    def changed_models(self) -> tuple[str, ...]:
+        return self.changes.get("changed", ())
+
+    @property
+    def unchanged_models(self) -> tuple[str, ...]:
+        return self.changes.get("unchanged", ())
+
+    @property
+    def changed(self) -> tuple[str, ...]:
+        return self.changes.get("changed", ())
+
+    @property
+    def unchanged(self) -> tuple[str, ...]:
+        return self.changes.get("unchanged", ())
+
+    @property
+    def added_models(self) -> tuple[str, ...]:
+        return self.added
+
+    @property
+    def removed_models(self) -> tuple[str, ...]:
+        return self.removed
 
 
 def _now() -> datetime:
@@ -323,6 +367,7 @@ def _refresh_once(
     }
     for model, entry in current.models.items():
         project_models.setdefault(entry.context_key, {}).setdefault(model, entry)
+    retired_models = {key: dict(value) for key, value in current.retired_models.items()}
     if catalog_ok:
         previous_context = next(
             (item for item in contexts if item.project_key == context_key), None
@@ -340,6 +385,17 @@ def _refresh_once(
             if context_signature is not None
             else ("model.catalog",),
         )
+        previous_entries = current.project_models.get(context_key, {})
+        context_retired = dict(retired_models.get(context_key, {}))
+        for model, entry in previous_entries.items():
+            if model not in new_models:
+                context_retired[model] = entry
+        for model in new_models:
+            context_retired.pop(model, None)
+        if context_retired:
+            retired_models[context_key] = context_retired
+        else:
+            retired_models.pop(context_key, None)
         project_models[context_key] = dict(new_models)
         contexts = [item for item in contexts if item.project_key != context_key] + [
             new_context
@@ -381,8 +437,35 @@ def _refresh_once(
             context_key, (), context_signature, service_version
         ),
         public_terms=current.public_terms,
+        retired_models=retired_models,
     )
     return snapshot, tuple(errors)
+
+
+def _metadata_changed(left: Any, right: Any) -> bool:
+    return bool(left != right)
+
+
+def _inventory_changes(
+    previous: AvailabilitySnapshot, current: AvailabilitySnapshot, context_key: str
+) -> dict[str, tuple[str, ...]]:
+    previous_entries = previous.project_models.get(context_key, {})
+    current_entries = current.project_models.get(context_key, {})
+    added = tuple(sorted(set(current_entries) - set(previous_entries)))
+    removed = tuple(sorted(set(previous_entries) - set(current_entries)))
+    changed: list[str] = []
+    unchanged: list[str] = []
+    for model in sorted(set(previous_entries) & set(current_entries)):
+        if previous_entries[model].metadata != current_entries[model].metadata:
+            changed.append(model)
+        else:
+            unchanged.append(model)
+    return {
+        "added": added,
+        "removed": removed,
+        "changed": tuple(changed),
+        "unchanged": tuple(unchanged),
+    }
 
 
 def coalesced_refresh(
@@ -449,7 +532,10 @@ def coalesced_refresh(
                         current.generation,
                         errors + ("publication_timeout",),
                     )
-                return RefreshResult(snapshot, True, snapshot.generation, errors)
+                changes = _inventory_changes(current, snapshot, _project_key(project))
+                return RefreshResult(
+                    snapshot, True, snapshot.generation, errors, changes
+                )
         except StoreError as error:
             remaining = deadline - time.monotonic()
             if error.code != "lock_contended" or remaining <= 0:

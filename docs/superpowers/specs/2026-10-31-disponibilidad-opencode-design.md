@@ -160,3 +160,13 @@ La consulta de disponibilidad no ejecuta inferencia. La salida saneada incluye f
 - No hay secretos, PII ni estado mutable en el paquete exportado.
 - Los estados desconocidos usan un único intento real autorizado, registrado una vez con IDs existentes.
 - Implementar conforme a la aprobación del usuario del 2026-10-31, con verificación y revisión independiente.
+
+## Aclaración aprobada: inventario variable de proveedores
+
+En cada revisión se vuelve a obtener el inventario efectivo de OpenCode y se compara con el último inventario válido del mismo contexto. Las altas incorporan proveedores/modelos y su metadata actual; las bajas confirmadas se excluyen de selección y recuentos activos, manteniendo sus datos retirados. Las actualizaciones de tarifa, capacidades y variantes también producen cambios explícitos. La comparación no fija ocho proveedores ni utiliza como conectados todos los proveedores soportados.
+
+Un catálogo completo y validado vacío acredita ausencia de modelos; un error de consulta, autenticación, formato o procedencia no acredita desconexión. En ese caso se conserva el último inventario válido fechado y se registra la incertidumbre. La ausencia en un contexto no revoca automáticamente otro contexto ni un intento vivo. La reconexión recupera metadata verificada sin promover como actual una certeza histórica de cuota de identidad desconocida.
+
+La revisión web utiliza los proveedores con modelos activos del inventario aplicable; un fallo del sitio público no equivale a desconexión de OpenCode. Los hechos públicos históricos se conservan separados de la selección activa. No se introduce poda automática de historial en esta entrega; aplican los límites de tamaño y validación del estado existente, sin prometer almacenamiento ilimitado.
+
+Para minimizar contexto, el encargo programado procesará las respuestas JSON mediante código y entregará al coordinador un resumen de cantidades y cambios relevantes. No volcará las listas completas de modelos sin cambios en cada revisión.

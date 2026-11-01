@@ -55,19 +55,18 @@ def request(self, operation, *, session_id=None, message_id=None, timeout=10.0, 
 - `DEFAULT_OPERATIONS` añade `"session.message.get"`.
 - Path: `GET /api/session/{session_id}/message/{message_id}`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 ```python
 def test_managed_binding_session_message_get_maps_get_path():
-    binding = ManagedBinding(...)
     path, method = _operation_path("session.message.get", "ses_1", "msg_1")
     assert path == "/api/session/ses_1/message/msg_1"
     assert method == "GET"
-    assert "session.message.get" in binding.operations
+    assert "session.message.get" in DEFAULT_OPERATIONS
 ```
-- [ ] **Step 2: Run** `uv run pytest tests/test_service_connection.py -q` → FAIL.
-- [ ] **Step 3: Implement** operación en `_operation_path` y `DEFAULT_OPERATIONS`; pasar `message_id` en `request`.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** (solo en implementación futura) `feat: add read-only session message operation`
+- [x] **Step 2: Run** `uv run pytest tests/test_service_connection.py -q` → FAIL (RED).
+- [x] **Step 3: Implement** operación en `_operation_path` y `DEFAULT_OPERATIONS`; pasar `message_id` en `request`.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** (solo en implementación futura) `feat: add read-only session message operation`
 
 ### Task 2: Helper conservador de reconciliación
 

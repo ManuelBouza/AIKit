@@ -74,8 +74,9 @@ class TrustedBinding(Protocol):
         self,
         operation: str,
         *,
-        session_id: str | None,
-        timeout: float,
+        session_id: str | None = None,
+        message_id: str | None = None,
+        timeout: float = 10.0,
         resume: bool | None = None,
     ) -> ApiResponse: ...
 

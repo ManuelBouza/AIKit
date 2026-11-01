@@ -249,6 +249,13 @@ def test_config_sources_verifies_owner_before_request(
     binding.close()
 
 
+def test_managed_binding_session_message_get_maps_get_path() -> None:
+    path, method = sc._operation_path("session.message.get", "ses_1", "msg_1")
+    assert path == "/api/session/ses_1/message/msg_1"
+    assert method == "GET"
+    assert "session.message.get" in sc.DEFAULT_OPERATIONS
+
+
 def test_binding_repr_excludes_credential(
     fake_server: tuple[str, int, object], tmp_path: Path
 ) -> None:
@@ -308,3 +315,216 @@ def test_http_header_trickle_respects_deadline() -> None:
     finally:
         srv.shutdown()
         srv.server_close()
+
+
+def _discover_binding(
+    fake_server: tuple[str, int, object], tmp_path: Path
+) -> sc.ManagedBinding:
+    host, port, _ = fake_server
+    reg_path = _write_reg(tmp_path, port, os.getpid())
+    ctx = si.HostContext(
+        opencode_registration=reg_path, aikit_state=tmp_path, expected_version="2.2.0"
+    )
+    return sc.discover_existing(ctx, timeout=5.0)
+
+
+def test_managed_binding_request_session_message_get_propagates_ids(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    calls: list[tuple[str, str]] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        calls.append((url, method))
+        return 200, {"data": {}}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+    from session_backend import ApiResponse
+
+    response = binding.request(
+        "session.message.get",
+        session_id="ses_1",
+        message_id="msg_1",
+        timeout=2.0,
+    )
+    assert isinstance(response, ApiResponse)
+    assert response.status == 200
+    assert len(calls) == 1
+    url, method = calls[0]
+    assert method == "GET"
+    assert "/api/session/ses_1/message/msg_1" in url
+    binding.close()
+
+
+def test_managed_binding_request_session_message_get_owner_before_http(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    host, port, _ = fake_server
+    reg_path = tmp_path / "reg.json"
+    reg_path.write_text(
+        json.dumps(
+            {
+                "id": "rid-1",
+                "url": f"http://127.0.0.1:{port}/",
+                "pid": os.getpid(),
+                "version": "2.2.0",
+                "password": "rotated",
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[int] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        calls.append(1)
+        return 200, {}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+    with pytest.raises(si.ServiceError) as exc:
+        binding.request(
+            "session.message.get", session_id="ses_1", message_id="msg_1", timeout=2.0
+        )
+    assert exc.value.code == "owner_mismatch"
+    assert calls == []
+    binding.close()
+
+
+def test_managed_binding_request_session_message_get_owner_changed_after_http(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    host, port, _ = fake_server
+    reg_path = tmp_path / "reg.json"
+    calls: list[int] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        reg_path.write_text(
+            json.dumps(
+                {
+                    "id": "rid-1",
+                    "url": f"http://127.0.0.1:{port}/",
+                    "pid": os.getpid(),
+                    "version": "2.2.0",
+                    "password": "rotated",
+                }
+            ),
+            encoding="utf-8",
+        )
+        calls.append(1)
+        return 200, {}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+    with pytest.raises(si.ServiceError) as exc:
+        binding.request(
+            "session.message.get", session_id="ses_1", message_id="msg_1", timeout=2.0
+        )
+    assert exc.value.code == "owner_mismatch"
+    assert len(calls) == 1
+    binding.close()
+
+
+def test_managed_binding_request_rejects_invalid_ids_before_http(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    calls: list[int] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        calls.append(1)
+        return 200, {}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+
+    with pytest.raises(si.ServiceError) as exc:
+        binding.request(
+            "session.message.get", session_id=None, message_id="msg_1", timeout=1.0
+        )
+    assert exc.value.code in {"invalid_session", "invalid_message"}
+    with pytest.raises(si.ServiceError) as exc:
+        binding.request(
+            "session.message.get", session_id="ses_1", message_id=None, timeout=1.0
+        )
+    assert exc.value.code in {"invalid_session", "invalid_message"}
+
+    for bad in ("../secret", "ses/x", "ses x", "", "ses\x00"):
+        with pytest.raises(si.ServiceError) as exc:
+            binding.request(
+                "session.message.get", session_id=bad, message_id="msg_1", timeout=1.0
+            )
+        assert exc.value.code == "invalid_session"
+        with pytest.raises(si.ServiceError) as exc:
+            binding.request(
+                "session.message.get", session_id="ses_1", message_id=bad, timeout=1.0
+            )
+        assert exc.value.code == "invalid_message"
+
+    assert calls == []
+    binding.close()
+
+
+def test_managed_binding_request_rejects_unavailable_operation(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    calls: list[int] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        calls.append(1)
+        return 200, {}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+    with pytest.raises(si.ServiceError) as exc:
+        binding.request(
+            "session.log", session_id="ses_1", message_id="msg_1", timeout=1.0
+        )
+    assert exc.value.code == "operation_unavailable"
+    assert calls == []
+    binding.close()
+
+
+def test_managed_binding_request_allows_legitimate_ids(
+    fake_server: tuple[str, int, object],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _discover_binding(fake_server, tmp_path)
+    calls: list[tuple[str, str]] = []
+
+    def fake_http(
+        *, url: str, method: str, credential: str, timeout: float, deadline: float
+    ) -> tuple[int, object]:
+        calls.append((url, method))
+        return 200, {"ok": True}
+
+    monkeypatch.setattr(sc, "_http_request", fake_http)
+    response = binding.request(
+        "session.message.get",
+        session_id="ses_abc-123",
+        message_id="msg_def_456",
+        timeout=2.0,
+    )
+    assert response.status == 200
+    assert calls
+    assert "/api/session/ses_abc-123/message/msg_def_456" in calls[0][0]
+    binding.close()

@@ -28,7 +28,7 @@ from service_identity import (
     token_for,
 )
 from session_backend import OwnerIdentity
-from session_store import Pricing, Role
+from session_store import _SESSION_ID, Pricing, Role
 
 MAX_HTTP_BODY_BYTES = 8 * 1024 * 1024
 DEFAULT_OPERATIONS = frozenset(
@@ -39,6 +39,7 @@ DEFAULT_OPERATIONS = frozenset(
         "session.inbox.list",
         "session.permission.list",
         "session.interrupt",
+        "session.message.get",
     }
 )
 
@@ -96,6 +97,7 @@ class ManagedBinding:
         operation: str,
         *,
         session_id: str | None = None,
+        message_id: str | None = None,
         timeout: float = 10.0,
         resume: bool | None = None,
     ) -> Any:
@@ -119,7 +121,7 @@ class ManagedBinding:
         if operation == "session.interrupt":
             if resume is not False:
                 raise ServiceError("invalid_resume", "resume debe ser false.")
-        path, method = _operation_path(operation, session_id)
+        path, method = _operation_path(operation, session_id, message_id)
         url = self.registration.url.rstrip("/") + path
         # location[directory] para config/model se añade por caller en path?
         deadline = time.monotonic() + max(0.0, timeout)
@@ -294,25 +296,34 @@ def _quote(value: str) -> str:
     return quote(value, safe="")
 
 
-def _operation_path(operation: str, session_id: str | None) -> tuple[str, str]:
+def _valid_id(value: str | None, *, code: str) -> str:
+    if not isinstance(value, str) or _SESSION_ID.fullmatch(value) is None:
+        raise ServiceError(code, "Identificador no válido.")
+    return value
+
+
+def _operation_path(
+    operation: str, session_id: str | None, message_id: str | None = None
+) -> tuple[str, str]:
     if operation == "server.info":
         return "/api/info", "GET"
     if operation == "session.get":
-        if not session_id:
-            raise ServiceError("invalid_session", "Sesión requerida.")
-        return f"/api/session/{session_id}", "GET"
+        session = _valid_id(session_id, code="invalid_session")
+        return f"/api/session/{_quote(session)}", "GET"
     if operation == "session.active":
         return "/api/session/status", "GET"
     if operation == "session.inbox.list":
-        if not session_id:
-            raise ServiceError("invalid_session", "Sesión requerida.")
-        return f"/api/session/{session_id}/message", "GET"
+        session = _valid_id(session_id, code="invalid_session")
+        return f"/api/session/{_quote(session)}/message", "GET"
     if operation == "session.permission.list":
         return "/api/permission", "GET"
     if operation == "session.interrupt":
-        if not session_id:
-            raise ServiceError("invalid_session", "Sesión requerida.")
-        return f"/api/session/{session_id}/abort", "POST"
+        session = _valid_id(session_id, code="invalid_session")
+        return f"/api/session/{_quote(session)}/abort", "POST"
+    if operation == "session.message.get":
+        session = _valid_id(session_id, code="invalid_session")
+        message = _valid_id(message_id, code="invalid_message")
+        return f"/api/session/{_quote(session)}/message/{_quote(message)}", "GET"
     raise ServiceError("operation_unavailable", "Operación no soportada.")
 
 

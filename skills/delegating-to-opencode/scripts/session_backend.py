@@ -14,7 +14,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from session_store import (
     DeliveryObservation,
@@ -45,6 +45,17 @@ class OwnerIdentity:
     pid: int
     started_at: str | None
     version: str
+
+
+@dataclass(frozen=True)
+class TerminalReconciliation:
+    accepted: bool
+    outcome: Literal["completed", "partial", "failed", "uncertain", "pending"]
+    finish: str | None
+    completed_at: int | float | None
+    assistant_message_id: str | None
+    reason: str
+    limitations: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -431,3 +442,351 @@ def interrupt_session(
 def worker_interrupt(record: TaskRecord) -> bool | None:
     """Sin fábrica de bindings de producción, el worker no tiene control real."""
     return interrupt_session(record).confirmed
+
+
+def reconcile_terminal_message(
+    record: TaskRecord,
+    binding: TrustedBinding,
+    *,
+    assistant_message_id: str | None,
+    prompt_message_id: str | None = None,
+    timeout: float,
+    _clock: Callable[[], float] = time.monotonic,
+) -> TerminalReconciliation:
+    """Reconcilia por una lectura read-only del mensaje durable.
+
+    Conservador: solo acredita ``finish=stop`` sin error, con identidades válidas
+    y marca temporal numérica finita. No muta ``record`` ni persiste.
+    """
+
+    if not isinstance(assistant_message_id, str) or not assistant_message_id:
+        return TerminalReconciliation(
+            False,
+            "uncertain",
+            None,
+            None,
+            None,
+            "assistant_message_id_unavailable",
+            ("assistant_message_id_unavailable",),
+        )
+
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not math.isfinite(timeout)
+        or timeout <= 0
+    ):
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "budget_exhausted",
+            ("budget_exhausted",),
+        )
+
+    session_id = getattr(record, "session", None)
+    cwd = getattr(record, "cwd", None)
+    server_identity = getattr(record, "server_identity", None)
+    if not isinstance(session_id, str) or not session_id:
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "session_unknown",
+            ("session_unknown",),
+        )
+    try:
+        _validate_session_id(session_id)
+    except StoreError:
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "session_unknown",
+            ("session_unknown",),
+        )
+    if not isinstance(cwd, str) or not cwd:
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "record_changed",
+            ("record_changed",),
+        )
+
+    expected_owner = getattr(binding, "expected_owner", None)
+    operations: frozenset[str] = getattr(binding, "operations", frozenset())
+    verify_owner = getattr(binding, "verify_owner", None)
+    request = getattr(binding, "request", None)
+    if (
+        expected_owner is None
+        or not callable(verify_owner)
+        or not callable(request)
+        or not _birth_known(expected_owner)
+        or getattr(expected_owner, "version", None) != "2.2.0"
+    ):
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "backend_unavailable",
+            ("backend_unavailable",),
+        )
+    if not isinstance(server_identity, str) or server_identity != getattr(
+        expected_owner, "identity", None
+    ):
+        return TerminalReconciliation(
+            False,
+            "pending",
+            None,
+            None,
+            assistant_message_id,
+            "owner_mismatch",
+            ("owner_mismatch",),
+        )
+
+    delivery = getattr(record, "delivery", None)
+    prior_state = getattr(delivery, "state", None)
+    if prior_state in {"failed", "interrupted"}:
+        return TerminalReconciliation(
+            False,
+            "failed" if prior_state == "failed" else "uncertain",
+            None,
+            None,
+            assistant_message_id,
+            "prior_delivery_not_success",
+            ("prior_delivery_not_success",),
+        )
+
+    deadline = _clock() + timeout
+
+    def remaining() -> float:
+        value = deadline - _clock()
+        if value <= 0:
+            raise _Unavailable("backend_timeout")
+        return value
+
+    def failure(
+        reason: str,
+        outcome: Literal["completed", "partial", "failed", "uncertain", "pending"],
+        *,
+        finish: str | None = None,
+        completed_at: int | float | None = None,
+        limitations: tuple[str, ...] | None = None,
+    ) -> TerminalReconciliation:
+        return TerminalReconciliation(
+            False,
+            outcome,
+            finish,
+            completed_at,
+            assistant_message_id,
+            reason,
+            limitations if limitations is not None else (reason,),
+        )
+
+    try:
+        owner = verify_owner(timeout=min(remaining(), 1.0))
+        remaining()
+        if owner is None or not _birth_known(owner) or owner != expected_owner:
+            return failure(
+                "owner_mismatch"
+                if owner is not None and owner != expected_owner
+                else "owner_unverified",
+                "pending",
+            )
+        if (
+            getattr(record, "server_identity", None) != server_identity
+            or getattr(record, "session", None) != session_id
+            or getattr(record, "cwd", None) != cwd
+        ):
+            return failure("record_changed", "pending")
+        if "session.message.get" not in operations:
+            return failure("operation_unavailable", "pending")
+        response = request(
+            "session.message.get",
+            session_id=session_id,
+            message_id=assistant_message_id,
+            timeout=remaining(),
+        )
+        remaining()
+        owner_after = verify_owner(timeout=min(remaining(), 0.5))
+        remaining()
+        if (
+            owner_after is None
+            or not _birth_known(owner_after)
+            or owner_after != expected_owner
+        ):
+            return failure("owner_mismatch", "pending")
+        if (
+            getattr(record, "server_identity", None) != server_identity
+            or getattr(record, "session", None) != session_id
+            or getattr(record, "cwd", None) != cwd
+        ):
+            return failure("record_changed", "pending")
+    except _Unavailable as error:
+        return failure(error.code, "pending")
+    except TimeoutError:
+        return failure("backend_timeout", "pending")
+    except Exception as error:  # noqa: BLE001
+        code = getattr(error, "code", None)
+        if not isinstance(code, str) or not code:
+            code = "backend_unavailable"
+        if code == "timeout":
+            code = "backend_timeout"
+        return failure(code, "pending")
+
+    status = getattr(response, "status", None)
+    body = getattr(response, "body", response)
+    if type(status) is not int:
+        return failure("invalid_response", "uncertain")
+    if status != 200:
+        return failure("backend_unavailable", "pending")
+
+    if not isinstance(body, dict):
+        return failure("invalid_response", "uncertain")
+    message = body
+    if isinstance(body.get("data"), dict):
+        message = body["data"]
+    if not isinstance(message, dict):
+        return failure("invalid_response", "uncertain")
+
+    info = message
+    if isinstance(message.get("info"), dict):
+        info = message["info"]
+    if not isinstance(info, dict):
+        return failure("invalid_response", "uncertain")
+
+    candidate_ids: list[str] = []
+    for obj in (message, info):
+        value = obj.get("id")
+        if isinstance(value, str):
+            candidate_ids.append(value)
+    if not candidate_ids or any(
+        value != assistant_message_id for value in candidate_ids
+    ):
+        return failure("assistant_message_id_mismatch", "uncertain")
+
+    session_candidates: list[str] = []
+    for obj in (message, info):
+        for key in ("sessionID", "sessionId", "session"):
+            value = obj.get(key)
+            if isinstance(value, str):
+                session_candidates.append(value)
+    if session_candidates and any(value != session_id for value in session_candidates):
+        return failure("session_mismatch", "uncertain")
+
+    if info.get("type") != "assistant":
+        return failure("invalid_role", "uncertain")
+
+    if info.get("error") is not None:
+        return failure("message_error", "failed")
+
+    finish = info.get("finish")
+    if not isinstance(finish, str) or not finish:
+        return failure("missing_finish", "uncertain")
+
+    completed_at: int | float | None = None
+    time_value = info.get("time")
+    if isinstance(time_value, dict):
+        completed_at = time_value.get("completed")
+    if completed_at is None:
+        for key in ("completed_at", "completedAt"):
+            if key in info:
+                completed_at = info.get(key)
+                break
+    if completed_at is None:
+        return failure("missing_completed_at", "uncertain")
+    if (
+        isinstance(completed_at, bool)
+        or not isinstance(completed_at, (int, float))
+        or not math.isfinite(completed_at)
+    ):
+        return failure("invalid_completed_at", "uncertain")
+
+    parent_id: object = None
+    parent_found = False
+    for obj in (message, info):
+        for key in ("parentID", "parent_id", "parentMessageID", "parent_message_id"):
+            if key in obj:
+                parent_id = obj.get(key)
+                parent_found = True
+                break
+        if parent_found:
+            break
+    if not parent_found and isinstance(info.get("metadata"), dict):
+        metadata = info["metadata"]
+        for key in ("parentID", "parent_id", "parentMessageID", "parent_message_id"):
+            if key in metadata:
+                parent_id = metadata.get(key)
+                parent_found = True
+                break
+
+    limitations_list: list[str] = []
+    if prompt_message_id is not None and not parent_found:
+        limitations_list.append("parent_id_unavailable")
+    if prompt_message_id is not None and parent_id is None:
+        limitations_list.append("parent_id_null_not_correlated")
+
+    if prompt_message_id is not None and parent_id is not None:
+        if parent_id != prompt_message_id:
+            return failure("parent_message_mismatch", "uncertain")
+
+    if finish == "stop":
+        return TerminalReconciliation(
+            True,
+            "completed",
+            finish,
+            completed_at,
+            assistant_message_id,
+            "accepted",
+            tuple(limitations_list),
+        )
+    if finish == "length":
+        return TerminalReconciliation(
+            False,
+            "partial",
+            finish,
+            completed_at,
+            assistant_message_id,
+            "finish_length",
+            tuple(limitations_list) or ("finish_length",),
+        )
+    if finish in {"error", "content-filter", "interrupted", "cancel"}:
+        return TerminalReconciliation(
+            False,
+            "failed",
+            finish,
+            completed_at,
+            assistant_message_id,
+            f"finish_{finish}",
+            tuple(limitations_list) or (f"finish_{finish}",),
+        )
+    if finish in {"tool-calls", "unknown"}:
+        return TerminalReconciliation(
+            False,
+            "uncertain",
+            finish,
+            completed_at,
+            assistant_message_id,
+            "non_final_finish",
+            tuple(limitations_list) or ("non_final_finish",),
+        )
+    return TerminalReconciliation(
+        False,
+        "uncertain",
+        finish,
+        completed_at,
+        assistant_message_id,
+        "unknown_finish",
+        tuple(limitations_list) or ("unknown_finish",),
+    )

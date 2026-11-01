@@ -70,6 +70,11 @@ def test_managed_binding_session_message_get_maps_get_path():
 
 ### Task 2: Helper conservador de reconciliación
 
+**Estado:** completada y aceptada mediante revisión independiente. TDD: 35 fallos
+antes de implementar; 127 pruebas focalizadas aprobadas después, junto con Ruff,
+formato y mypy. Captura de metadata y evaluador disponibles; sin integración en
+el supervisor ni cambios de persistencia. La tarea 3 permanece pendiente.
+
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/session_backend.py`
 - Test: `tests/test_session_backend.py`

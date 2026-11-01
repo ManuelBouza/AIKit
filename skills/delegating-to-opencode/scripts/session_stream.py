@@ -37,6 +37,8 @@ class EventStream:
         self.terminal = False
         self.error = False
         self.session_mismatch = False
+        self.assistant_message_id: str | None = None
+        self.assistant_message_mismatch: bool = False
 
     def feed(self, chunk: bytes) -> None:
         for part in chunk.splitlines(keepends=True):
@@ -77,6 +79,23 @@ class EventStream:
         part = event.get("part")
         if not isinstance(part, dict):
             part = {}
+        observed_message_ids: list[str] = []
+        for source in (event, part):
+            if not isinstance(source, dict):
+                continue
+            value = source.get("messageID")
+            if isinstance(value, str):
+                observed_message_ids.append(value)
+        if observed_message_ids:
+            candidate = observed_message_ids[0]
+            if any(value != candidate for value in observed_message_ids):
+                self.assistant_message_mismatch = True
+                self.assistant_message_id = None
+            elif self.assistant_message_id is None:
+                self.assistant_message_id = candidate
+            elif self.assistant_message_id != candidate:
+                self.assistant_message_mismatch = True
+                self.assistant_message_id = None
         if event.get("type") == "error" or event.get("error") or part.get("error"):
             self.error = True
         identities: list[str] = []

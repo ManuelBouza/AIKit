@@ -141,7 +141,7 @@ class ManagedBinding:
         if self.verify_owner(timeout=min(timeout, 1.0)) is None:
             raise ServiceError("owner_mismatch", "Propietario no verificado.")
         url = self.registration.url.rstrip("/") + "/api/config"
-        params = f"?directory={_quote(str(project))}"
+        params = "?" + urllib.parse.urlencode({"location[directory]": str(project)})
         deadline = time.monotonic() + max(0.0, timeout)
         status, body = _http_request(
             url=url + params,
@@ -162,7 +162,7 @@ class ManagedBinding:
         if self.verify_owner(timeout=min(timeout, 1.0)) is None:
             raise ServiceError("owner_mismatch", "Propietario no verificado.")
         url = self.registration.url.rstrip("/") + "/api/model"
-        params = f"?directory={_quote(str(project))}"
+        params = "?" + urllib.parse.urlencode({"location[directory]": str(project)})
         deadline = time.monotonic() + max(0.0, timeout)
         status, body = _http_request(
             url=url + params,
@@ -203,7 +203,7 @@ class ManagedBinding:
         if self.verify_owner(timeout=min(timeout, 1.0)) is None:
             raise ServiceError("owner_mismatch", "Propietario no verificado.")
         url = self.registration.url.rstrip("/") + "/api/experimental/usage/limits"
-        params = f"?directory={_quote(str(project))}"
+        params = "?" + urllib.parse.urlencode({"location[directory]": str(project)})
         deadline = time.monotonic() + max(0.0, timeout)
         status, body = _http_request(
             url=url + params,

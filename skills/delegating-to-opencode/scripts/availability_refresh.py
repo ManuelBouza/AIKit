@@ -156,7 +156,20 @@ def _metadata_from_public(public: dict[str, Any]) -> ModelMetadata:
     )
 
 
-def _parse_usage_limits(payload: object) -> QuotaObservation | None:
+def _parse_usage_limits(payload: object, project: Path) -> QuotaObservation | None:
+    if isinstance(payload, dict) and "data" in payload:
+        location = payload.get("location")
+        if not isinstance(location, dict):
+            return None
+        directory = location.get("directory")
+        if not isinstance(directory, str) or not directory:
+            return None
+        location_path = Path(directory)
+        if not location_path.is_absolute() or _project_key(
+            location_path
+        ) != _project_key(project):
+            return None
+        payload = payload["data"]
     if not isinstance(payload, dict) or not isinstance(payload.get("go"), dict):
         return None
     go = payload["go"]
@@ -199,6 +212,8 @@ def _parse_usage_limits(payload: object) -> QuotaObservation | None:
 
 
 def _parse_integrations(payload: object) -> list[str]:
+    if isinstance(payload, dict) and "data" in payload:
+        payload = payload["data"]
     if not isinstance(payload, list):
         return []
     result: list[str] = []
@@ -243,7 +258,7 @@ def _refresh_once(
     integrations: list[str] | None = None
     try:
         payload = query(lambda seconds: binding.integrations(timeout=seconds))
-        if not isinstance(payload, list):
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
             raise ValueError("Invalid integrations")
         integrations = _parse_integrations(payload)
     except Exception:
@@ -285,7 +300,7 @@ def _refresh_once(
             payload = query(
                 lambda seconds: binding.usage_limits(project, timeout=seconds)
             )
-            observation = _parse_usage_limits(payload)
+            observation = _parse_usage_limits(payload, project)
             if observation is None:
                 raise ValueError("Invalid quota")
             aggregates = [item for item in aggregates if item.provider != "opencode-go"]

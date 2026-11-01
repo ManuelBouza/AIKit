@@ -26,14 +26,37 @@ def test_go_refresh_whitelist_and_aggregate(tmp_path: Path) -> None:
         context=context,
         catalog=[api_model(provider="opencode-go", model_id="iceman-contributor-free")],
         usage_limits_data={
-            "go": {
-                "rolling": {"percent": 0, "limited": False, "resetsAt": 1793476425740},
-                "weekly": {"percent": 100, "limited": True, "resetsAt": 1793577600000},
-                "monthly": {"percent": 50, "limited": False, "resetsAt": 1795887585000},
-            }
+            "location": {"directory": str(tmp_path / "project")},
+            "data": {
+                "workspace": {
+                    "id": "ws-ficticio",
+                    "usageURL": "https://example.invalid/usage",
+                },
+                "go": {
+                    "rolling": {
+                        "percent": 0,
+                        "limited": False,
+                        "resetsAt": 1793476425740,
+                    },
+                    "weekly": {
+                        "percent": 100,
+                        "limited": True,
+                        "resetsAt": 1793577600000,
+                    },
+                    "monthly": {
+                        "percent": 50,
+                        "limited": False,
+                        "resetsAt": 1795887585000,
+                    },
+                },
+                "budgets": [],
+            },
         },
         openapi={"paths": {"/api/experimental/usage/limits": {"get": {}}}},
-        integrations_data=[{"id": "kilo", "name": "Kilo", "connections": 1}],
+        integrations_data={
+            "location": {"directory": str(tmp_path / "project")},
+            "data": [{"id": "kilo", "name": "Kilo", "connections": 1}],
+        },
     )
     project = tmp_path / "project"
     project.mkdir()
@@ -164,9 +187,17 @@ def test_failed_catalog_preserves_models_and_project_context(tmp_path: Path) -> 
 
 
 @pytest.mark.parametrize("limited", [None, 0, 1, "false", [], {}])
-def test_usage_limited_requires_strict_bool(limited: object) -> None:
+def test_usage_limited_requires_strict_bool(limited: object, tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
     assert (
-        ar._parse_usage_limits({"go": {"weekly": {"limited": limited, "percent": 0}}})
+        ar._parse_usage_limits(
+            {
+                "location": {"directory": str(project)},
+                "data": {"go": {"weekly": {"limited": limited, "percent": 0}}},
+            },
+            project,
+        )
         is None
     )
 
@@ -363,3 +394,80 @@ def test_refresh_publication_lock_uses_remaining_budget(
     assert not result.refreshed
     assert not state.exists()
     assert len(binding.catalog_calls) == 1
+
+
+def test_usage_location_must_match_project(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    other = tmp_path / "other"
+    other.mkdir()
+    valid_payload = {
+        "location": {"directory": str(project)},
+        "data": {
+            "go": {
+                "rolling": {"percent": 0, "limited": False, "resetsAt": 1},
+                "weekly": {"percent": 100, "limited": True, "resetsAt": 2},
+            }
+        },
+    }
+    assert ar._parse_usage_limits(valid_payload, project) is not None
+
+    mismatched_payload = {
+        "location": {"directory": str(other)},
+        "data": valid_payload["data"],
+    }
+    assert ar._parse_usage_limits(mismatched_payload, project) is None
+
+    missing_location = {"data": valid_payload["data"]}
+    assert ar._parse_usage_limits(missing_location, project) is None
+
+    invalid_location = {
+        "location": {"directory": "relative/path"},
+        "data": valid_payload["data"],
+    }
+    assert ar._parse_usage_limits(invalid_location, project) is None
+
+
+def test_usage_location_mismatch_preserves_last_valid_aggregate(
+    tmp_path: Path,
+) -> None:
+    state = tmp_path / "state" / "availability-state.json"
+    state.parent.mkdir()
+    project = tmp_path / "project"
+    project.mkdir()
+    other = tmp_path / "other"
+    other.mkdir()
+    context = HostContext(tmp_path / "registration", tmp_path / "state", "2.2.0")
+    context.aikit_state.mkdir(parents=True, exist_ok=True)
+    valid_payload = {
+        "location": {"directory": str(project)},
+        "data": {
+            "go": {
+                "rolling": {"percent": 0, "limited": False, "resetsAt": 1},
+                "weekly": {"percent": 100, "limited": True, "resetsAt": 2},
+            }
+        },
+    }
+    binding = FakeBinding(
+        context=context,
+        catalog=[api_model(provider="opencode-go", model_id="beam-free")],
+        usage_limits_data=valid_payload,
+        openapi={"paths": {"/api/experimental/usage/limits": {"get": {}}}},
+    )
+    first = ar.coalesced_refresh(state, binding, project, 2.0, force=True)
+    assert first.errors == ()
+    assert first.snapshot.aggregates
+    previous = first.snapshot.aggregates
+
+    binding.usage_limits_data = {
+        "location": {"directory": str(other)},
+        "data": valid_payload["data"],
+    }
+    second = ar.coalesced_refresh(state, binding, project, 2.0, force=True)
+    assert "usage_limits_unavailable" in second.errors
+    assert second.snapshot.aggregates == previous
+
+    binding.usage_limits_data = valid_payload
+    third = ar.coalesced_refresh(state, binding, project, 2.0, force=True)
+    assert third.errors == ()
+    assert third.snapshot.aggregates

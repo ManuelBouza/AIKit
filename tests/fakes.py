@@ -324,7 +324,10 @@ class FakeBinding:
         if self.usage_limits_error is not None:
             raise ServiceError(self.usage_limits_error, "Fallo de uso.")
         if self.usage_limits_data is not None:
-            return self.usage_limits_data
+            payload = self.usage_limits_data
+            if isinstance(payload, dict) and "data" not in payload:
+                payload = {"location": {"directory": "fake"}, "data": payload}
+            return payload
         return {"go": None}
 
     def integrations(self, *, timeout: float) -> object:
@@ -333,8 +336,12 @@ class FakeBinding:
         if self.integrations_returncode != 0:
             raise ServiceError("http_error", "Fallo de integraciones.")
         if self.integrations_data is None:
-            return [{"id": "opencode", "name": "OpenCode", "connections": 1}]
-        return self.integrations_data
+            payload: object = [{"id": "opencode", "name": "OpenCode", "connections": 1}]
+        else:
+            payload = self.integrations_data
+        if isinstance(payload, list):
+            return {"location": {"directory": "fake"}, "data": payload}
+        return payload
 
     def child_environment(self, base: Mapping[str, str]) -> dict[str, str]:
         if self.closed:

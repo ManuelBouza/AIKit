@@ -765,7 +765,9 @@ def test_integrated_http_supervisor_pipe_and_local_recovery(
             elif path == "/api/config":
                 body = default_config_sources()
             elif path == "/api/model":
-                directory = parse_qs(urlsplit(self.path).query)["directory"][0]
+                directory = parse_qs(urlsplit(self.path).query)["location[directory]"][
+                    0
+                ]
                 body = {"location": {"directory": directory}, "data": [api_model()]}
             else:
                 body = {"unrelated_session": "still_running"}

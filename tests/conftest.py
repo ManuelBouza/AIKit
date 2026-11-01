@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
@@ -173,10 +174,16 @@ class Harness:
             self.bindings.append(binding)
             return binding
 
-        def launch(prepared: Any, record: Any, *, context: HostContext) -> None:
+        from unittest.mock import MagicMock
+
+        def launch(prepared: Any, record: Any, *, context: HostContext) -> MagicMock:
             if transport.timeout_error:
                 _write_report(record, "", interrupted=True, context=context)
-                return
+                mock = MagicMock()
+                mock.communicate.side_effect = subprocess.TimeoutExpired(
+                    "cmd", prepared.timeout
+                )
+                return mock
             completed = transport(prepared.argv, prepared.project, prepared.timeout)
             _write_report(
                 record,
@@ -184,6 +191,9 @@ class Harness:
                 returncode=completed.returncode,
                 context=context,
             )
+            mock = MagicMock()
+            mock.communicate.return_value = (None, None)
+            return mock
 
         self.monkeypatch.setattr(delegate, "resolve_host_context", lambda: context)
         self.monkeypatch.setattr(delegate, "discover_existing", discover)

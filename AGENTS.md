@@ -62,6 +62,17 @@ la revisión técnica. Contrato de carga en
 `skills/delegating-to-opencode/references/carga-opencode.md`; evidencia en
 `docs/balance-carga.md`.
 
+Espera por finalización (coordinación): preferir espera acotada por proceso/tarea
+propia con límite máximo y retorno anticipado; notificación asíncrona solo si está
+publicada y en turno activo. La salida del cliente es solo señal; `pending`/
+`uncertain` nunca autoriza reintento ni duplicar inferencia. Si el cliente vence
+pero el backend sigue vivo, conservar IDs/contexto y usar reconciliador/estado
+determinista propio que despierte solo ante cambio o guardia razonable (puede
+consultar la API sin LLM). Sin SSE global, hooks ni servidores aquí, ni sleep
+fijo de 300 s ni monitorización. Duraciones por intento real en caché, no vida de
+sesión reutilizada; grupos comparables y límites honestos. Capacidades portables
+variables; instalación pendiente.
+
 ## Orquestación Codex/OpenCode
 
 Codex conserva conversación, coordinación, decisiones del usuario, selección de

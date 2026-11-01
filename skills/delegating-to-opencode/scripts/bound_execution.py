@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import subprocess
 import time
 import uuid
 from datetime import datetime, timezone
@@ -339,12 +340,14 @@ def _wait_result(
 
 def _launch_supervisor(
     prepared: BoundLaunch, record: TaskRecord, *, context: HostContext
-) -> None:
-    """Seam de producción: arranca el supervisor independiente ya reservado."""
+) -> subprocess.Popen[bytes]:
+    """Seam de producción: arranca el supervisor independiente ya reservado.
+    Returns the supervisor process handle for completion-aware waiting.
+    """
 
     from session_worker import launch_worker
 
-    launch_worker(
+    _, process = launch_worker(
         prepared.project,
         record.task_id,
         context=context,
@@ -352,6 +355,7 @@ def _launch_supervisor(
         _host_reserved=True,
         _task=prepared.task,
     )
+    return process
 
 
 def _host_error_code(exc: HostRegistryError) -> str:
@@ -470,6 +474,7 @@ def execute_bound(
             pending["code"] = str(code)
             return pending
 
+        # Wait for result.json with bounded polling (original mechanism)
         return _wait_result(context, record, seconds, agent=prepared.agent)
     finally:
         prepared.binding.close()

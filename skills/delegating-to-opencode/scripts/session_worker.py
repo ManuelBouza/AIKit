@@ -213,8 +213,10 @@ def launch_worker(
     agent: str = "build",
     _host_reserved: bool = False,
     _task: str | None = None,
-) -> TaskRecord:
-    """Reserva antes de lanzar. Una reserva incierta nunca se elimina ni repite."""
+) -> tuple[TaskRecord, subprocess.Popen[bytes]]:
+    """Reserva antes de lanzar. Una reserva incierta nunca se elimina ni repite.
+    Returns (TaskRecord, supervisor_process_handle) for completion-aware waiting.
+    """
     with lock_task(root, task_id):
         record = load_task(root, task_id)
         _deadline(record)
@@ -285,7 +287,7 @@ def launch_worker(
             finally:
                 process.stdin.close()
         threading.Thread(target=process.wait, daemon=True).start()
-    return record
+    return record, process
 
 
 def supervise(

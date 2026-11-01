@@ -34,6 +34,25 @@ refresh es explícito y no arranca el servicio. Conservar sesión/contexto y
 reanudar solo donde el backend/CLI oficial lo soporte. No reenviar por
 EOF/cliente pendiente; revisar vivo/admisión/inbox/parcial antes de reintentar.
 
+## Espera por finalización
+
+Prefiere espera acotada por proceso/tarea propia con límite máximo y retorno
+anticipado; si hay notificación asíncrona publicada, úsala solo para señales
+significativas durante turno activo. La salida del cliente es solo señal: valida
+adaptador, intento, sesión, propietario y entrega terminal; `pending`/`uncertain`
+nunca autoriza reintento. Si el cliente vence pero el backend sigue vivo,
+conserva IDs/contexto y usa reconciliador/estado determinista propio que despierte
+solo ante cambio o guardia razonable; puede consultar la API sin LLM. No SSE
+global, hooks ni servidores aquí, ni sleep fijo de 300 s ni monitorización.
+
+Duraciones por intento real en caché (`timing`), nunca vida de sesión reutilizada;
+separa completed/error/censored/medición y agrupa por proveedor/modelo/esfuerzo/
+rol/contexto con mediana, dispersión y número de muestras; sin datos suficientes,
+dilo. Ninguna estimación retrasa una señal real ni cancela un intento vivo. Las
+capacidades portables varían; instalación pendiente. Si se edita el repositorio
+objetivo, ejecuta el observador desde runtime estable aprobado/instalado, no
+importando código mutable del destino.
+
 ## Registro de coordinación
 
 El registro es manual, sin backend: una entrada por intento y su resultado real.

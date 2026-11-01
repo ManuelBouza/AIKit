@@ -22,6 +22,16 @@ Antes de cada inferencia en OpenCode anuncia objetivo, modelo, esfuerzo y tarifa
 reintentar. No eludas permisos, autenticación ni privacidad. Workers no
 redelegan; no interceptar subagentes ni modificar Superpowers.
 
+Espera por finalización: preferir espera acotada por proceso/tarea propia con
+límite máximo y retorno anticipado; notificación asíncrona solo si está publicada
+y durante turno activo. La salida del cliente es solo señal; `pending`/`uncertain`
+nunca autoriza reintento. Si el cliente vence pero el backend sigue vivo, conserva
+IDs/contexto y usa reconciliador/estado determinista propio que despierte solo ante
+cambio o guardia razonable (puede consultar la API sin LLM). Sin SSE global,
+hooks ni servidores aquí, ni sleep fijo de 300 s ni monitorización. Duraciones por
+intento real en caché, no vida de sesión reutilizada; grupos comparables y límites
+honestos. Las capacidades portables varían; instalación pendiente.
+
 Si un subagente nativo usa la CLI, devuelve el JSON de stdout directamente al
 coordinador; solo este persiste en una ruta permitida. Si falla el guardado,
 recupera la salida y registra el problema: no repitas una inferencia terminada.

@@ -17,6 +17,7 @@ from session_store import StoreError, load_task, save_task
 from session_stream import open_artifact
 
 from tests.fakes import finish_event, text_event
+from tests.test_bound_execution import attempt_directory, make_context
 from tests.test_session_store import make_record
 
 
@@ -413,3 +414,105 @@ def test_result_write_failure_keeps_host_uncertain(
         == 1
     )
     assert hr.load_host_task(ctx, record.task_id).attempts[-1].phase == "uncertain"
+
+
+def test_detached_worker_continues_after_client_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Worker detached survives coordinator timeout; result recoverable via recover_local_result."""
+    import subprocess
+    import sys
+    import time
+
+    import bound_execution as be
+    import delegate
+    from session_store import load_task
+
+    from tests.fakes import (
+        FakeBinding,
+        api_model,
+        finish_event,
+        seed_availability,
+        text_event,
+        variant,
+    )
+
+    ctx = make_context(tmp_path)
+    binding = FakeBinding(context=ctx)
+    monkeypatch.setattr(delegate, "resolve_host_context", lambda: ctx)
+    monkeypatch.setattr(
+        delegate, "discover_existing", lambda _context, **kwargs: binding
+    )
+    monkeypatch.setattr(delegate, "find_opencode", lambda: "C:/fake/opencode.exe")
+
+    project = tmp_path / "project"
+    project.mkdir()
+
+    # Seed availability with the model we'll use
+    seed_availability(
+        ctx,
+        project,
+        [
+            api_model(
+                "kimi-k3.1-pro", provider="opencode-go", variants=[variant("high")]
+            )
+        ],
+    )
+
+    prepared = delegate._prepare_run(
+        project,
+        lambda: "slow-task",
+        "opencode-go/kimi-k3.1-pro#high",
+        None,
+        "test",
+        "build",
+        10.0,
+        role="implementer",
+        context=ctx,
+    )
+
+    created: list[subprocess.Popen[bytes]] = []
+
+    def launch(value: Any, record: Any, *, context: HostContext) -> subprocess.Popen:  # type: ignore
+        scripts = str(Path(delegate.__file__).parent)
+        repo = str(Path.cwd())
+        code = (
+            "import sys,time; from pathlib import Path;"
+            f"sys.path[:0]=[{scripts!r},{repo!r}];"
+            "from session_store import load_task; from tests.test_bound_execution import write_terminal;"
+            f"time.sleep(.5); r=load_task(Path({record.cwd!r}),{record.task_id!r});"
+            f"write_terminal(r,{(text_event('slow-done') + chr(10) + finish_event(0))!r})"
+        )
+        options: dict[str, Any] = (
+            {"creationflags": subprocess.CREATE_NO_WINDOW}
+            if sys.platform == "win32"
+            else {}
+        )
+        proc = subprocess.Popen(
+            [sys.executable, "-c", code],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            **options,
+        )
+        created.append(proc)
+        return proc
+
+    monkeypatch.setattr(be, "_launch_supervisor", launch)
+    result = be.execute_bound(prepared, context=ctx, wait_seconds=0.1)
+
+    assert result["status"] == "pending"
+    assert result["uncertain"] is True
+
+    # Worker still running; wait for it to complete
+    target = attempt_directory(load_task(project, result["task_id"])) / "result.json"
+    deadline = time.monotonic() + 5
+    while not target.exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert target.exists(), "Worker did not write result.json in time"
+    assert created
+    assert created[0].wait(timeout=5) == 0
+
+    recovered = be.recover_local_result(ctx, load_task(project, result["task_id"]))
+    assert recovered["status"] == "ok"
+    assert recovered["summary"] == "slow-done"

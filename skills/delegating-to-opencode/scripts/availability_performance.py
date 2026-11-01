@@ -12,7 +12,10 @@ import statistics
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Literal, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
+
+if TYPE_CHECKING:
+    from availability_state import AvailabilitySnapshot
 
 from session_store import Role
 
@@ -294,8 +297,11 @@ def _merge_token_stats(existing: TokenStats, incoming: TokenStats) -> TokenStats
 def _merge_samples(
     existing: PerformanceSample, incoming: PerformanceSample
 ) -> PerformanceSample:
-    """Completa campos ausentes de una misma identidad de evento."""
-
+    """Completa campos ausentes de una misma identidad de evento.
+    Prefiere valores de incoming cuando este no tiene limitación 'pending'
+    y existing la tiene (p.ej. pending -> completed). Elimina limitación
+    'pending' si incoming no la tiene, o si el otro lado ya tiene un
+    task_seconds definitivo (completed) sin pending."""
     if (
         existing.role is not None
         and incoming.role is not None
@@ -305,7 +311,20 @@ def _merge_samples(
         and existing.context_bucket != incoming.context_bucket
     ):
         raise ValueError("Identidad de evento con contexto contradictorio.")
-    limitations = tuple(sorted(set(existing.limitations) | set(incoming.limitations)))
+
+    # unión de limitaciones, pero descartar 'pending' si incoming no lo tiene
+    base_limits = set(existing.limitations) | set(incoming.limitations)
+    if "pending" in base_limits:
+        # descartar pending si incoming no lo tiene
+        if "pending" not in incoming.limitations:
+            base_limits.discard("pending")
+        # o si existing ya no tiene pending y ya tiene task_seconds definitivo
+        elif (
+            "pending" not in existing.limitations and existing.task_seconds is not None
+        ):
+            base_limits.discard("pending")
+    limitations = tuple(sorted(base_limits))
+
     tokens = _merge_token_stats(existing.tokens, incoming.tokens)
     observed_at = min(existing.observed_at, incoming.observed_at)
     tps = existing.tokens_per_second
@@ -318,6 +337,21 @@ def _merge_samples(
                 existing.generation_seconds, incoming.generation_seconds
             ),
         )
+
+    # task_seconds: prefer incoming when it resolves a pending
+    existing_has_pending = "pending" in existing.limitations
+    incoming_has_pending = "pending" in incoming.limitations
+    task_seconds: float | None = None
+    if incoming.task_seconds is not None and (
+        existing.task_seconds is None
+        or (existing_has_pending and not incoming_has_pending)
+    ):
+        task_seconds = incoming.task_seconds
+    else:
+        task_seconds = _merge_optional_float(
+            existing.task_seconds, incoming.task_seconds
+        )
+
     return PerformanceSample(
         key=existing.key,
         task_id=existing.task_id,
@@ -339,9 +373,7 @@ def _merge_samples(
         model_seconds=_merge_optional_float(
             existing.model_seconds, incoming.model_seconds
         ),
-        task_seconds=_merge_optional_float(
-            existing.task_seconds, incoming.task_seconds
-        ),
+        task_seconds=task_seconds,
         tool_seconds=_merge_optional_float(
             existing.tool_seconds, incoming.tool_seconds
         ),
@@ -1187,6 +1219,65 @@ summarize = aggregate_samples
 summarize_window = aggregate_window
 
 
+def summarize_timing(
+    snapshot: AvailabilitySnapshot,
+    project_key: str,
+) -> list[dict[str, Any]]:
+    """Resumen determinista de tiempos de intento (task_seconds) por grupo comparable.
+
+    Filtra muestras con measurement_kind="task" y source="supervisor_clock".
+    Agrupa por (provider, model, variant, role, context_bucket).
+    Retorna lista de dicts serializables con median, sample_count, confidence, limitations.
+    Grupos con <3 muestras marcan confidence="low" e incluyen "insufficient_for_predictors" en limitations.
+    """
+
+    # Filter samples: task kind + supervisor_clock source
+    task_samples = [
+        s
+        for s in snapshot.performance_samples
+        if s.measurement_kind == "task"
+        and s.source == "supervisor_clock"
+        and s.task_seconds is not None
+    ]
+
+    if not task_samples:
+        return []
+
+    # Group by comparable key: (provider, model, variant, role, context_bucket)
+    groups: dict[
+        tuple[str, str, str | None, str | None, str | None], list[PerformanceSample]
+    ] = {}
+    for sample in task_samples:
+        comp_key = (
+            sample.key.provider,
+            sample.key.model,
+            sample.key.variant,
+            sample.role,
+            sample.context_bucket,
+        )
+        groups.setdefault(comp_key, []).append(sample)
+
+    results = []
+    for _comp_key, samples in groups.items():
+        try:
+            result = aggregate_samples(samples)
+            result_dict = result_to_dict(result)
+            # Add explicit "insufficient_for_predictors" flag for low confidence
+            if result.confidence == "low":
+                limitations = list(result_dict.get("limitations", []))
+                if "insufficient_for_predictors" not in limitations:
+                    limitations.append("insufficient_for_predictors")
+                result_dict["limitations"] = limitations
+            results.append(result_dict)
+        except ValueError:
+            # Skip groups that can't be aggregated (mixed keys, etc.)
+            continue
+
+    # Sort by median task_seconds ascending (faster first)
+    results.sort(key=lambda r: r.get("task_seconds") or float("inf"))
+    return results
+
+
 __all__ = [
     "PerformanceModelKey",
     "PerformanceKey",
@@ -1229,4 +1320,5 @@ __all__ = [
     "window_to_dict",
     "window_from_dict",
     "result_to_dict",
+    "summarize_timing",
 ]

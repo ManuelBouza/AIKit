@@ -1293,6 +1293,36 @@ def availability_import_public_terms_command(
         return _error(exc.code, exc.message)
 
 
+def timing_command(cwd: Path | str) -> dict[str, Any]:
+    """Resumen determinista de tiempos de intento observados."""
+    from availability_performance import summarize_timing
+    from availability_state import read_snapshot, state_path
+    from service_identity import resolve_host_context
+
+    try:
+        _validate_cwd(cwd)
+        host = resolve_host_context()
+        path = state_path(host.aikit_state)
+        snapshot = read_snapshot(path)
+        if snapshot is None:
+            return {
+                "status": "ok",
+                "timing_summary": [],
+                "message": "No availability snapshot found",
+            }
+        project_key = _project_key(Path(cwd))
+        timing_summary = summarize_timing(snapshot, project_key)
+        return {"status": "ok", "timing_summary": timing_summary}
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable", "No se pudo leer la tabla compartida."
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+
+
 def _positive_float(value: str) -> float:
     try:
         number = float(value)
@@ -1373,6 +1403,12 @@ def _parser() -> argparse.ArgumentParser:
         sub.add_argument("--replace", action="store_true")
         sub.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
 
+    timing_parser = subparsers.add_parser(
+        "timing", help="Resumen determinista de tiempos de intento observados."
+    )
+    timing_parser.add_argument("--cwd", required=True)
+    timing_parser.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -1398,6 +1434,8 @@ def main(argv: list[str] | None = None) -> int:
                 payload = availability_refresh_command(
                     cwd=args.cwd, timeout=args.timeout
                 )
+        elif args.command == "timing":
+            payload = timing_command(cwd=args.cwd)
         else:
             payload = run_task(
                 cwd=args.cwd,

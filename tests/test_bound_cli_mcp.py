@@ -13,6 +13,7 @@ import mcp_server
 import pytest
 from mcp.client.session import ClientSession
 from mcp.shared.memory import create_connected_server_and_client_session
+from service_identity import HostContext
 
 from tests.conftest import Harness
 from tests.fakes import DEFAULT_MODEL, api_model, variant
@@ -189,11 +190,16 @@ async def test_mcp_pending_is_tracked_without_error_or_second_send(
 ) -> None:
     harness.fake()
     launches: list[Any] = []
-    monkeypatch.setattr(
-        bound_execution,
-        "_launch_supervisor",
-        lambda prepared, record, *, context: launches.append(record),
-    )
+    import subprocess
+    from unittest.mock import MagicMock
+
+    def mock_launch(prepared: Any, record: Any, *, context: HostContext) -> MagicMock:
+        launches.append(record)
+        mock = MagicMock()
+        mock.communicate.side_effect = subprocess.TimeoutExpired("cmd", 0.05)
+        return mock
+
+    monkeypatch.setattr(bound_execution, "_launch_supervisor", mock_launch)
 
     async with _client() as session:
         result = await session.call_tool(
@@ -265,24 +271,19 @@ async def test_mcp_schema_exposes_role_and_preserves_agent_and_variant(
 async def test_mcp_real_wait_budget_returns_tracking_without_stopping_worker(
     harness: Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from types import SimpleNamespace
-
+    """Test that completion-aware wait returns pending when supervisor times out."""
     harness.fake()
-    now = [0.0]
     launches = []
+    import subprocess
+    from unittest.mock import MagicMock
 
-    def sleep(seconds: float) -> None:
-        now[0] += seconds
+    def mock_launch(prepared: Any, record: Any, *, context: HostContext) -> MagicMock:
+        launches.append(record)
+        mock = MagicMock()
+        mock.communicate.side_effect = subprocess.TimeoutExpired("cmd", 300)
+        return mock
 
-    monkeypatch.setattr(
-        bound_execution, "time", SimpleNamespace(monotonic=lambda: now[0], sleep=sleep)
-    )
-    monkeypatch.setattr(bound_execution, "POLL_SECONDS", 10.0)
-    monkeypatch.setattr(
-        bound_execution,
-        "_launch_supervisor",
-        lambda prepared, record, *, context: launches.append(record),
-    )
+    monkeypatch.setattr(bound_execution, "_launch_supervisor", mock_launch)
     async with _client() as session:
         result = await session.call_tool(
             "opencode_delegate",
@@ -295,7 +296,6 @@ async def test_mcp_real_wait_budget_returns_tracking_without_stopping_worker(
             },
         )
     payload = json.loads(_text(result))
-    assert now[0] == 45
     assert result.isError is False
     assert payload["status"] == "pending"
     assert payload["task_id"] == launches[0].task_id

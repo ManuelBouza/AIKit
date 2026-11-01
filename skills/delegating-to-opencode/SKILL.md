@@ -201,6 +201,38 @@ conversación ni vuelques logs extensos. Consulta el catálogo al seleccionar y
 reutilízalo en el mismo contexto mientras no haya señal de cambio; no es caché
 garantizada ni cuota.
 
+## Espera por finalización
+
+Prefiere la espera acotada por finalización del anfitrión sobre un proceso o
+tarea propia, con límite máximo y retorno anticipado al estar listo. Si existe
+una capacidad de notificación asíncrona realmente publicada, úsala solo para
+señales significativas de finalización, error, permiso o estado incierto durante
+un turno de espera activo; conserva multitarea e interrupciones del usuario. No
+duermas un fijo de 300 s tras lanzar, no uses modelo ni subagente de
+monitorización y no inventes nombres de herramientas ni prometas push universal a
+chat inactivo.
+
+La salida del cliente o proceso es solo señal: valida `delivery`, `attempt_id`,
+`session_id`, identidad del servidor/propietario y entrega terminal antes de
+declarar éxito. `pending`/`uncertain` nunca autoriza reintento ni duplicar
+inferencia. Si la espera del cliente vence pero el backend sigue vivo, conserva
+IDs y contexto y usa un reconciliador/estado determinista propio, que despierte
+al coordinador solo ante cambio o guardia razonable; ese fallback puede consultar
+la API sin activaciones LLM. No te suscribas a SSE global ni añadas hooks ni
+servidores aquí.
+
+Las duraciones provienen del comando `timing` sobre muestras reales por intento
+en caché; nunca la vida completa de una sesión reutilizada como velocidad del
+modelo. Separa completed/error/censored/medición; mediana, dispersión y número de
+muestras solo para grupos comparables por proveedor/modelo/esfuerzo/rol/contexto.
+Ninguna estimación retrasa una señal real de finalización ni cancela un intento
+vivo. La notificación de chat actual está probada, pero las capacidades portables
+varían y la instalación sigue pendiente. Si el repositorio objetivo se edita,
+ejecuta el observador desde un runtime estable aprobado/instalado, no importando
+código mutable del destino. No prometas control de procesos no soportado. La
+evidencia real existente está en `.aikit/opencode-wait-study/tool-wait-probes.json`;
+declara sus límites honestamente.
+
 ## Límites
 
 Una carpeta o worktree no es un sandbox del sistema operativo. El aislamiento es

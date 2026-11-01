@@ -47,7 +47,11 @@ from service_identity import (
     get_process_birth,
     resolve_host_context,
 )
-from session_backend import interrupt_session, worker_interrupt
+from session_backend import (
+    interrupt_session,
+    reconcile_terminal_message,
+    worker_interrupt,
+)
 from session_store import (
     DeliveryObservation,
     DeliveryState,
@@ -190,6 +194,15 @@ def _bound_command(
     return delegate._build_bound_command(
         exe, binding.registration.url, selected, attempt.agent, text
     )
+
+
+def _delivery_source(
+    delivery: DeliveryState, reconciled_terminal: bool, prior_source: str
+) -> str:
+    """Source acreditada de la entrega: solo lo que sobrevive verificación."""
+    if delivery == "completed":
+        return "durable_message" if reconciled_terminal else "cli_terminal"
+    return prior_source if reconciled_terminal else "client_observation"
 
 
 def _deadline(record: TaskRecord) -> float:
@@ -503,6 +516,8 @@ def supervise(
                     thread.join(0.005)
             returncode = process.wait()
             events.finish()
+            reconciled_terminal = False
+            reconciliation_result: Any = None
             delivery: DeliveryState = "partial" if events.summary else "pending"
             if returncode != 0 or events.error:
                 delivery = "failed"
@@ -514,6 +529,53 @@ def supervise(
                 delivery = "completed"
             elif deadline_exceeded and interrupt_confirmed is True:
                 delivery = "interrupted"
+            prior_delivery_source = (
+                record.delivery.source
+                if record.delivery is not None
+                else "client_observation"
+            )
+            if (
+                delivery in {"partial", "pending"}
+                and not events.terminal
+                and not events.error
+                and not events.session_mismatch
+                and not events.assistant_message_mismatch
+                and events.assistant_message_id is not None
+                and record.session is not None
+                and not deadline_exceeded
+                and not provenance_failed
+                and "stream_read_failed" not in limitations
+                and "record_save_failed" not in limitations
+                and binding is not None
+                and context is not None
+                and (owner_budget := end - time.monotonic()) > 0
+                and binding.verify_owner(timeout=min(owner_budget, 1.0)) is not None
+            ):
+                remaining_budget = end - time.monotonic()
+                if remaining_budget > 0:
+                    reconciliation_timeout = min(remaining_budget, 10.0)
+                    try:
+                        reconciliation_result = reconcile_terminal_message(
+                            record,
+                            binding,
+                            assistant_message_id=events.assistant_message_id,
+                            timeout=reconciliation_timeout,
+                        )
+                    except Exception:  # noqa: BLE001
+                        reconciliation_result = None
+                        if "reconciliation_failed" not in limitations:
+                            limitations.append("reconciliation_failed")
+                    if (
+                        reconciliation_result is not None
+                        and getattr(reconciliation_result, "accepted", False) is True
+                    ):
+                        delivery = "completed"
+                        reconciled_terminal = True
+                        for limitation in (
+                            getattr(reconciliation_result, "limitations", ()) or ()
+                        ):
+                            if limitation not in limitations:
+                                limitations.append(limitation)
             if events.invalid_json:
                 limitations.append("invalid_json")
             if events.session_mismatch:
@@ -554,7 +616,7 @@ def supervise(
             )
             record.delivery = DeliveryObservation(
                 delivery,
-                "cli_terminal" if delivery == "completed" else "client_observation",
+                _delivery_source(delivery, reconciled_terminal, prior_delivery_source),
                 _now(),
             )
             record.last_event_at = _now()
@@ -651,6 +713,21 @@ def supervise(
             if provenance_failed:
                 delivery = "pending"
                 report["status"], report["delivery"] = "pending", "pending"
+                if (
+                    reconciled_terminal
+                    and record.delivery is not None
+                    and record.delivery.source == "durable_message"
+                ):
+                    record.delivery = DeliveryObservation(
+                        delivery, prior_delivery_source, _now()
+                    )
+                    persist()
+                    try:
+                        (directory / "result.json").write_bytes(
+                            json.dumps(report, ensure_ascii=True).encode("utf-8")
+                        )
+                    except OSError:
+                        limitations.append("result_save_failed")
         try:
             print(json.dumps(report, ensure_ascii=True), flush=True)
         except (OSError, ValueError):

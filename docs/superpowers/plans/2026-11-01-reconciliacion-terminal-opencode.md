@@ -140,6 +140,13 @@ Además cubrir: `length` → `partial`; `error/content-filter/interrupted/cancel
 
 ### Task 3: Integración en supervisor
 
+**Estado:** completada. Revisión independiente aceptada y correcciones posteriores
+verificadas con cuatro casos RED y 184 pruebas focalizadas aprobadas. La consulta
+se limita al presupuesto restante; una invalidación posterior conserva estado y
+fuente conservadores. El consumo de la evidencia en `bound_execution` y la
+instalación siguen pendientes. El formato de los archivos de esta tarea pasa;
+el formato global informó una incidencia previa fuera del alcance.
+
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/session_worker.py:495-560`
 - Test: `tests/test_session_worker.py`

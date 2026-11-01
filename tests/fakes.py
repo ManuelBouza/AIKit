@@ -232,6 +232,37 @@ class FakeBinding:
     valid: bool = True
     calls: list[tuple[str, Path | None]] = field(default_factory=list)
     closed: bool = False
+    operations: frozenset[str] = field(
+        default_factory=lambda: frozenset(
+            {
+                "server.info",
+                "session.get",
+                "session.active",
+                "session.inbox.list",
+                "session.permission.list",
+                "session.interrupt",
+                "session.message.get",
+            }
+        )
+    )
+    responses: dict[str, Any] = field(
+        default_factory=lambda: {
+            "session.message.get": {
+                "data": {
+                    "id": "msg_1",
+                    "sessionID": "ses_prueba",
+                    "type": "assistant",
+                    "finish": "stop",
+                    "error": None,
+                    "time": {"completed": 123},
+                }
+            }
+        }
+    )
+    request_calls: list[tuple[str, str | None, str | None, float, bool | None]] = field(
+        default_factory=list
+    )
+    response_status: dict[str, int] = field(default_factory=dict)
     child_environments: list[dict[str, str]] = field(default_factory=list)
     registration: Any = field(init=False)
     token: str = field(init=False)
@@ -349,6 +380,32 @@ class FakeBinding:
         environment = {**base, "OPENCODE_PASSWORD": "fake-secret"}
         self.child_environments.append(environment)
         return environment
+
+    def request(
+        self,
+        operation: str,
+        *,
+        session_id: str | None = None,
+        message_id: str | None = None,
+        timeout: float = 10.0,
+        resume: bool | None = None,
+    ) -> Any:
+        from session_backend import ApiResponse
+
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if not self.valid:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        if self.verify_owner(timeout=min(timeout, 1.0)) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        self.request_calls.append((operation, session_id, message_id, timeout, resume))
+        status = self.response_status.get(operation, 200)
+        body = (
+            self.responses.get(operation) if isinstance(self.responses, dict) else None
+        )
+        if self.verify_owner(timeout=0.5) is None:
+            raise ServiceError("owner_mismatch", "Propietario cambió.")
+        return ApiResponse(status, body)
 
     def close(self) -> None:
         self.closed = True

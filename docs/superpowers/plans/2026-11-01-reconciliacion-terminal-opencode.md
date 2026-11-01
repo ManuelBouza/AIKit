@@ -170,6 +170,14 @@ Además: si `uncertain`, mantiene `pending`; si presupuesto agotado, mantiene `p
 
 ### Task 4: Reutilizar contrato en bound_execution
 
+**Estado:** completada. La recuperación durable válida ya cumplía el contrato;
+se añadió rechazo de resultados `completed` si el registro actual fue demovido
+o carece de observación de entrega. RED: cuatro fallos antes del cambio; GREEN:
+197 pruebas focalizadas y 47 repetidas por revisor independiente, más Ruff,
+formato y mypy. Retorno nativo acotado tras rechazos de cuota/nivel de cuenta
+y agotamiento del presupuesto de OpenCode; se conservó el contexto del intento.
+Sin instalación, prueba de inferencia real ni cambios del JSON público.
+
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/bound_execution.py:172-270`
 - Test: `tests/test_bound_execution.py`

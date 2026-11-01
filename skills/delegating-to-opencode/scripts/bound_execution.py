@@ -176,6 +176,10 @@ def _map_result(
         data.get("task_id") != record.task_id
         or data.get("attempt_id") != record.attempt_id
         or data.get("session") != record.session
+        or (
+            data.get("delivery") == "completed"
+            and (record.delivery is None or record.delivery.state != "completed")
+        )
     ):
         return _pending(
             record,

@@ -121,14 +121,19 @@ Persistencia y compatibilidad:
 - [ ] **Step 1: Write failing tests**
 ```python
 def test_reconcile_terminal_message_accepts_stop_with_valid_ids():
-    result = reconcile_terminal_message(record, binding, assistant_message_id="msg_1", timeout=5.0)
+    result = reconcile_terminal_message(
+        record, binding, assistant_message_id="msg_1", timeout=5.0
+    )
     assert result.accepted is True
     assert result.outcome == "completed"
     assert result.finish == "stop"
     assert result.assistant_message_id == "msg_1"
 
+
 def test_reconcile_terminal_message_rejects_foreign_or_old_ids():
-    result = reconcile_terminal_message(record, binding, assistant_message_id="msg_old", timeout=5.0)
+    result = reconcile_terminal_message(
+        record, binding, assistant_message_id="msg_old", timeout=5.0
+    )
     assert result.accepted is False
     assert result.outcome in {"uncertain", "pending"}
 ```
@@ -201,14 +206,16 @@ def test_map_result_reuses_reconciled_completed_evidence():
 
 ### Task 5: Documentación y validación de empaquetado
 
+**Estado:** completada según alcance aprobado (pasos 1–3); commit omitido por instrucción explícita.
+
 **Files:**
 - Modify: `docs/balance-carga.md`, `README.md`, `skills/delegating-to-opencode/SKILL.md` (si aplica)
 - Test: `tests/test_plugin_export.py`
 
-- [ ] **Step 1: Update docs** describiendo trigger, casos negativos, semántica de presupuesto, campos de evidencia y compatibilidad con `pending`/`uncertain`.
-- [ ] **Step 2: Run** `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `git diff --check`.
-- [ ] **Step 3: Verify package export** `python scripts/build_plugin.py --help` o lectura del parser; luego export a una ruta única bajo `.aikit/`, sin instalación.
-- [ ] **Step 4: Commit** (solo en implementación futura) `docs: document terminal reconciliation contract`
+- [x] **Step 1: Update docs** describiendo trigger, casos negativos, semántica de presupuesto, campos de evidencia y compatibilidad con `pending`/`uncertain`.
+- [x] **Step 2: Run** `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `git diff --check`.
+- [x] **Step 3: Verify package export** `python scripts/build_plugin.py --help` o lectura del parser; luego export a una ruta única bajo `.aikit/`, sin instalación.
+- [x] **Step 4: Commit** `docs: document terminal reconciliation contract`
 
 ### Task 6: Revisión independiente
 

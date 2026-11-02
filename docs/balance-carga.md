@@ -20,6 +20,78 @@ En otros escenarios ya eligió OpenCode para corregir fallos, CLI para tareas
 largas y Go tras cuota free. Es una decisión en seco, no ejecución real ni
 ahorro de tokens.
 
+## Reconciliación terminal en la fuente actual (Task5)
+
+Este apartado documenta la implementación fuente de Tasks1–4 y su exportación
+candidata; no amplía ni reinterpreta las evidencias históricas de abajo. No se
+instaló el candidato ni se realizó una inferencia E2E real.
+
+### Disparador y límites
+
+`session_worker` espera a que la CLI termine y finaliza el parser. Solo intenta
+reconciliar si no hay un `step_finish`/`step-finish` con `reason=stop` ni error,
+la entrega observada sigue en `partial` o `pending`, no hay discrepancias de
+sesión o de ID, se capturó un ID de mensaje asistente y siguen válidos el registro,
+la sesión, el propietario y el contexto del intento. Un código de salida distinto
+de cero, vencimiento del deadline, fallo de lectura/persistencia o procedencia
+inválida impide la reconciliación.
+
+El ID de mensaje proviene de `messageID` observado por `EventStream` en el evento
+o su `part`; IDs contradictorios invalidan esa evidencia. El supervisor usa el
+`attempt_id`, la sesión y la identidad de propietario/servidor ya vinculados al
+registro, además de comprobar que el propietario no cambió. No pasa un
+`prompt_message_id`: por tanto, no se afirma que esta integración valide el
+parentesco con el mensaje del usuario. Si no hay ID actual fiable, se conserva
+`uncertain`; nunca se elige el último mensaje por cercanía temporal.
+
+Se hace como máximo un `GET /api/session/{session_id}/message/{message_id}`
+read-only. El presupuesto del helper es `min(tiempo_restante_del_worker, 10 s)`;
+la comprobación previa del propietario usa como máximo `min(tiempo_restante, 1
+s)`, y el helper vuelve a verificar propietario y registro alrededor de la
+lectura. No hay polling ni una inferencia adicional. El timeout MCP del cliente no
+cambia el deadline del worker ni autoriza a cancelar o repetir un intento vivo.
+
+| Evidencia del mensaje | Resultado conservador |
+| --- | --- |
+| ID/sesión coherentes, mensaje asistente, sin error, `finish=stop` y `completed_at` numérico finito | Puede acreditar `completed` |
+| `finish=length` | `partial`, no éxito |
+| Error del mensaje o `finish=error`, `content-filter`, `interrupted` o `cancel` | `failed` |
+| `tool-calls`, `unknown`, finish ausente/desconocido o timestamp inválido | `uncertain`, nunca `completed` |
+| ID ausente/contradictorio, sesión ajena, respuesta inválida, backend no disponible, timeout, propietario/registro cambiado o presupuesto agotado | Se conserva estado no satisfactorio (`pending`/`uncertain`) |
+| Error del evento CLI o proceso con código distinto de cero | No se consulta el mensaje para promover el intento |
+
+Un `parent_id` ausente o nulo no permite buscar otro mensaje ni establecer por sí
+solo un enlace al prompt. Si se proporciona un prompt esperado, un padre distinto
+se rechaza; la integración actual no proporciona ese ID. Solo la identidad de
+mensaje capturada para el intento actual puede participar en la decisión.
+`idle`, texto en stdout, código CLI cero y `source=durable_message` por separado
+no demuestran éxito.
+
+### Evidencia persistida y recuperación
+
+`TerminalReconciliation` devuelve metadatos en memoria (`finish`,
+`completed_at`, `assistant_message_id`, `reason` y `limitations`); el supervisor
+no persiste ese objeto ni añade esos campos al contrato JSON. Al aceptar, el
+registro de entrega conserva su estado y `DeliveryObservation.source` pasa a
+`durable_message`. También se guarda la observación de host existente: fase
+`terminal_observed` (su campo de fuente actual sigue siendo `cli_terminal`). El
+`result.json` local y el resultado público conservan JSON plano con `delivery`
+como cadena; no existe un objeto anidado `delivery` nuevo. La observación de
+ejecución puede continuar como `unknown`: reconciliar entrega no acredita por sí
+misma el estado del proceso/servidor, y `server_state_unknown` no se borra si esa
+ejecución sigue sin acreditar.
+
+`bound_execution` recupera localmente, validando la identidad de tarea, intento,
+sesión y procedencia del host. No llama al backend ni inicia otra inferencia. Una
+respuesta antigua `completed` se rechaza si el registro actual fue demovido o ya
+no tiene entrega completada (`result_mismatch`). Las entregas `completed`
+heredadas que sí tienen identidad y observación terminal válidas siguen siendo
+compatibles; `TaskRecord` no requiere campos nuevos.
+
+La modificación documental no cambia requisitos de instalación ni versiones.
+El exportador produce un candidato fuente; no acredita que el host haya
+recargado o instalado ese candidato.
+
 ## Diseño
 
 OpenCode ejecuta por defecto trabajo externalizable autorizado: exploración

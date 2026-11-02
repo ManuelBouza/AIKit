@@ -214,6 +214,44 @@ vivo.
 Detalle, límites y resultados observados:
 [MCP local de AIKit](docs/mcp-opencode.md).
 
+## Reconciliación de entrega al terminar la CLI
+
+En el código fuente actual, cuando el proceso CLI ya terminó sin un evento
+terminal `step_finish`/`step-finish` con `reason=stop`, el supervisor puede hacer
+una sola lectura read-only del mensaje asistente identificado por el `messageID`
+capturado durante ese intento. Solo lo intenta si no hubo error, la sesión y el
+propietario siguen verificados y queda presupuesto: el timeout del helper es el
+mínimo entre el tiempo restante del worker y 10 segundos; la comprobación previa
+del propietario también queda acotada por el presupuesto (máximo 1 segundo).
+No consulta el último mensaje ni hace polling.
+
+La reconciliación acredita la entrega únicamente con identidad coherente,
+`finish=stop`, sin error del mensaje y con `completed_at` numérico y finito.
+`length` es parcial; `error`, `content-filter`, `interrupted` y `cancel` son
+fallidos; `tool-calls`, `unknown`, datos incompletos, ID ausente o discrepancias
+conservan un resultado no satisfactorio o incierto. Código de salida cero, texto,
+estado `idle` o la procedencia `durable_message` por sí solos no son éxito.
+El supervisor comprueba el ID de asistente capturado y la procedencia de intento,
+sesión y propietario; no pasa un `prompt_message_id`, así que no se afirma que
+valide el enlace padre-hijo del mensaje.
+
+Se persisten el estado y la fuente de entrega (`DeliveryObservation.source`,
+`durable_message` al aceptar), además de la observación de host existente. El
+resultado JSON local mantiene su formato plano (`delivery` es una cadena), no
+añade un objeto `delivery` ni conserva `finish`, `completed_at`, el ID del
+mensaje o el `reason` del helper: esos metadatos viven solo en memoria durante la
+reconciliación. La entrega reconciliada no acredita por sí misma la ejecución del
+servidor; `execution` puede seguir en `unknown` y `server_state_unknown` se
+conserva cuando la ejecución no queda acreditada.
+
+La recuperación posterior es local e idempotente: reutiliza el resultado y la
+procedencia guardados, sin consultar el backend ni iniciar otra inferencia. Si el
+registro vigente fue demovido pero un `result.json` antiguo aún dice
+`completed`, se rechaza como `result_mismatch`. Los registros heredados que ya
+tenían una entrega `completed` válida siguen siendo compatibles. Esta descripción
+corresponde al código fuente y al paquete candidato; no afirma que una instalación
+existente se haya actualizado ni que se haya ejecutado una inferencia E2E real.
+
 ## Selección por tarea
 
 La prioridad es una decisión del coordinador: las preferencias se aplican por

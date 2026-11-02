@@ -534,6 +534,7 @@ def supervise(
                 if record.delivery is not None
                 else "client_observation"
             )
+            owner_precheck_failed = False
             if (
                 delivery in {"partial", "pending"}
                 and not events.terminal
@@ -548,23 +549,40 @@ def supervise(
                 and "record_save_failed" not in limitations
                 and binding is not None
                 and context is not None
-                and (owner_budget := end - time.monotonic()) > 0
-                and binding.verify_owner(timeout=min(owner_budget, 1.0)) is not None
             ):
-                remaining_budget = end - time.monotonic()
-                if remaining_budget > 0:
-                    reconciliation_timeout = min(remaining_budget, 10.0)
+                owner_budget = end - time.monotonic()
+                if owner_budget > 0:
                     try:
-                        reconciliation_result = reconcile_terminal_message(
-                            record,
-                            binding,
-                            assistant_message_id=events.assistant_message_id,
-                            timeout=reconciliation_timeout,
-                        )
+                        owner = binding.verify_owner(timeout=min(owner_budget, 1.0))
                     except Exception:  # noqa: BLE001
-                        reconciliation_result = None
-                        if "reconciliation_failed" not in limitations:
-                            limitations.append("reconciliation_failed")
+                        owner = None
+                        owner_precheck_failed = True
+                        provenance_failed = True
+                        if "owner_verification_failed" not in limitations:
+                            limitations.append("owner_verification_failed")
+                    if owner is None:
+                        owner_precheck_failed = True
+                        provenance_failed = True
+                        if (
+                            "owner_verification_failed" not in limitations
+                            and "owner_mismatch" not in limitations
+                        ):
+                            limitations.append("owner_mismatch")
+                    if owner is not None:
+                        remaining_budget = end - time.monotonic()
+                        if remaining_budget > 0:
+                            reconciliation_timeout = min(remaining_budget, 10.0)
+                            try:
+                                reconciliation_result = reconcile_terminal_message(
+                                    record,
+                                    binding,
+                                    assistant_message_id=events.assistant_message_id,
+                                    timeout=reconciliation_timeout,
+                                )
+                            except Exception:  # noqa: BLE001
+                                reconciliation_result = None
+                                if "reconciliation_failed" not in limitations:
+                                    limitations.append("reconciliation_failed")
                     if (
                         reconciliation_result is not None
                         and getattr(reconciliation_result, "accepted", False) is True
@@ -594,9 +612,21 @@ def supervise(
                 and "interrupt_unconfirmed" not in limitations
             ):
                 limitations.append("interrupt_unconfirmed")
-            if binding is not None and binding.verify_owner(timeout=1) is None:
-                provenance_failed = True
-                limitations.append("owner_mismatch")
+            if binding is not None and not owner_precheck_failed:
+                try:
+                    owner = binding.verify_owner(timeout=1)
+                except Exception:  # noqa: BLE001
+                    owner = None
+                    provenance_failed = True
+                    if "owner_verification_failed" not in limitations:
+                        limitations.append("owner_verification_failed")
+                if owner is None:
+                    provenance_failed = True
+                    if (
+                        "owner_verification_failed" not in limitations
+                        and "owner_mismatch" not in limitations
+                    ):
+                        limitations.append("owner_mismatch")
             if context is not None:
                 try:
                     record_host_observation(

@@ -51,6 +51,15 @@ s)`, y el helper vuelve a verificar propietario y registro alrededor de la
 lectura. No hay polling ni una inferencia adicional. El timeout MCP del cliente no
 cambia el deadline del worker ni autoriza a cancelar o repetir un intento vivo.
 
+Estos tiempos tienen ámbitos distintos. La preparación/preflight usa los límites
+propios de sus operaciones y queda fuera del contador de ejecución; no se afirma
+que carezca de límites ni se fija aquí un máximo global. El deadline actual del
+worker/CLI comienza una vez iniciado el proceso. La reconciliación consume su
+tiempo restante, sin reiniciarlo ni extenderlo. La espera MCP de 45 s configurada
+para la llamada referida es otra espera: su vencimiento no prueba que el backend
+terminó, no lo cancela ni autoriza un reenvío. No se promete un tope exacto de
+tiempo de pared que incluya limpieza o respuesta HTTP final.
+
 | Evidencia del mensaje | Resultado conservador |
 | --- | --- |
 | ID/sesión coherentes, mensaje asistente, sin error, `finish=stop` y `completed_at` numérico finito | Puede acreditar `completed` |

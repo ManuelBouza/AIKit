@@ -37,15 +37,19 @@ los contratos. No modifica ni sustituye el dictamen original. La revisión globa
 sigue `needs_corrections`; la corrección REV-001 de `1d816fe` fue aceptada
 independientemente en el seguimiento descrito a continuación.
 
+**Estado actual:** REV-001 aceptado de forma independiente; REV-002 con disposición
+aprobada documentalmente y sin cambio de código; REV-003 y REV-004 abiertos. Esto
+no cambia el dictamen global `needs_corrections` ni cierra Task 6.
+
 | ID | Evaluación | Evidencia y decisión siguiente |
 |---|---|---|
 | REV-001 | **Confirmado; corrección `1d816fe` aceptada independientemente.** El precheck `verify_owner` de la fase de reconciliación se evaluaba fuera del `try`; la reproducción observó excepción propagada y ausencia de `result.json`. También se protegió el check final de propietario, otra salida abrupta posible. Un resultado `None` ahora permanece conservador. | Código: `skills/delegating-to-opencode/scripts/session_worker.py:537-585,615-629`; regresión: `tests/test_worker_owner_precheck.py`. No se llama al reconciliador sin propietario verificado; se persiste salida `pending` con limitación saneada y sin procedencia `durable_message`. Aceptación limitada al snapshot del seguimiento. No explica DEF-001. |
-| REV-002 | **Discutible; sin cambio.** El deadline de ejecución se inicia tras arrancar la CLI (`session_worker.py:481`), por lo que no descuenta el preflight. Sin embargo, spec §4 y plan Task 3 limitan el helper al presupuesto restante del worker sin definir que el timeout total comience antes del preflight. | El coordinador debe decidir el alcance temporal antes de cambiarlo; no se alteró timeout ni presupuesto en esta corrección. |
+| REV-002 | **Disposición resuelta por aclaración aprobada; sin cambio de código.** El deadline de ejecución arranca después de preparar y lanzar la CLI (`session_worker.py:481`), observación válida del revisor. La exigencia adicional de sumar preflight y ejecución apareció en el brief de revisión del coordinador (`.aikit/mcp-reconciliation-task6-review.md`), no explícitamente en el diseño original ni en Task 3. El usuario aprobó conservar el contrato de timeout por proceso, no crear un presupuesto total nuevo. | `docs/mcp-opencode.md` §Tiempos y cancelación y §Supervisor de CLI y reconciliación; `docs/balance-carga.md` §Disparador y límites. Se aclaran los ámbitos sin cambiar valores, deadline o cancelación. No es aceptación del hallazgo por el revisor ni corrección funcional. |
 | REV-003 | **Confirmado como pérdida de diagnóstico; sin cambio.** El resultado del helper no aceptado no se refleja en `delivery`, `outcome`, `reason` ni `limitations`; el estado del CLI se conserva y no se promueve a `completed`. | `session_worker.py:586-596` copia `limitations` solo al aceptar; tabla de `docs/balance-carga.md:54-60`. Decidir después si se requiere una correspondencia/persistencia adicional, sin ampliar REV-001. |
 | REV-004 | **Confirmado como divergencia con el diseño; disposición pendiente.** El diseño §4 pide evidencia mínima durable con procedencia, IDs, outcome y reason; la documentación de implementación dice que esos detalles quedan en memoria y solo persisten estado/fuente (`docs/balance-carga.md:70-89`). Documentar el comportamiento no demuestra que se aprobara cambiar el requisito. | El coordinador debe decidir si recuperar persistencia detallada o aprobar un cambio de diseño; no se modificaron schemas, locks ni JSON en esta corrección. |
 
-Informe de corrección y checks: `.aikit/mcp-reconciliation-fix1/report.json`.
-REV-002–004 siguen abiertos; la prueba real mínima y la instalación conservan
+Informe de corrección y checks de REV-001: `.aikit/mcp-reconciliation-fix1/report.json`.
+REV-003–004 siguen abiertos; la prueba real mínima y la instalación conservan
 autorizaciones separadas.
 
 ## Evidencia y límites
@@ -70,9 +74,10 @@ autorizaciones separadas.
 
 ## Continuación
 
-Resolver el contrato de REV-002 y la disposición de REV-003/004; no reabrir ni
-presentar como pendiente la revisión ya aceptada de REV-001 sin cambios nuevos.
-Las revisiones no acreditan una entrega modificada después de su snapshot.
+Resolver la disposición de REV-003/004; REV-002 tiene una decisión aprobada
+documentalmente, sin cambio funcional. No reabrir ni presentar como pendiente la
+revisión ya aceptada de REV-001 sin cambios nuevos. La aceptación de REV-001 no
+acepta Task 6 global ni acredita otros cambios posteriores a su snapshot.
 La prueba real y la instalación conservan sus autorizaciones separadas.
 Seguimiento en [REC-001](pendientes.md#rec-001--task-6-cierre-global-de-reconciliación).
 
@@ -96,6 +101,7 @@ nuevos ni modificaciones de la entrega.
   `d2eb470c17cf6dcb15313a832c9cbd524b31b285b8980a90b5683b3ee73b714c`.
   Copia vinculada y comprobación en `review-bound.json` y `coordinator.json`
   del mismo directorio ignorado por Git.
-- REV-002–004 permanecen abiertos. No acepta Task 6 global, no explica DEF-001,
+- REV-003/004 permanecen abiertos; REV-002 se resolvió documentalmente según el
+  triage, sin que el revisor volviera a aceptarlo. No acepta Task 6 global, no explica DEF-001,
   no incluye prueba real mínima, instalación, nueva exportación ni paridad del
   paquete anterior con la fuente actual.

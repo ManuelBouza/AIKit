@@ -14,6 +14,10 @@ Si OpenCode y Codex ofrecen vías disponibles y suficientemente adecuadas, se pr
 
 Si un intento OpenCode queda incompleto por agotamiento verificado de tokens/cuota y no queda alternativa adecuada disponible, se permitirá evaluar OpenAI de pago en esa misma sesión para continuar ese intento. No habilita tareas nuevas ni una ruta ordinaria a Codex mediante OpenCode. GPT servido por Go u otro proveedor ya permitido no necesita esta excepción. Si tampoco hay vía adecuada, se continúa en Codex con el contexto y evidencia recuperables, sin detener el trabajo ni prometer transferencia íntegra entre plataformas.
 
+Cuando dos opciones OpenCode adecuadas sirven a la tarea, se acuerda preservar la cuota de una bolsa compartida que también habilite capacidades útiles para encargos más exigentes, favoreciendo otra bolsa si no implica perjuicio significativo a la tarea actual. La reserva es flexible, no absoluta: no justifica degradar calidad ni impone orden por gratuidad o pago. Se considera el reinicio o caducidad para evitar desperdiciar cuota. Se reserva una bolsa concreta, no un proveedor entero; un proveedor puede tener bolsas independientes.
+
+Solo se atribuye este coste de oportunidad cuando la relación entre cuota y capacidades está acreditada. Que varios modelos aparezcan bajo un mismo proveedor no demuestra que compartan cuota. Si esa relación es desconocida, no se presume beneficio de reserva ni se lanzan inferencias para averiguarlo.
+
 ## Requisitos
 
 Las siguientes concreciones operativas son **propuestas para aprobación**, no acuerdos adicionales:
@@ -26,6 +30,8 @@ Las siguientes concreciones operativas son **propuestas para aprobación**, no a
 - **R06 — Acotar la excepción OpenAI.** Para continuar con proveedor directo OpenAI exigir intento existente incompleto por cuota, ausencia verificada de alternativas adecuadas disponibles, modelo/cuenta conectados adecuados y permisos válidos. Diseñar después un mecanismo limitado a esa sesión; no desactivar el bloqueo general ni afirmar que hoy está soportado.
 - **R07 — Preservar roles.** Mantener subagentes nativos, Superpowers y revisión independiente. La revisión es una tarea propia que requiere modelo adecuado: checks deterministas no sustituyen análisis técnico y etiquetar un modelo o esfuerzo como `high` no acredita calidad de revisor. No rediseñar aquí el reparto general Codex/OpenCode.
 - **R08 — Alinear cambios futuros.** Tras aprobación, armonizar texto global, de proyecto, skill y transporte existentes e identificar prioridades previas que deban sustituirse. Este borrador no modifica reglas activas ni permisos: el bloqueo OpenAI actual, si está configurado, permanece vigente.
+- **R09 — Representar reservas acreditadas.** Propuesta: basar la reserva solo en evidencia local de grupos de cuota, sus miembros y alcance, fuente y fecha de observación; conservar caducidad o reinicio únicamente si se conoce. No inferir cuota compartida por proveedor, nombre o listado de modelos, inventar relaciones entre bolsas ni añadir consultas rutinarias, TTL o ranking universal. Relacionar la reserva con capacidades acreditadas útiles para tareas más exigentes, no con etiquetas comerciales o coste por sí solos; no prometer beneficio futuro.
+- **R10 — Aplicar preferencia flexible.** Propuesta: entre opciones OpenCode ya adecuadas, favorecer una bolsa independiente si elegirla no perjudica significativamente coste o plazo de la tarea actual, atendiendo a restricciones y estimaciones acreditadas. Considerar si la cuota reservada caducaría antes del uso previsto. No hay prioridad absoluta: si el perjuicio es material, la reserva no decide por sí sola; aplicar restricciones de la tarea y dejar pendiente la resolución del intercambio. Esta preferencia nunca amplía la excepción OpenAI, que sigue requiriendo un intento incompleto por cuota y ninguna alternativa adecuada disponible.
 
 ## Ejemplos de aceptación
 
@@ -42,7 +48,11 @@ Son criterios para implementar y probar posteriormente; **no se ejecutan en esta
 | Nueva tarea directa OpenAI | Rechazar por la regla ordinaria. |
 | Intento activo | No reenviar ni duplicar inferencia. |
 | Ninguna vía adecuada disponible en OpenCode | Continuar con una opción adecuada de Codex y evidencia/contexto recuperables, sin promesa de transferencia íntegra. |
+| A adecuada en bolsa independiente; B adecuada en bolsa compartida acreditada, útil para tareas exigentes | Favorecer A si no perjudica significativamente coste/plazo de la tarea actual. |
+| Relación entre bolsas desconocida | No atribuir beneficio de reserva ni averiguarlo mediante inferencias. |
+| Reservar implicaría diferencia material | Sin primacía automática: atender restricciones; el criterio de materialidad queda pendiente. |
+| Cuota compartida caduca antes del uso previsto | Considerar la pérdida evitable; no reservar incondicionalmente. |
 
 ## Fuera de alcance y pendientes
 
-Quedan pendientes la aprobación del usuario, el diseño concreto de la habilitación excepcional, la identificación de prioridades que se reemplazarían y la implementación con pruebas de aceptación. No se modifica routing, instrucciones globales o de proyecto, skills, políticas, `opencode.json`, checkout principal, notas, caché, configuración, estado ni cuentas. Esta fase no autoriza ejecutar los casos de aceptación, instalar el complemento ni publicarlo. Versionar el borrador no activa la política. La propuesta no acredita disponibilidad, calidad de modelos concretos ni permisos nuevos.
+Quedan pendientes la aprobación del usuario, el diseño concreto de la habilitación excepcional y la implementación con pruebas de aceptación. También falta acordar cómo valorar perjuicios significativos de coste/plazo —sin porcentajes ni segundos universales— y qué evidencia identifica capacidades reservables, modelos de frontera y coste de oportunidad —sin ranking universal ni beneficio futuro asegurado—. Sigue como propuesta para revisión, no acuerdo expreso, presentar al usuario el intercambio si la diferencia material no se resuelve con las restricciones de la tarea; no requiere consultas rutinarias. No se modifica routing, instrucciones globales o de proyecto, skills, políticas, `opencode.json`, checkout principal, notas, caché, configuración, estado ni cuentas. Esta fase no autoriza ejecutar los casos de aceptación, instalar el complemento ni publicarlo. Versionar el borrador no activa la política. La propuesta no acredita disponibilidad, calidad de modelos concretos ni permisos nuevos.

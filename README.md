@@ -216,6 +216,9 @@ Detalle, límites y resultados observados:
 
 ## Reconciliación de entrega al terminar la CLI
 
+El estado de las entregas abiertas y su siguiente paso está en el
+[registro de pendientes](docs/pendientes.md).
+
 En el código fuente actual, cuando el proceso CLI ya terminó sin un evento
 terminal `step_finish`/`step-finish` con `reason=stop`, el supervisor puede hacer
 una sola lectura read-only del mensaje asistente identificado por el `messageID`

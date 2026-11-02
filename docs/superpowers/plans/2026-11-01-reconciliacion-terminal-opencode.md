@@ -10,6 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-01-reconciliacion-terminal-opencode-design.md` (commit 9f5f5e8)
 
+## Estado actual — 2026-11-02
+
+| Unidad | Estado actual | Base y límite |
+|---|---|---|
+| Tasks 1–5 | Código, documentación y exportación completados y versionados. | Cierre de Task 5 `ed00065`; commits previos `912eced`, `22c8b1f`, `a3aec53`, `b9e645b`. Informe Task 5: `.aikit/mcp-reconciliation-task5/report.json`; aceptación de metadata: `.aikit/mcp-reconciliation-task5/coordinator-acceptance.json`. Los nombres de commits, fixtures y pasos en el plan original son intención histórica cuando no coinciden literalmente con el historial/entrega; no prueban por sí solos la ejecución de cada subpaso. Las casillas conservadas en Tasks 1–4 no son un ledger reconciliado: no leerlas como que esas tareas siguen pendientes ni como evidencia global.
+| Task 5: validación | Final: 849 pruebas aprobadas, Ruff, mypy y exportación de 42 archivos; candidato no instalado. | La primera suite tuvo 848 aprobadas y un `PermissionError`; la prueba aislada y el reintento completo pasaron, pero la causa inicial quedó sin diagnosticar. Sin instalación, recarga del host ni prueba E2E real.
+| Task 6: revisión/cierre | Pendiente. No se ha hecho revisión independiente global ni una prueba real mínima del candidato. | Revisiones parciales previas no equivalen a Task 6. La exportación sin instalar sí consta en Task 5; no repetirla como si fuera revisión.
+
+El registro de reanudación es [docs/pendientes.md](../../pendientes.md). Separa fuente, candidato exportado y host instalado: el informe identifica un candidato 0.2.0 no instalado y refiere una caché anterior no inspeccionada; no se afirma que el host haya actualizado. La instalación posterior requiere autorización propia.
+
 ## Global Constraints
 
 - No nueva skill ni infraestructura paralela; reutilizar módulos existentes.
@@ -17,14 +27,14 @@
 - Una sola lectura read-only por intento cuando falta marcador terminal.
 - No aceptar idle/exit 0/texto como éxito; `server_state_unknown` no se suprime sin acreditación.
 - `EventStream` conserva regla conservadora; no modificar parser para inventar terminal.
-- Durante esta fase de planificación: no commit/push/install. En implementación futura, commits por tarea permitidos por el coordinador, sin push/install automático.
+- Restricción del plan original: durante la planificación, no commit/push/install; las implementaciones podían versionarse por tarea con autorización, sin push/instalación automática. Tasks 1–5 ya se versionaron según el estado actual de arriba; no leer esta regla histórica como si la entrega siguiera en planificación.
 - Validación rutinaria sin catálogo ni `doctor`; `doctor` solo si el usuario lo pide expresamente.
 - `build_plugin.py` requiere argumentos; verificar con `--help` o lectura del parser antes de ejecutar export.
 - No prometer capacidades de tests sin nombre y assertions esperadas.
 
 ## Review Focus
 
-Cinco tests asignados a revisión:
+Pruebas que el plan original propuso como foco para Task 6; no acreditan que la revisión global se haya ejecutado:
 1. `tests/test_service_connection.py::test_managed_binding_session_message_get_maps_get_path`
 2. `tests/test_session_backend.py::test_reconcile_terminal_message_accepts_stop_with_valid_ids`
 3. `tests/test_session_backend.py::test_reconcile_terminal_message_rejects_foreign_or_old_ids`
@@ -70,10 +80,7 @@ def test_managed_binding_session_message_get_maps_get_path():
 
 ### Task 2: Helper conservador de reconciliación
 
-**Estado:** completada y aceptada mediante revisión independiente. TDD: 35 fallos
-antes de implementar; 127 pruebas focalizadas aprobadas después, junto con Ruff,
-formato y mypy. Captura de metadata y evaluador disponibles; sin integración en
-el supervisor ni cambios de persistencia. La tarea 3 permanece pendiente.
+**Estado actual:** implementación completada y versionada como parte de Tasks 1–5; hubo revisión independiente de esta unidad, no revisión global de Task 6. La evidencia histórica reporta 35 fallos antes de implementar, 127 pruebas focalizadas después, Ruff, formato y mypy. Captura de metadata y evaluador quedaron integrados en las tareas posteriores. Los pasos enumerados debajo son la secuencia de plan original, no evidencia literal de cada fixture/comando.
 
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/session_backend.py`
@@ -145,12 +152,7 @@ Además cubrir: `length` → `partial`; `error/content-filter/interrupted/cancel
 
 ### Task 3: Integración en supervisor
 
-**Estado:** completada. Revisión independiente aceptada y correcciones posteriores
-verificadas con cuatro casos RED y 184 pruebas focalizadas aprobadas. La consulta
-se limita al presupuesto restante; una invalidación posterior conserva estado y
-fuente conservadores. El consumo de la evidencia en `bound_execution` y la
-instalación siguen pendientes. El formato de los archivos de esta tarea pasa;
-el formato global informó una incidencia previa fuera del alcance.
+**Estado actual:** integración completada y versionada. La evidencia histórica registra revisión independiente de la unidad, cuatro casos RED y 184 pruebas focalizadas. La consulta se limita al presupuesto restante; una invalidación posterior conserva estado y fuente conservadores. El consumo de evidencia se completó en Task 4; solo sigue pendiente la instalación, que requiere autorización propia. El formato de archivos de esta tarea pasó; la incidencia global anterior fue corregida en Task 5.
 
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/session_worker.py:495-560`
@@ -183,6 +185,8 @@ formato y mypy. Retorno nativo acotado tras rechazos de cuota/nivel de cuenta
 y agotamiento del presupuesto de OpenCode; se conservó el contexto del intento.
 Sin instalación, prueba de inferencia real ni cambios del JSON público.
 
+Esta revisión es de Task 4, no satisface la revisión global de Task 6.
+
 **Files:**
 - Modify: `skills/delegating-to-opencode/scripts/bound_execution.py:172-270`
 - Test: `tests/test_bound_execution.py`
@@ -206,7 +210,7 @@ def test_map_result_reuses_reconciled_completed_evidence():
 
 ### Task 5: Documentación y validación de empaquetado
 
-**Estado:** completada según alcance aprobado (pasos 1–3); commit omitido por instrucción explícita.
+**Estado actual:** completada y versionada en el cierre `ed00065`. La evidencia final está en `.aikit/mcp-reconciliation-task5/report.json`; conserva también el fallo inicial y su reintento satisfactorio, sin atribuirle causa.
 
 **Files:**
 - Modify: `docs/balance-carga.md`, `README.md`, `skills/delegating-to-opencode/SKILL.md` (si aplica)
@@ -215,13 +219,13 @@ def test_map_result_reuses_reconciled_completed_evidence():
 - [x] **Step 1: Update docs** describiendo trigger, casos negativos, semántica de presupuesto, campos de evidencia y compatibilidad con `pending`/`uncertain`.
 - [x] **Step 2: Run** `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `git diff --check`.
 - [x] **Step 3: Verify package export** `python scripts/build_plugin.py --help` o lectura del parser; luego export a una ruta única bajo `.aikit/`, sin instalación.
-- [x] **Step 4: Commit** `docs: document terminal reconciliation contract`
+- [x] **Step 4: Versionado** cierre Task 5 en `ed00065` (el mensaje de commit del ejemplo original no es literal).
 
 ### Task 6: Revisión independiente
 
 - [ ] **Step 1: Fresh reviewer session** valida metadata (`role: reviewer`, `session`, `snapshot`, `verdict`, `checks[]`, `findings[]`, `limitations[]`) con `scripts/review_evidence.py`; el revisor no se limita a metadata, ejecuta comprobaciones reales sin modificar la entrega.
 - [ ] **Step 2: Real minimal test once** solo con autorización futura; sin tests de inferencia en la suite.
-- [ ] **Step 3: Export validation** sin instalación.
+- [x] **Step 3: Export validation** sin instalación; cubierta en Task 5 por el informe y aceptación indicados arriba.
 
 ---
 

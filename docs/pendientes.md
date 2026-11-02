@@ -8,10 +8,11 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ### REC-001 — Task 6: cierre global de reconciliación
 
-- **Categoría/estado:** entrega incompleta; revisión global ejecutada, cierre no aceptado (`needs_corrections`). REV-001 está corregida en fuente y pendiente de nueva revisión; REV-002–004 siguen abiertos. La prueba real mínima y la instalación siguen pendientes.
+- **Categoría/estado:** entrega incompleta; revisión global ejecutada, cierre no aceptado (`needs_corrections`). La corrección REV-001 de `1d816fe` fue aceptada independientemente; REV-002–004 siguen abiertos. La prueba real mínima y la instalación siguen pendientes.
 - **Evidencia:** [plan de reconciliación](superpowers/plans/2026-11-01-reconciliacion-terminal-opencode.md), `.aikit/mcp-reconciliation-task5/report.json` y `.aikit/mcp-reconciliation-task5/coordinator-acceptance.json`. Cierre Task 5: `ed00065`; commits previos de la cadena: `912eced`, `22c8b1f`, `a3aec53`, `b9e645b`. Task 5 registró 849 pruebas aprobadas tras una ejecución con 848 aprobadas y un fallo `PermissionError`; Ruff, mypy y exportación de 42 archivos pasaron. El reintento verde no diagnosticó la causa del fallo inicial.
 - **Revisión global:** [dictamen y triage REV-001–REV-004](revision-reconciliacion-2026-11-02.md), sobre `9a00248`, sesión independiente de OpenCode. 155 pruebas focalizadas pasaron; REV-001 se reprodujo y corrigió separadamente (`.aikit/mcp-reconciliation-fix1/report.json`). El triage no demuestra la causa de DEF-001 ni acepta el cierre.
-- **Siguiente paso acotado:** fijar nuevo snapshot y solicitar revisión independiente de la corrección REV-001; decidir aparte el alcance de REV-002 y la disposición de REV-003/004. No cerrar por las pruebas verdes ni avanzar a prueba real/instalación mientras falte aceptación.
+- **Seguimiento REV-001:** revisión de cuatro archivos del snapshot `1d816fe` aceptada, sin hallazgos nuevos, por la sesión independiente original; 72 pruebas y reproducción adicional del check final. Informe y límites en el dictamen enlazado. El check final solo tiene reproducción temporal en este seguimiento, no una nueva regresión versionada.
+- **Siguiente paso acotado:** aclarar el contrato temporal de REV-002 y resolver después la disposición de REV-003/004. No atribuir la aceptación parcial de REV-001 al conjunto ni avanzar a prueba real/instalación mientras falte aceptación global.
 - **Dependencia/autorización:** coordinar la reanudación de Task 6. La prueba real requiere autorización específica. No instalar ni publicar como parte de este pendiente.
 
 ### DEF-001 — Fallo de arranque del supervisor

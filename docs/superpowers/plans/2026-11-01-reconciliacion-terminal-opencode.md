@@ -16,7 +16,7 @@
 |---|---|---|
 | Tasks 1–5 | Código, documentación y exportación completados y versionados. | Cierre de Task 5 `ed00065`; commits previos `912eced`, `22c8b1f`, `a3aec53`, `b9e645b`. Informe Task 5: `.aikit/mcp-reconciliation-task5/report.json`; aceptación de metadata: `.aikit/mcp-reconciliation-task5/coordinator-acceptance.json`. Los nombres de commits, fixtures y pasos en el plan original son intención histórica cuando no coinciden literalmente con el historial/entrega; no prueban por sí solos la ejecución de cada subpaso. Las casillas conservadas en Tasks 1–4 no son un ledger reconciliado: no leerlas como que esas tareas siguen pendientes ni como evidencia global.
 | Task 5: validación | Final: 849 pruebas aprobadas, Ruff, mypy y exportación de 42 archivos; candidato no instalado. | La primera suite tuvo 848 aprobadas y un `PermissionError`; la prueba aislada y el reintento completo pasaron, pero la causa inicial quedó sin diagnosticar. Sin instalación, recarga del host ni prueba E2E real.
-| Task 6: revisión/cierre | Pendiente. No se ha hecho revisión independiente global ni una prueba real mínima del candidato. | Revisiones parciales previas no equivalen a Task 6. La exportación sin instalar sí consta en Task 5; no repetirla como si fuera revisión.
+| Task 6: revisión/cierre | Revisión global ejecutada sobre `9a00248`: `needs_corrections`; un bloqueante y tres advertencias. Cierre no aceptado, prueba real pendiente. | [Dictamen y evidencia](../../revision-reconciliacion-2026-11-02.md). 155 pruebas focalizadas pasaron; una reproducción confirmó excepción sin resultado terminal. No equivale a aceptación ni a diagnóstico del fallo histórico de arranque.
 
 El registro de reanudación es [docs/pendientes.md](../../pendientes.md). Separa fuente, candidato exportado y host instalado: el informe identifica un candidato 0.2.0 no instalado y refiere una caché anterior no inspeccionada; no se afirma que el host haya actualizado. La instalación posterior requiere autorización propia.
 
@@ -223,7 +223,7 @@ def test_map_result_reuses_reconciled_completed_evidence():
 
 ### Task 6: Revisión independiente
 
-- [ ] **Step 1: Fresh reviewer session** valida metadata (`role: reviewer`, `session`, `snapshot`, `verdict`, `checks[]`, `findings[]`, `limitations[]`) con `scripts/review_evidence.py`; el revisor no se limita a metadata, ejecuta comprobaciones reales sin modificar la entrega.
+- [x] **Step 1: Fresh reviewer session** ejecutada sin modificar entrega; metadata, snapshot y logs contrastados. `scripts/review_evidence.py` devuelve `verdict_not_accepted` por dictamen `needs_corrections`; falta corregir y revisar un nuevo snapshot antes del cierre.
 - [ ] **Step 2: Real minimal test once** solo con autorización futura; sin tests de inferencia en la suite.
 - [x] **Step 3: Export validation** sin instalación; cubierta en Task 5 por el informe y aceptación indicados arriba.
 

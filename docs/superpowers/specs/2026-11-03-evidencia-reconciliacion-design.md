@@ -1,6 +1,6 @@
 # Diseño: evidencia de reconciliación terminal
 
-**Borrador pendiente de aprobación.** Corte: 2026-11-03 (Europe/Madrid). Diseño documental para la deuda REC-001, REV-003/004; no implementado, probado ni aceptado. No añade selector ni autoriza cambios.
+**Diseño aprobado por el usuario el 2026-11-03 (Europe/Madrid), commit `27daa45`.** Diseño documental para la deuda REC-001, REV-003/004; no implementado ni probado. No añade selector ni autoriza implementación por sí solo.
 
 ## Problema y dirección de alcance acordada
 
@@ -8,11 +8,11 @@
 
 La dirección acordada es guardar evidencia mínima, saneada y acotada de cada reconciliación intentada, incluidas las negativas, reutilizando el registro local existente y su persistencia atómica. La observación no es la entrega final, no demuestra cuota y nunca autoriza por sí sola `completed`.
 
-La secuencia de ciclo de vida descrita abajo es **propuesta del coordinador para revisión del usuario**, no una decisión ya aprobada ni una garantía implementada.
+El ciclo de vida y la secuencia descritos abajo pertenecen al diseño aprobado; su corrección aún debe verificarse mediante implementación y pruebas, no se presentan como garantía existente.
 
 ## Alternativas
 
-1. **Propuesta preferida del coordinador:** campo opcional en `TaskRecord`, con validación y `save_task`/`lock_task` existentes. Centraliza evidencia por tarea y reutiliza atomicidad y recuperación actuales; queda pendiente de revisión del usuario.
+1. **Elegida:** campo opcional en `TaskRecord`, con validación y `save_task`/`lock_task` existentes. Centraliza evidencia por tarea y reutiliza atomicidad y recuperación actuales.
 2. **Descartada:** sidecar/journal separado, servicio o base de datos. Duplicaría almacenamiento, identidad, recuperación y sincronización sin necesidad demostrada.
 3. **Descartada:** dejar el diagnóstico solo en logs o reducirlo a `delivery.source`. No permite recuperar con el registro local `outcome`, razón ni correlación, y no satisface la dirección aprobada.
 
@@ -63,6 +63,11 @@ esta compatibilidad.
 
 El helper conserva una sola lectura `GET` como máximo y el timeout por proceso aprobado en REV-002: precheck/helper usan el tiempo restante actual del worker, sin reiniciar deadline ni sumar preflight. No se añaden consultas, reintentos, cancelación ni llamadas de modelo. `record.json` es el punto de commit local único, no una transacción atómica entre el registro, `result.json` y host registry.
 
+## Comprobación factual de mecanismos existentes
+
+- `host_registry.record_host_observation(..., terminal=False)` cambia el intento actual a fase `uncertain` y source `client_observation`, bajo `_lock_host`; `_write_host` ya publica con temporal, `fsync` y `_atomic_replace`. Es el mecanismo existente para retirar el marcador terminal de ese intento, sujeto a una prueba de regresión al implementar.
+- `session_worker` actualmente crea `result.json` con `open_artifact` (`xb`), que evita reutilizar archivos, pero no es reemplazo atómico. Sí existe `session_store._atomic_replace(source, destination)`: exige temporal y destino en el mismo directorio, usa `os.replace` en POSIX y reemplazo POSIX-semántico en Win32. `host_registry._write_host` demuestra el patrón temporal + flush/`fsync` + helper. El plan propone reutilizarlo para preparar/reemplazar `result.json` en el directorio del intento, sin servicio ni API nueva; su uso entre módulos y la preservación de ACL/lectores requieren pruebas antes de aceptación.
+
 La correspondencia que deberá quedar explícita en la documentación actualizada es:
 
 | Outcome del helper | Diagnóstico conservado | `delivery` final |
@@ -107,8 +112,8 @@ Archivos de implementación/pruebas a decidir en un plan posterior: `session_sto
 
 ## Comprobación de diseño
 
-El builder independiente señaló que faltaba resolver el lifecycle provisional y el orden de `record.json`/`result.json`/host para impedir recuperar un `completed` stale si fallaba la invalidación. Referencia acotada: `.aikit/rev003004-builder-report.json` (sesión `ses_e5fdce7b7ffeYxwV4NcoCnfvGG`). La respuesta que se propone aquí es usar `record.json` como commit local único, con estados provisional/committed/invalidated, digest del artefacto y recuperación fail-closed. Esto contesta la pregunta de diseño, no constituye aceptación del builder ni aprobación del usuario.
+El builder independiente señaló que faltaba resolver el lifecycle provisional y el orden de `record.json`/`result.json`/host para impedir recuperar un `completed` stale si fallaba la invalidación. Referencia acotada: `.aikit/rev003004-builder-report.json` (sesión `ses_e5fdce7b7ffeYxwV4NcoCnfvGG`). La respuesta del coordinador usa `record.json` como commit local único, con estados provisional/committed/invalidated, digest del artefacto y recuperación fail-closed. El usuario aprobó el diseño `27daa45`; esto no afirma que el builder haya revisado o aceptado una revisión posterior ni que la implementación esté verificada.
 
 ## Pendientes y límites
 
-Pendientes: aprobación del usuario; confirmar esquema exacto/allowlist y tratamiento de corrupción; verificar que los mecanismos existentes permiten invalidar host terminal y preparar `result.json` atómicamente sin API ni infraestructura nueva. Si cualquiera exige ampliación material, detenerse y devolver el gate al coordinador. Después de aprobar, preparar un plan y probar fallos inyectados en cada frontera y recuperación contra artefactos stale. Este protocolo local sigue sin verificarse; no promete transacción multiartefacto. La aceptación de REV-001 es limitada; Task 6 global sigue sin cerrar. No corrige DEF-001, no cambia el timeout decidido ni resuelve instalación/prueba real; no está implementado.
+Plan de implementación: [2026-11-03-evidencia-reconciliacion.md](../plans/2026-11-03-evidencia-reconciliacion.md). Su ejecución requiere autorización separada. Siguen pendientes la implementación y verificación de validadores/allowlist, escritura atómica de `result.json`, invalidación host y gates de recuperación. Si las pruebas muestran que el mecanismo actual no cubre esos requisitos sin ampliación material, detenerse y devolver la decisión al coordinador. El protocolo local no está verificado y no promete transacción multiartefacto. La aceptación de REV-001 es limitada; Task 6 global sigue sin cerrar. No corrige DEF-001, no cambia el timeout decidido ni resuelve instalación/prueba real; no está implementado.

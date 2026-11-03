@@ -49,9 +49,9 @@ no cambia el dictamen global `needs_corrections` ni cierra Task 6.
 | REV-004 | **Confirmado como divergencia con el diseño; disposición pendiente de implementación.** El diseño §4 pide evidencia mínima durable con procedencia, IDs, outcome y reason; la documentación de implementación dice que esos detalles quedan en memoria y solo persisten estado/fuente (`docs/balance-carga.md:70-89`). Documentar el comportamiento no demuestra que se aprobara cambiar el requisito. | El [diseño aprobado](superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md) y el [plan](superpowers/plans/2026-11-03-evidencia-reconciliacion.md) concretan el campo opcional; REV-004 sigue abierto hasta implementación/revisión. |
 
 Informe de corrección y checks de REV-001: `.aikit/mcp-reconciliation-fix1/report.json`.
-REV-003/004 siguen abiertos; el diseño está aprobado y el plan preparado, sin
-implementación. La prueba real mínima y la instalación conservan autorizaciones
-separadas.
+REV-003/004 siguen abiertos; Unidad 1 está implementada y aceptada
+independientemente; las unidades 2–4 no iniciadas. Esto no acepta el cierre global.
+La prueba real mínima y la instalación conservan autorizaciones separadas.
 
 ## Evidencia y límites
 
@@ -75,8 +75,9 @@ separadas.
 
 ## Continuación
 
-Revisar el plan de implementación de REV-003/004 y obtener autorización propia
-antes de ejecutarlo; REV-002 tiene una decisión aprobada documentalmente, sin cambio funcional.
+Continuar con Unidad 2 solo con autorización propia, conservando la aceptación
+independiente de Unidad 1. REV-002 tiene una decisión aprobada
+documentalmente, sin cambio funcional.
 No reabrir ni presentar como pendiente la revisión ya aceptada de REV-001 sin
 cambios nuevos. La aceptación de REV-001 no acepta Task 6 global ni acredita
 otros cambios posteriores a su snapshot.
@@ -104,7 +105,34 @@ nuevos ni modificaciones de la entrega.
   Copia vinculada y comprobación en `review-bound.json` y `coordinator.json`
   del mismo directorio ignorado por Git.
 - REV-003/004 permanecen abiertos; el diseño está aprobado y el plan preparado,
-  pero no implementado. REV-002 se resolvió documentalmente según el
+  con Unidad 1 aceptada y unidades 2–4 pendientes. REV-002 se resolvió documentalmente según el
   triage, sin que el revisor volviera a aceptarlo. No acepta Task 6 global, no explica DEF-001,
   no incluye prueba real mínima, instalación, nueva exportación ni paridad del
   paquete anterior con la fuente actual.
+
+## Unidad 1 de evidencia — aceptación independiente, 2026-11-03
+
+Implementada la extensión opcional `TaskRecord.reconciliation`, su validación y
+serialización compatible, y `TerminalReconciliation.response_observed`.
+Supervisor y recuperación no se modificaron; las unidades 2–4 siguen pendientes.
+REV-003/004 y Task 6 global permanecen abiertos.
+
+- Implementador: sesión `ses_e646f8e11ffe32fS2z1SqClTdW`, GPT-6 Luna mediante
+  OpenCode Go, `high`, de pago. Evidencia RED/GREEN de almacenamiento y del
+  marcador HTTP; suite final **866 aprobadas**, Ruff lint y mypy correctos.
+- Revisor independiente: `ses_e5d09204fffeiFXrNO99xPXVmW`, Kimi K3.1 Pro mediante
+  OpenCode Go, `high`, de pago. Dictamen **`accepted`**, sin hallazgos. Ejecutó
+  **175 pruebas focalizadas** y una reproducción temporal con 49 mutaciones,
+  16 campos ausentes y ocho incoherencias rechazadas conservadoramente.
+- Se verificaron identidad y los siete hashes del snapshot antes de actualizar
+  este seguimiento; `review_evidence.py` aceptó el contrato. El coordinador no
+  repitió la revisión técnica. Los casos temporales no son pruebas versionadas
+  ni una demostración exhaustiva de toda entrada posible.
+- Informe original: `.aikit/rev003004-unit1-review/review.json`, SHA-256
+  `992770b4d50d8ed1d8480c0711e375771587eae984c04e089d40ee16e0a60510`.
+  Comprobación local: `.aikit/rev003004-unit1/coordinator-acceptance.json`.
+- El formato global detectó inicialmente un ejemplo del plan anterior. El
+  coordinador corrigió solo ese formato: Ruff informó 122 archivos formateados.
+  `uv` nativo falló por permisos de caché del sandbox; se utilizó el Ruff ya
+  instalado en `.venv`. No se repitió inferencia ni suite por ese cambio documental.
+- Sin exportación, instalación, prueba real, nueva política ni cierre global.

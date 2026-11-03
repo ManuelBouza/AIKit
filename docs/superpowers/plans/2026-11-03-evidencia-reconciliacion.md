@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md` (aprobado el 2026-11-03; commit `27daa45`).
 
-**Estado:** Plan preparado; su ejecución requiere autorización separada. Todas las casillas están pendientes.
+**Estado:** Unidad 1 ejecutada y aceptada independientemente el 2026-11-03. Unidades 2–4 pendientes; no habilitar el escritor antes del lector compatible.
 
 ## Global Constraints
 
@@ -55,8 +55,20 @@ ReconciliationPhase = Literal["not_attempted", "local_failure", "response_observ
 ReconciliationIdentity = Literal["unverified", "verified", "invalidated"]
 ReconciliationLifecycle = Literal["provisional", "committed", "invalidated"]
 ReconciliationSource = Literal["local", "durable_message"]
-ReconciliationOutcome = Literal["completed", "partial", "failed", "uncertain", "pending"]
-TerminalFinish = Literal["stop", "length", "error", "content-filter", "interrupted", "cancel", "tool-calls", "unknown"]
+ReconciliationOutcome = Literal[
+    "completed", "partial", "failed", "uncertain", "pending"
+]
+TerminalFinish = Literal[
+    "stop",
+    "length",
+    "error",
+    "content-filter",
+    "interrupted",
+    "cancel",
+    "tool-calls",
+    "unknown",
+]
+
 
 @dataclass(frozen=True)
 class ReconciliationObservation:
@@ -77,10 +89,12 @@ class ReconciliationObservation:
     limitations: tuple[ReconciliationReason, ...]
     result_sha256: str | None
 
+
 @dataclass
 class TaskRecord:
     # campos actuales sin cambio
     reconciliation: ReconciliationObservation | None = None
+
 
 @dataclass(frozen=True)
 class TerminalReconciliation:
@@ -90,15 +104,18 @@ class TerminalReconciliation:
 
 `ReconciliationReason` es un `Literal` formado por razones ya emitidas por `reconcile_terminal_message`: `accepted`, `assistant_message_id_unavailable`, `assistant_message_id_mismatch`, `backend_timeout`, `backend_unavailable`, `budget_exhausted`, `finish_cancel`, `finish_content-filter`, `finish_error`, `finish_interrupted`, `finish_length`, `invalid_completed_at`, `invalid_response`, `invalid_role`, `message_error`, `missing_completed_at`, `missing_finish`, `non_final_finish`, `operation_unavailable`, `owner_mismatch`, `owner_unverified`, `parent_id_null_not_correlated`, `parent_id_unavailable`, `parent_message_mismatch`, `prior_delivery_not_success`, `record_changed`, `session_mismatch`, `session_unknown`, `unknown_finish`; añadir solo códigos locales existentes necesarios: `owner_verification_failed`, `reconciliation_failed`, `record_save_failed`, `result_save_failed`, `provenance_unavailable`, `deadline_exceeded`, `result_mismatch`. Finish remoto fuera de `TerminalFinish` se normaliza a `None` con `reason=unknown_finish`; nunca guardar texto arbitrario.
 
-- [ ] **Paso 1: RED de compatibilidad de almacenamiento.** `test_legacy_record_without_reconciliation_loads` afirma `record.reconciliation is None` y que serializar legacy omite la clave; `test_reconciliation_record_round_trips_and_validates` comprueba round-trip, generation positiva, timestamp zonado y digest SHA-256; `test_malformed_reconciliation_is_not_usable` muta enum/ID/digest y verifica `invalid_record`, nunca aceptación.
-- [ ] **Paso 2: Ejecutar tests de almacenamiento para comprobar RED.** `uv run pytest tests/test_session_store.py -q`; esperado: ausencia de parser/serializador opcional o rechazo de fixture nueva, nunca import error.
-- [ ] **Paso 3: Implementar el campo.** Extender `TaskRecord`, `_RECORD_KEYS`, `_record_from_json`, `_record_to_json` y `_validate_record`: aceptar exactamente set legacy o set legacy + `reconciliation`; ausencia => `None`; al serializar `None`, no insertar la clave. Validar formatos y enums; no cambiar versión ni migrar masivamente.
-- [ ] **Paso 4: GREEN almacenamiento.** Ejecutar `uv run pytest tests/test_session_store.py -q`; esperado: legacy y nueva forma pasan, forma malformada fail-closed.
-- [ ] **Paso 5: Escribir test RED de provenance HTTP.** `test_reconciliation_marks_only_received_response`: early exits y request que lanza conservan `response_observed=False`; `ApiResponse` real pone `True`, incluso con status no-success.
-- [ ] **Paso 6: Ejecutar RED.** `uv run pytest tests/test_terminal_reconciliation.py -q`; esperado: assertion fallida por el marcador ausente, no error de import.
-- [ ] **Paso 7: Implementar el marcador.** Añadir `response_observed: bool = False` al final de `TerminalReconciliation`; activarlo solo después de retornar `request`. Un HTTP 500 puede tener `True` y `accepted=False`; el flag no acredita identidad ni éxito.
-- [ ] **Paso 8: GREEN focal.** Ejecutar `uv run pytest tests/test_session_store.py tests/test_terminal_reconciliation.py -q`; esperado: ambas áreas pasan.
-- [ ] **Paso 9: Revisión y versionado futuro.** Revisión independiente de esquema/saneamiento; tras aprobación del coordinador, `git add` solo los archivos de Unidad 1 y `git commit -m "feat: model reconciliation evidence safely"`; sin push ni instalación.
+- [x] **Paso 1: RED de compatibilidad de almacenamiento.** `test_legacy_record_without_reconciliation_loads` afirma `record.reconciliation is None` y que serializar legacy omite la clave; `test_reconciliation_record_round_trips_and_validates` comprueba round-trip, generation positiva, timestamp zonado y digest SHA-256; `test_malformed_reconciliation_is_not_usable` muta enum/ID/digest y verifica `invalid_record`, nunca aceptación.
+- [x] **Paso 2: Ejecutar tests de almacenamiento para comprobar RED.** `uv run pytest tests/test_session_store.py -q`; esperado: ausencia de parser/serializador opcional o rechazo de fixture nueva, nunca import error.
+- [x] **Paso 3: Implementar el campo.** Extender `TaskRecord`, `_RECORD_KEYS`, `_record_from_json`, `_record_to_json` y `_validate_record`: aceptar exactamente set legacy o set legacy + `reconciliation`; ausencia => `None`; al serializar `None`, no insertar la clave. Validar formatos y enums; no cambiar versión ni migrar masivamente.
+- [x] **Paso 4: GREEN almacenamiento.** Ejecutar `uv run pytest tests/test_session_store.py -q`; esperado: legacy y nueva forma pasan, forma malformada fail-closed.
+- [x] **Paso 5: Escribir test RED de provenance HTTP.** `test_reconciliation_marks_only_received_response`: early exits y request que lanza conservan `response_observed=False`; `ApiResponse` real pone `True`, incluso con status no-success.
+- [x] **Paso 6: Ejecutar RED.** `uv run pytest tests/test_terminal_reconciliation.py -q`; esperado: assertion fallida por el marcador ausente, no error de import.
+- [x] **Paso 7: Implementar el marcador.** Añadir `response_observed: bool = False` al final de `TerminalReconciliation`; activarlo solo después de retornar `request`. Un HTTP 500 puede tener `True` y `accepted=False`; el flag no acredita identidad ni éxito.
+- [x] **Paso 8: GREEN focal.** Ejecutar `uv run pytest tests/test_session_store.py tests/test_terminal_reconciliation.py -q`; esperado: ambas áreas pasan.
+- [x] **Paso 9: Revisión y versionado futuro.** Revisión independiente de esquema/saneamiento; tras aprobación del coordinador, `git add` solo los archivos de Unidad 1 y `git commit -m "feat: model reconciliation evidence safely"`; sin push ni instalación.
+
+
+**Cierre de Unidad 1:** implementador 866 pruebas globales; revisor independiente 175 focales y reproducción adicional, sin hallazgos. Casos de almacenamiento en "tests/test_reconciliation_observation_store.py" para mantener archivos acotados. Evidencia y límites en [el seguimiento](../../revision-reconciliacion-2026-11-02.md). Las interfaces posteriores aún no se publican desde el supervisor.
 
 ## Unidad 2: lector de recuperación y compatibilidad
 
@@ -107,7 +124,9 @@ class TerminalReconciliation:
 **Interfaces que produce:**
 
 ```python
-def _read_result_snapshot(record: TaskRecord) -> tuple[bytes, dict[str, Any]] | None: ...
+def _read_result_snapshot(
+    record: TaskRecord,
+) -> tuple[bytes, dict[str, Any]] | None: ...
 def _reconciliation_matches_result(record: TaskRecord, result_bytes: bytes) -> bool: ...
 ```
 
@@ -125,7 +144,9 @@ def _reconciliation_matches_result(record: TaskRecord, result_bytes: bytes) -> b
 **Interfaces que produce:**
 
 ```python
-def _write_result_atomic(attempt_directory: Path, report: dict[str, Any]) -> tuple[bytes, str]: ...
+def _write_result_atomic(
+    attempt_directory: Path, report: dict[str, Any]
+) -> tuple[bytes, str]: ...
 def _result_sha256(payload: bytes) -> str: ...
 ```
 

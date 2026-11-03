@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Literal, TypedDict, cast
+from typing import Any, BinaryIO, Literal, TypedDict, cast, get_args
 
 if sys.platform == "win32":
     import msvcrt
@@ -31,6 +31,61 @@ Pricing = Literal["free", "paid", "unknown"]
 ExecutionState = Literal["active", "waiting", "retrying", "idle", "unknown"]
 DeliveryState = Literal["pending", "partial", "completed", "failed", "interrupted"]
 WaitingReason = Literal["permission", "input"]
+ReconciliationPhase = Literal["not_attempted", "local_failure", "response_observed"]
+ReconciliationIdentity = Literal["unverified", "verified", "invalidated"]
+ReconciliationLifecycle = Literal["provisional", "committed", "invalidated"]
+ReconciliationSource = Literal["local", "durable_message"]
+ReconciliationOutcome = Literal[
+    "completed", "partial", "failed", "uncertain", "pending"
+]
+TerminalFinish = Literal[
+    "stop",
+    "length",
+    "error",
+    "content-filter",
+    "interrupted",
+    "cancel",
+    "tool-calls",
+    "unknown",
+]
+ReconciliationReason = Literal[
+    "accepted",
+    "assistant_message_id_unavailable",
+    "assistant_message_id_mismatch",
+    "backend_timeout",
+    "backend_unavailable",
+    "budget_exhausted",
+    "finish_cancel",
+    "finish_content-filter",
+    "finish_error",
+    "finish_interrupted",
+    "finish_length",
+    "invalid_completed_at",
+    "invalid_response",
+    "invalid_role",
+    "message_error",
+    "missing_completed_at",
+    "missing_finish",
+    "non_final_finish",
+    "operation_unavailable",
+    "owner_mismatch",
+    "owner_unverified",
+    "parent_id_null_not_correlated",
+    "parent_id_unavailable",
+    "parent_message_mismatch",
+    "prior_delivery_not_success",
+    "record_changed",
+    "session_mismatch",
+    "session_unknown",
+    "unknown_finish",
+    "owner_verification_failed",
+    "reconciliation_failed",
+    "record_save_failed",
+    "result_save_failed",
+    "provenance_unavailable",
+    "deadline_exceeded",
+    "result_mismatch",
+]
 
 
 class StoreError(Exception):
@@ -76,6 +131,28 @@ class QuotaResume:
     alternatives_reason: str
 
 
+@dataclass(frozen=True)
+class ReconciliationObservation:
+    """Diagnóstico local acotado; nunca prueba por sí solo la entrega."""
+
+    attempt_id: str
+    session_id: str | None
+    assistant_message_id: str | None
+    observed_at: str
+    generation: int
+    phase: ReconciliationPhase
+    identity: ReconciliationIdentity
+    lifecycle: ReconciliationLifecycle
+    source: ReconciliationSource
+    accepted: bool | None
+    outcome: ReconciliationOutcome | None
+    reason: ReconciliationReason
+    finish: TerminalFinish | None
+    completed_at: int | float | None
+    limitations: tuple[ReconciliationReason, ...]
+    result_sha256: str | None
+
+
 @dataclass
 class TaskRecord:
     version: int
@@ -99,6 +176,7 @@ class TaskRecord:
     last_event_at: str | None
     cursor: str | None
     quota_resume: QuotaResume | None
+    reconciliation: ReconciliationObservation | None = None
 
 
 class TaskReply(TypedDict):
@@ -115,6 +193,14 @@ class TaskReply(TypedDict):
 
 _SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,255}\Z")
 _REPARSE_POINT = 0x400
+_MAX_RECONCILIATION_MESSAGE_ID_BYTES = 1024 * 1024
+_RECONCILIATION_PHASES = frozenset(get_args(ReconciliationPhase))
+_RECONCILIATION_IDENTITIES = frozenset(get_args(ReconciliationIdentity))
+_RECONCILIATION_LIFECYCLES = frozenset(get_args(ReconciliationLifecycle))
+_RECONCILIATION_SOURCES = frozenset(get_args(ReconciliationSource))
+_RECONCILIATION_OUTCOMES = frozenset(get_args(ReconciliationOutcome))
+_RECONCILIATION_FINISHES = frozenset(get_args(TerminalFinish))
+_RECONCILIATION_REASONS = frozenset(get_args(ReconciliationReason))
 _RECORD_KEYS = {
     "version",
     "task_id",
@@ -138,6 +224,7 @@ _RECORD_KEYS = {
     "cursor",
     "quota_resume",
 }
+_RECORD_OPTIONAL_KEYS = {"reconciliation"}
 
 
 def _invalid_record() -> StoreError:
@@ -372,6 +459,195 @@ def _quota_resume_to_json(value: QuotaResume | None) -> dict[str, Any] | None:
     }
 
 
+def _reconciliation_from_json(
+    value: object,
+    *,
+    attempt_id: str,
+    record_session: str | None,
+    server_identity: str | None,
+) -> ReconciliationObservation | None:
+    if value is None:
+        return None
+    data = _object(value)
+    _exact_keys(
+        data,
+        {
+            "attempt_id",
+            "session_id",
+            "assistant_message_id",
+            "observed_at",
+            "generation",
+            "phase",
+            "identity",
+            "lifecycle",
+            "source",
+            "accepted",
+            "outcome",
+            "reason",
+            "finish",
+            "completed_at",
+            "limitations",
+            "result_sha256",
+        },
+    )
+
+    observed_attempt = _canonical_uuid(data["attempt_id"], "invalid_record")
+    if observed_attempt != attempt_id:
+        raise _invalid_record()
+
+    session_id = _string(data["session_id"], optional=True)
+    if session_id is not None:
+        try:
+            _validate_session_id(session_id)
+        except StoreError as exc:
+            raise _invalid_record() from exc
+        if session_id != record_session:
+            raise _invalid_record()
+
+    message_id = _string(data["assistant_message_id"], optional=True)
+    if message_id is not None:
+        try:
+            encoded_message_id = message_id.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise _invalid_record() from exc
+        if len(encoded_message_id) > _MAX_RECONCILIATION_MESSAGE_ID_BYTES or any(
+            ord(character) < 0x20 or ord(character) == 0x7F for character in message_id
+        ):
+            raise _invalid_record()
+
+    observed_at = _timestamp(data["observed_at"])
+    generation = data["generation"]
+    if (
+        isinstance(generation, bool)
+        or not isinstance(generation, int)
+        or generation < 1
+    ):
+        raise _invalid_record()
+
+    phase = data["phase"]
+    identity = data["identity"]
+    lifecycle = data["lifecycle"]
+    source = data["source"]
+    if not isinstance(phase, str) or phase not in _RECONCILIATION_PHASES:
+        raise _invalid_record()
+    if not isinstance(identity, str) or identity not in _RECONCILIATION_IDENTITIES:
+        raise _invalid_record()
+    if not isinstance(lifecycle, str) or lifecycle not in _RECONCILIATION_LIFECYCLES:
+        raise _invalid_record()
+    if not isinstance(source, str) or source not in _RECONCILIATION_SOURCES:
+        raise _invalid_record()
+    if (phase == "response_observed") != (source == "durable_message"):
+        raise _invalid_record()
+
+    accepted = data["accepted"]
+    if accepted is not None and not isinstance(accepted, bool):
+        raise _invalid_record()
+    outcome = data["outcome"]
+    if outcome is not None and (
+        not isinstance(outcome, str) or outcome not in _RECONCILIATION_OUTCOMES
+    ):
+        raise _invalid_record()
+    reason = data["reason"]
+    if not isinstance(reason, str) or reason not in _RECONCILIATION_REASONS:
+        raise _invalid_record()
+    finish = data["finish"]
+    if finish is not None and (
+        not isinstance(finish, str) or finish not in _RECONCILIATION_FINISHES
+    ):
+        raise _invalid_record()
+
+    completed_at = data["completed_at"]
+    if completed_at is not None:
+        if isinstance(completed_at, bool) or not isinstance(completed_at, (int, float)):
+            raise _invalid_record()
+        try:
+            if not math.isfinite(completed_at):
+                raise _invalid_record()
+        except OverflowError as exc:
+            raise _invalid_record() from exc
+
+    limitations_value = data["limitations"]
+    if not isinstance(limitations_value, list) or any(
+        not isinstance(item, str) or item not in _RECONCILIATION_REASONS
+        for item in limitations_value
+    ):
+        raise _invalid_record()
+
+    result_sha256 = _string(data["result_sha256"], optional=True)
+    if (
+        result_sha256 is not None
+        and re.fullmatch(r"[0-9a-f]{64}", result_sha256) is None
+    ):
+        raise _invalid_record()
+    if lifecycle == "committed" and result_sha256 is None:
+        raise _invalid_record()
+    if identity == "verified" and (
+        phase != "response_observed"
+        or session_id is None
+        or message_id is None
+        or server_identity is None
+    ):
+        raise _invalid_record()
+    if accepted is True and (
+        phase != "response_observed"
+        or identity not in {"verified", "invalidated"}
+        or outcome != "completed"
+        or reason != "accepted"
+        or finish != "stop"
+        or completed_at is None
+    ):
+        raise _invalid_record()
+    if outcome == "completed" and accepted is not True:
+        raise _invalid_record()
+    if accepted is True and (session_id is None or message_id is None):
+        raise _invalid_record()
+
+    assert observed_at is not None
+    return ReconciliationObservation(
+        attempt_id=observed_attempt,
+        session_id=session_id,
+        assistant_message_id=message_id,
+        observed_at=observed_at,
+        generation=generation,
+        phase=cast(ReconciliationPhase, phase),
+        identity=cast(ReconciliationIdentity, identity),
+        lifecycle=cast(ReconciliationLifecycle, lifecycle),
+        source=cast(ReconciliationSource, source),
+        accepted=accepted,
+        outcome=cast(ReconciliationOutcome | None, outcome),
+        reason=cast(ReconciliationReason, reason),
+        finish=cast(TerminalFinish | None, finish),
+        completed_at=completed_at,
+        limitations=tuple(
+            cast(ReconciliationReason, item) for item in limitations_value
+        ),
+        result_sha256=result_sha256,
+    )
+
+
+def _reconciliation_to_json(
+    value: ReconciliationObservation,
+) -> dict[str, Any]:
+    return {
+        "attempt_id": value.attempt_id,
+        "session_id": value.session_id,
+        "assistant_message_id": value.assistant_message_id,
+        "observed_at": value.observed_at,
+        "generation": value.generation,
+        "phase": value.phase,
+        "identity": value.identity,
+        "lifecycle": value.lifecycle,
+        "source": value.source,
+        "accepted": value.accepted,
+        "outcome": value.outcome,
+        "reason": value.reason,
+        "finish": value.finish,
+        "completed_at": value.completed_at,
+        "limitations": list(value.limitations),
+        "result_sha256": value.result_sha256,
+    }
+
+
 def _record_from_json(value: object) -> TaskRecord:
     data = _object(value)
     version = data.get("version")
@@ -381,7 +657,9 @@ def _record_from_json(value: object) -> TaskRecord:
         raise StoreError(
             "unsupported_version", "La versión del registro no está soportada."
         )
-    _exact_keys(data, _RECORD_KEYS)
+    record_keys = set(data)
+    if record_keys not in (_RECORD_KEYS, _RECORD_KEYS | _RECORD_OPTIONAL_KEYS):
+        raise _invalid_record()
 
     task_id = _canonical_uuid(data["task_id"], "invalid_record")
     attempt_id = _canonical_uuid(data["attempt_id"], "invalid_record")
@@ -416,6 +694,12 @@ def _record_from_json(value: object) -> TaskRecord:
             raise _invalid_record() from exc
     assert model is not None
     assert reason is not None
+    reconciliation = _reconciliation_from_json(
+        data.get("reconciliation"),
+        attempt_id=attempt_id,
+        record_session=session_value,
+        server_identity=server_identity,
+    )
     return TaskRecord(
         version=version,
         task_id=task_id,
@@ -438,11 +722,12 @@ def _record_from_json(value: object) -> TaskRecord:
         last_event_at=_timestamp(data["last_event_at"], optional=True),
         cursor=cursor,
         quota_resume=_quota_resume_from_json(data["quota_resume"]),
+        reconciliation=reconciliation,
     )
 
 
 def _record_to_json(record: TaskRecord) -> dict[str, Any]:
-    return {
+    data = {
         "version": record.version,
         "task_id": record.task_id,
         "attempt_id": record.attempt_id,
@@ -465,6 +750,9 @@ def _record_to_json(record: TaskRecord) -> dict[str, Any]:
         "cursor": record.cursor,
         "quota_resume": _quota_resume_to_json(record.quota_resume),
     }
+    if record.reconciliation is not None:
+        data["reconciliation"] = _reconciliation_to_json(record.reconciliation)
+    return data
 
 
 def _validate_record(record: TaskRecord) -> None:

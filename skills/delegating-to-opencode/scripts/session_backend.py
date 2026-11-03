@@ -56,6 +56,7 @@ class TerminalReconciliation:
     assistant_message_id: str | None
     reason: str
     limitations: tuple[str, ...]
+    response_observed: bool = False
 
 
 @dataclass(frozen=True)
@@ -569,6 +570,7 @@ def reconcile_terminal_message(
         )
 
     deadline = _clock() + timeout
+    response_observed = False
 
     def remaining() -> float:
         value = deadline - _clock()
@@ -592,6 +594,7 @@ def reconcile_terminal_message(
             assistant_message_id,
             reason,
             limitations if limitations is not None else (reason,),
+            response_observed,
         )
 
     try:
@@ -618,6 +621,7 @@ def reconcile_terminal_message(
             message_id=assistant_message_id,
             timeout=remaining(),
         )
+        response_observed = isinstance(response, ApiResponse)
         remaining()
         owner_after = verify_owner(timeout=min(remaining(), 0.5))
         remaining()
@@ -750,6 +754,7 @@ def reconcile_terminal_message(
             assistant_message_id,
             "accepted",
             tuple(limitations_list),
+            response_observed,
         )
     if finish == "length":
         return TerminalReconciliation(
@@ -760,6 +765,7 @@ def reconcile_terminal_message(
             assistant_message_id,
             "finish_length",
             tuple(limitations_list) or ("finish_length",),
+            response_observed,
         )
     if finish in {"error", "content-filter", "interrupted", "cancel"}:
         return TerminalReconciliation(
@@ -770,6 +776,7 @@ def reconcile_terminal_message(
             assistant_message_id,
             f"finish_{finish}",
             tuple(limitations_list) or (f"finish_{finish}",),
+            response_observed,
         )
     if finish in {"tool-calls", "unknown"}:
         return TerminalReconciliation(
@@ -780,6 +787,7 @@ def reconcile_terminal_message(
             assistant_message_id,
             "non_final_finish",
             tuple(limitations_list) or ("non_final_finish",),
+            response_observed,
         )
     return TerminalReconciliation(
         False,
@@ -789,4 +797,5 @@ def reconcile_terminal_message(
         assistant_message_id,
         "unknown_finish",
         tuple(limitations_list) or ("unknown_finish",),
+        response_observed,
     )

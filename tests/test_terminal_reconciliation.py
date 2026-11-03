@@ -367,3 +367,52 @@ def test_reconcile_terminal_message_rejects_message_error(tmp_path: Path) -> Non
     result = transport.reconcile(tmp_path, assistant_message_id="msg_1", timeout=5.0)
     assert result.accepted is False
     assert result.outcome == "failed"
+
+
+@pytest.mark.parametrize(
+    ("case", "response_observed", "accepted", "outcome", "reason"),
+    [
+        ("missing_id", False, False, "uncertain", "assistant_message_id_unavailable"),
+        ("request_exception", False, False, "pending", "backend_unavailable"),
+        ("http_error", True, False, "pending", "backend_unavailable"),
+        ("invalid_body", True, False, "uncertain", "invalid_response"),
+        ("non_api_result", False, False, "uncertain", "invalid_response"),
+        ("success", True, True, "completed", "accepted"),
+        ("owner_changed_after_response", True, False, "pending", "owner_mismatch"),
+    ],
+)
+def test_reconciliation_marks_only_received_http_response(
+    tmp_path: Path,
+    case: str,
+    response_observed: bool,
+    accepted: bool,
+    outcome: str,
+    reason: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transport = Binding(tmp_path)
+    message_id: str | None = "msg_1"
+    if case == "missing_id":
+        message_id = None
+    elif case == "request_exception":
+        transport.error = RuntimeError("synthetic-private-detail")
+    elif case == "http_error":
+        transport.status["session.message.get"] = 500
+    elif case == "invalid_body":
+        transport.responses["session.message.get"] = []
+    elif case == "non_api_result":
+
+        def unexpected_response(*_args: Any, **_kwargs: Any) -> Any:
+            return {}
+
+        monkeypatch.setattr(transport, "request", unexpected_response)
+    elif case == "owner_changed_after_response":
+        transport.owner_change_at = 2
+
+    result = transport.reconcile(tmp_path, assistant_message_id=message_id, timeout=5.0)
+
+    assert getattr(result, "response_observed", None) is response_observed
+    assert result.accepted is accepted
+    assert result.outcome == outcome
+    assert result.reason == reason
+    assert "synthetic-private-detail" not in repr(result)

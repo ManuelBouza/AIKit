@@ -49,9 +49,11 @@ no cambia el dictamen global `needs_corrections` ni cierra Task 6.
 | REV-004 | **Confirmado como divergencia con el diseño; disposición pendiente de implementación.** El diseño §4 pide evidencia mínima durable con procedencia, IDs, outcome y reason; la documentación de implementación dice que esos detalles quedan en memoria y solo persisten estado/fuente (`docs/balance-carga.md:70-89`). Documentar el comportamiento no demuestra que se aprobara cambiar el requisito. | El [diseño aprobado](superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md) y el [plan](superpowers/plans/2026-11-03-evidencia-reconciliacion.md) concretan el campo opcional; REV-004 sigue abierto hasta implementación/revisión. |
 
 Informe de corrección y checks de REV-001: `.aikit/mcp-reconciliation-fix1/report.json`.
-REV-003/004 siguen abiertos; Unidad 1 está implementada y aceptada
-independientemente; las unidades 2–4 no iniciadas. Esto no acepta el cierre global.
-La prueba real mínima y la instalación conservan autorizaciones separadas.
+REV-003/004 siguen abiertos; Unidades 1 y 2 están aceptadas independientemente; las unidades 3–4 no iniciadas. Esto no
+acepta el cierre global. La prueba real mínima y la instalación conservan
+autorizaciones separadas.
+La corrección del bypass por `source=cli_event` está pendiente de rerevisión;
+RED/GREEN y checks se registran en `.aikit/rev003004-unit2-fix1/report.json`.
 
 ## Evidencia y límites
 
@@ -75,8 +77,8 @@ La prueba real mínima y la instalación conservan autorizaciones separadas.
 
 ## Continuación
 
-Continuar con Unidad 2 solo con autorización propia, conservando la aceptación
-independiente de Unidad 1. REV-002 tiene una decisión aprobada
+Continuar con Unidad 3, con autorización propia; se conserva la aceptación de
+Unidades 1 y 2. REV-002 tiene una decisión aprobada
 documentalmente, sin cambio funcional.
 No reabrir ni presentar como pendiente la revisión ya aceptada de REV-001 sin
 cambios nuevos. La aceptación de REV-001 no acepta Task 6 global ni acredita
@@ -105,7 +107,7 @@ nuevos ni modificaciones de la entrega.
   Copia vinculada y comprobación en `review-bound.json` y `coordinator.json`
   del mismo directorio ignorado por Git.
 - REV-003/004 permanecen abiertos; el diseño está aprobado y el plan preparado,
-  con Unidad 1 aceptada y unidades 2–4 pendientes. REV-002 se resolvió documentalmente según el
+  con Unidades 1 y 2 aceptadas y unidades 3–4 pendientes. REV-002 se resolvió documentalmente según el
   triage, sin que el revisor volviera a aceptarlo. No acepta Task 6 global, no explica DEF-001,
   no incluye prueba real mínima, instalación, nueva exportación ni paridad del
   paquete anterior con la fuente actual.
@@ -136,3 +138,39 @@ REV-003/004 y Task 6 global permanecen abiertos.
   `uv` nativo falló por permisos de caché del sandbox; se utilizó el Ruff ya
   instalado en `.venv`. No se repitió inferencia ni suite por ese cambio documental.
 - Sin exportación, instalación, prueba real, nueva política ni cierre global.
+
+## Unidad 2 — recuperación local aceptada, 2026-11-03
+
+Se incorporó una captura única de bytes y JSON del resultado, y un gate para
+validar evidencia presente antes de recuperar `completed`. Se conservan los
+gates legacy cuando no existe observación; no se consulta backend. El escritor
+del supervisor sigue pendiente de Unidad 3.
+
+- Implementador: misma sesión `ses_e646f8e11ffe32fS2z1SqClTdW`, GPT-6 Luna por
+  OpenCode Go, `high` para Unidad 2 y `medium` para la corrección puntual, de pago.
+  Suite final **875 pruebas aprobadas**, Ruff, formato y mypy correctos.
+- La primera revisión de `ses_e5ce9e5adffegZQ71MHqEMJUZt`, Kimi K3.1 Pro por
+  OpenCode Go, `high`, de pago, encontró RECOVERY-SOURCE-GATE: una observación
+  negativa podía eludir la validación cuando la fuente era `cli_event`.
+  Se conservó el dictamen `needs_corrections` en
+  `.aikit/rev003004-unit2-review/review.json`.
+- Tras reproducir el bloqueo en RED, se retiró la dependencia de la fuente y
+  se verificó GREEN, incluido CLI legacy sin observación. El mismo revisor
+  aceptó el nuevo snapshot, sin hallazgos: **186 pruebas focalizadas** y tres
+  reproducciones aprobadas. Los intentos paralelos iniciales colisionaron en
+  el directorio temporal; quedaron registrados y se repitieron secuencialmente
+  con directorio propio. No se atribuyó esa colisión al producto.
+- Informe de seguimiento:
+  `.aikit/rev003004-unit2-rereview/review.json`, SHA-256
+  `d2d18d02a12b799fd359af28bed7dbe8af2650b45815aed13cce090d5842f585`.
+  El coordinador vinculó la sesión en una copia separada y verificó cuatro
+  hashes, logs y el contrato de aceptación antes del seguimiento documental.
+  Evidencia: `.aikit/rev003004-unit2/coordinator-acceptance.json`.
+- Desviación TDD registrada: un primer parche se aplicó antes de la regresión;
+  se retiró íntegramente y el RED confirmado se ejecutó sobre el código base
+  antes de reimplementar. El primer pase verde no se presentó como RED.
+- No existe referencia externa de `generation`: se valida positiva en el
+  registro actual y se enlaza por intento/sesión/digest. No se acredita
+  autoría criptográfica ni propietario online por esos metadatos.
+- Aceptación exclusiva de Unidad 2. Unidades 3–4, REV-003/004 completos y
+  Task 6 global siguen pendientes. Sin exportación, instalación o prueba real.

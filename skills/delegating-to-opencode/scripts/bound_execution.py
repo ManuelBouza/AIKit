@@ -7,6 +7,7 @@ recupera el resultado local sin repetir inferencia.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -138,7 +139,9 @@ def _read_artifact(record: TaskRecord, name: str) -> bytes | None:
         return None
 
 
-def _read_result(record: TaskRecord) -> dict[str, Any] | None:
+def _read_result_snapshot(
+    record: TaskRecord,
+) -> tuple[bytes, dict[str, Any]] | None:
     raw = _read_artifact(record, "result.json")
     if raw is None:
         return None
@@ -146,7 +149,35 @@ def _read_result(record: TaskRecord) -> dict[str, Any] | None:
         data = json.loads(raw, object_pairs_hook=_without_duplicate_keys)
     except (UnicodeError, ValueError, RecursionError):
         return None
-    return data if isinstance(data, dict) else None
+    return (raw, data) if isinstance(data, dict) else None
+
+
+def _read_result(record: TaskRecord) -> dict[str, Any] | None:
+    snapshot = _read_result_snapshot(record)
+    return snapshot[1] if snapshot is not None else None
+
+
+def _reconciliation_matches_result(record: TaskRecord, result_bytes: bytes) -> bool:
+    observation = record.reconciliation
+    if observation is None:
+        # Legacy records retain only their existing delivery/provenance gates.
+        return True
+    return bool(
+        observation.attempt_id == record.attempt_id
+        and observation.session_id == record.session
+        and observation.assistant_message_id
+        and observation.generation >= 1
+        and observation.phase == "response_observed"
+        and observation.identity == "verified"
+        and observation.lifecycle == "committed"
+        and observation.source == "durable_message"
+        and observation.accepted is True
+        and observation.outcome == "completed"
+        and observation.reason == "accepted"
+        and observation.finish == "stop"
+        and observation.completed_at is not None
+        and observation.result_sha256 == hashlib.sha256(result_bytes).hexdigest()
+    )
 
 
 def _read_stdout(record: TaskRecord) -> str:
@@ -309,8 +340,21 @@ def _recover(context: HostContext, record: TaskRecord, *, agent: str) -> dict[st
         if record.session is not None and record.session != current.session:
             raise HostRegistryError("session_mismatch")
         attempt = verify_provenance(context, current)
-        data = _read_result(current)
-        if data is not None:
+        snapshot = _read_result_snapshot(current)
+        if snapshot is not None:
+            result_bytes, data = snapshot
+            if (
+                data.get("delivery") == "completed"
+                and current.delivery is not None
+                and current.delivery.state == "completed"
+                and not _reconciliation_matches_result(current, result_bytes)
+            ):
+                return _pending(
+                    current,
+                    agent=attempt.agent,
+                    limitations=["result_mismatch"],
+                    delivery="pending",
+                )
             return _map_result(
                 current,
                 data,

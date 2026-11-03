@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md` (aprobado el 2026-11-03; commit `27daa45`).
 
-**Estado:** Unidad 1 ejecutada y aceptada independientemente el 2026-11-03. Unidades 2–4 pendientes; no habilitar el escritor antes del lector compatible.
+**Estado:** Unidades 1 y 2 ejecutadas y aceptadas independientemente el 2026-11-03. Unidades 3–4 pendientes; no habilitar el escritor antes del lector compatible.
 
 ## Global Constraints
 
@@ -130,12 +130,15 @@ def _read_result_snapshot(
 def _reconciliation_matches_result(record: TaskRecord, result_bytes: bytes) -> bool: ...
 ```
 
-- [ ] **Paso 1: Escribir tests RED de reader.** `test_recover_legacy_record_without_observation_uses_existing_gates`, `test_recover_rejects_stale_reconciliation_evidence`, `test_recover_does_not_complete_malformed_observation` y `test_recover_rejects_digest_mismatch_without_backend_read`. Legacy válido conserva el gate antiguo; metadata presente requiere lifecycle/identity/accepted/outcome/IDs/digest correctos.
-- [ ] **Paso 2: Ejecutar RED.** `uv run pytest tests/test_bound_reconciliation.py -q`; esperado: fallos de comportamiento por falta de validación de observación, no fallos de import.
-- [ ] **Paso 3: Implementar snapshot de resultado.** Añadir `def _read_result_snapshot(record: TaskRecord) -> tuple[bytes, dict[str, Any]] | None`; reutilizar `_read_artifact` y límite existente, parsear una vez, entregar bytes exactos y payload. Mantener `_read_result` como adaptador dict para sus demás consumidores.
-- [ ] **Paso 4: Implementar gate de `_recover`.** Si `reconciliation is None`, conservar reglas legacy. Si está presente, `completed` solo pasa con intento/sesión/owner/generation vigentes, lifecycle `committed`, identity `verified`, `accepted=True`, outcome `completed`, IDs consistentes, host terminal actual y digest de bytes coincidente. Metadata negativa/provisional/invalidada/stale/malformada retorna pending saneado; nunca consultar binding/backend.
-- [ ] **Paso 5: GREEN y revisión.** Repetir `uv run pytest tests/test_bound_reconciliation.py -q`; comprobar status/delivery pending, `result_mismatch`, ningún request backend en discrepancias y CLI-terminal normal sin observación. Revisión independiente de compatibilidad.
-- [ ] **Paso 6: Versionar tras aprobación.** `git add` solo archivos de Unidad 2 y `git commit -m "fix: gate reconciliation recovery on committed evidence"`; no instalar/exportar.
+- [x] **Paso 1: Escribir tests RED de reader.** `test_recover_legacy_record_without_observation_uses_existing_gates`, `test_recover_rejects_stale_reconciliation_evidence`, `test_recover_does_not_complete_malformed_observation` y `test_recover_rejects_digest_mismatch_without_backend_read`. Legacy válido conserva el gate antiguo; metadata presente requiere lifecycle/identity/accepted/outcome/IDs/digest correctos.
+- [x] **Paso 2: Ejecutar RED.** `uv run pytest tests/test_bound_reconciliation.py -q`; esperado: fallos de comportamiento por falta de validación de observación, no fallos de import.
+- [x] **Paso 3: Implementar snapshot de resultado.** Añadir `def _read_result_snapshot(record: TaskRecord) -> tuple[bytes, dict[str, Any]] | None`; reutilizar `_read_artifact` y límite existente, parsear una vez, entregar bytes exactos y payload. Mantener `_read_result` como adaptador dict para sus demás consumidores.
+- [x] **Paso 4: Implementar gate de `_recover`.** Si `reconciliation is None`, conservar reglas legacy. Si está presente, `completed` solo pasa con intento/sesión/owner vigentes y generation positiva en el registro actual, lifecycle `committed`, identity `verified`, `accepted=True`, outcome `completed`, IDs consistentes, host terminal actual y digest de bytes coincidente. Metadata negativa/provisional/invalidada/stale/malformada retorna pending saneado; nunca consultar binding/backend.
+- [x] **Paso 5: GREEN y revisión.** Repetir `uv run pytest tests/test_bound_reconciliation.py -q`; comprobar status/delivery pending, `result_mismatch`, ningún request backend en discrepancias y CLI-terminal normal sin observación. Revisión independiente de compatibilidad.
+- [x] **Paso 6: Versionar tras aprobación.** `git add` solo archivos de Unidad 2 y `git commit -m "fix: gate reconciliation recovery on committed evidence"`; no instalar/exportar.
+
+
+**Cierre de Unidad 2:** 875 pruebas globales del implementador; 186 focales y tres reproducciones del revisor, dictamen accepted. El bloqueo por fuente de entrega se reprodujo, corrigió y revisó en la misma sesión independiente. Generation se valida positiva en el registro actual: no existe copia externa para contrastarla; el enlace usa intento, sesión y digest. No se afirma esa comparación independiente ni autenticidad criptográfica. Detalle en [el seguimiento](../../revision-reconciliacion-2026-11-02.md). Unidades 3 y 4 no iniciadas.
 
 ## Unidad 3: protocolo del supervisor y publicación ordenada
 

@@ -248,3 +248,43 @@ informativo de Unidad 3. No se añadieron cambios funcionales en esta unidad.
   prueba real mínima pendiente de autorización; instalación/paridad con el host
   instalado siguen separadas. No hay push, instalación ni nueva política de
   selección de modelos en esta entrega.
+
+## Task 6 — prueba real mínima aceptada con límites, 2026-11-04
+
+El usuario autorizó la prueba real mediante go. Se hizo **una inferencia**,
+Beam por Kilo, **low**, gratuito según catálogo, contra el servicio existente;
+no se instaló el candidato ni se detuvo el servidor compartido.
+
+- Sesión nueva `ses_e57ee2401ffeIOiCQGOR2t5iYP`, mensaje
+  `msg_1a811dc2e001xb9ozAkCNnGmWz`, capturados de la CLI real. El proceso
+  terminó con exit 0; el comprobador quedó pending porque no reconoció el
+  terminal que pretendía filtrar. No se afirma que ese evento se perdiera
+  ni se filtrara correctamente. La guardia se conservó y no hubo reintento.
+- Con esos mismos IDs se llamó al helper del candidato: **un GET durable**,
+  `response_observed=true`, `accepted=true`, `outcome=completed`, `finish=stop`,
+  fecha de finalización presente y correlación verificada. No se hizo segunda
+  inferencia. Evidencia original y continuación separadas en
+  `.aikit/reconciliation-real-minimum/native-events.jsonl` y
+  `native-helper-result.json`; aceptación del coordinador en
+  `coordinator-acceptance.json` del mismo directorio.
+- Alcance real: CLI → API de mensaje durable → evaluador del candidato. No
+  acredita supervisor completo, commit de evidencia, resultado persistido ni
+  recovery en vivo. No se fabricó un resultado para afirmar ese éxito.
+  Esos recorridos conservan las 893 pruebas deterministas del autor y las
+  124 focales más revisión independiente de Unidad 4, como evidencia distinta.
+- Disposición del coordinador: aceptar el mínimo de Task 6 con ese alcance,
+  sin instalar ni prometer E2E completo. Coste si esta cobertura es insuficiente:
+  podría quedar un defecto específico de la integración real del supervisor.
+- La preparación tuvo intentos inadecuados de Beam y Nemotron, conservados
+  en artefactos ignorados. Se aplicó fallback nativo acotado GPT-6.1 Terra,
+  medium, para un comprobador fiable limitado al helper. Una copia local
+  innecesaria del registro creada en preparación se eliminó sin exponer
+  valores; no se modificó el registro original. El fallback no implica que
+  todos los proveedores de OpenCode estuvieran agotados.
+- Los imports de prueba crearon **23 archivos de caché Python** en el candidato
+  ejercitado. Sus archivos exportados conservan su identidad, pero preparar
+  una exportación nueva limpia antes de instalar; no usar ese directorio de
+  pruebas como paquete de despliegue.
+- Cierre de REC-001 con límites anteriores. ENT-002 (paquete/host/instalación)
+  y DEF-001 (arranque histórico) permanecen separados y abiertos. Sin push,
+  instalación, cambios de producto ni nueva política de selección.

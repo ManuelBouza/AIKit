@@ -6,13 +6,12 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ## Prioridad y entregas
 
-### REC-001 — Task 6: cierre global de reconciliación
+### REC-001 — Task 6: cierre de código y prueba real mínima
 
-- **Categoría/estado:** aceptación global de código de Unidades 1–4 completada. REV-001 corregido y aceptado; REV-002 resuelto por disposición documental aprobada; REV-003/004 implementados y aceptados en revisión global. La Task 6 original sigue incompleta por su prueba real mínima; la instalación permanece separada.
-- **Evidencia actual:** [plan de evidencia](superpowers/plans/2026-11-03-evidencia-reconciliacion.md), [dictamen y seguimiento](revision-reconciliacion-2026-11-02.md), `.aikit/rev003004-unit4/report.json`, `report-bound.json` y `coordinator-acceptance.json`. Autor: **893 pruebas globales**, Ruff, formato y mypy; revisor independiente: **124 focales** y paridad de **42 archivos** del nuevo candidato. El comentario informativo de Unidad 3 está corregido.
-- **Historia preservada:** Task 5 antigua `ed00065`, 849 aprobadas después de una ejecución con 848 y un PermissionError de causa no diagnosticada. Revisión inicial sobre `9a00248` encontró REV-001–004. Sus informes y fallos permanecen como evidencia histórica, no como estado del candidato nuevo.
-- **Siguiente paso acotado:** ejecutar prueba real mínima de reconciliación contra el servicio existente de OpenCode; requiere autorización específica. No repetir suite global ni revisión técnica ya aceptadas por rutina.
-- **Dependencia/autorización:** no instalar ni publicar como parte del cierre de código. La aceptación no acredita paridad con el host instalado ni resuelve DEF-001.
+- **Categoría/estado:** cerrada con alcance explícito. Código de Unidades 1–4 aceptado independientemente; REV-001–004 resueltos según su disposición documentada. Prueba real mínima de CLI/API/helper autorizada y aceptada el 2026-11-04. No acredita supervisor completo, persistencia o recuperación en vivo; esos recorridos tienen pruebas deterministas y revisión técnica, no una demostración E2E real.
+- **Evidencia:** [plan original](superpowers/plans/2026-11-01-reconciliacion-terminal-opencode.md), [seguimiento](revision-reconciliacion-2026-11-02.md), `.aikit/rev003004-unit4/coordinator-acceptance.json` y `.aikit/reconciliation-real-minimum/coordinator-acceptance.json`. Una inferencia Beam/Kilo low, gratuita; un GET durable; helper accepted/completed/stop. Primer comprobador pending conservado, reutilizados sus IDs sin repetir inferencia. Suite 893 del autor y 124 focales independientes siguen siendo evidencia separada.
+- **Disposición:** coordinador acepta este mínimo acotado, sin afirmar pérdida de terminal ni éxito E2E del supervisor. Riesgo restante: fallo específico de integración en vivo no cubierto por este mínimo. DEF-001 y el host instalado no quedan verificados por este cierre.
+- **Siguiente paso:** ENT-002, preparar paquete limpio y contrastar host antes de decidir instalación; no añade una nueva función ni otra batería de inferencias.
 
 ### DEF-001 — Fallo de arranque del supervisor
 
@@ -25,7 +24,7 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 - **Categoría/estado:** entrega incompleta; el candidato actualizado de fuente/exportación existe, pero no está instalado. No se ha comprobado aquí la identidad del host instalado.
 - **Evidencia:** `.aikit/rev003004-unit4/dist/aikit`, candidato 0.2.0 de 42 archivos, paridad revisada por hashes y aceptación global de código. No se instaló ni activó. El candidato histórico de Task 5 es anterior a estos cambios; la aceptación de la exportación nueva no verifica el host instalado.
-- **Siguiente paso acotado:** después de REC-001, contrastar fuente, candidato y host antes de decidir despliegue.
+- **Siguiente paso acotado:** crear una nueva exportación limpia y contrastar fuente, candidato y host antes de decidir despliegue. La prueba real importó módulos del candidato ejercitado y dejó 23 archivos de caché Python; no instalar directamente ese directorio de pruebas.
 - **Dependencia/autorización:** instalación/actualización exige autorización propia; no se infiere del export ni de este registro.
 
 ### ENT-003 — Nota 001: disponibilidad de cuentas

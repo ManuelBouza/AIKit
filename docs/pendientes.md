@@ -20,13 +20,13 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 - **Siguiente paso acotado:** al retomar REC-001, valorar si este fallo impide ejecutar la revisión; diagnosticarlo solo si constituye un bloqueo, sin ampliar automáticamente el alcance.
 - **Dependencia/autorización:** diagnóstico futuro autorizado por separado; no hay permiso de corregir o rediseñar ahora.
 
-### ENT-002 — Actualización preparada, instalación pendiente
+### ENT-002 — Instalada; carga en Codex pendiente
 
-- **Categoría/estado:** versión 0.2.1 preparada; portable y candidato local0.2.1+host.1 validados, sin instalar ni recargar. Proyecto, lock y manifiesto fuente coherentes; sin cambios de dependencias o comportamiento.
-- **Evidencia:** [plan de actualización y restauración](actualizacion-0.2.1.md), `.aikit/ent002-update-021/package-acceptance.json`, manifiestos de ambos paquetes y metadata de checks recuperada del backend. Cada distribución:42 archivos + catálogo, cero extras.12 pruebas de exportación aprobadas; lock offline correcto. Solo plugin.json y mcp.json difieren en el candidato local; se preservaron exactamente AIKIT_STATE y AIKIT_OPENCODE_REGISTRATION.
-- **Host observado:** aikit@aikit-local registrado y habilitado0.2.0+host.1; caché/fuente anteriores conservadas. No confundir registro habilitado con runtime cargado en este chat.
-- **Siguiente paso acotado:** instalar candidato0.2.1+host.1 según el plan, con respaldo selectivo previo, fuente nueva, runtime en installedPath y restauración al fallar; después el usuario recarga Codex y se comprueba carga real.
-- **Dependencia/autorización:** requiere autorización propia de instalación; esta preparación no la ejecutó. Sin push ni cambios de otros plugins/cuentas. Prueba real previa limitada al helper; DEF-001 permanece separado.
+- **Categoría/estado:** AIKit 0.2.1+host.1 instalado y habilitado tras autorización explícita. Runtime preparado en la caché nueva; initialize/list_tools del MCP instalado confirma opencode_catalog y opencode_delegate. No equivale a carga verificada en este chat antes de recargar.
+- **Evidencia:** [resultado de instalación](instalacion-0.2.1.md), [plan y restauración](actualizacion-0.2.1.md), `.aikit/ent002-install-021/coordinator-acceptance.json`, inventario y metadata de checks recuperada del backend.43 archivos de fuente y42 de caché coinciden con el paquete aprobado. Overlay de dos paths conservado; versión anterior y sus 42 archivos intactos.
+- **Desviación:** la carpeta de respaldo inicial quedó vacía antes de actualizar. Se creó un punto de recuperación explícitamente POSTERIOR con inventario guardado antes y archivos antiguos verificados. No se presenta como respaldo previo. El primer smoke falló por PLUGIN_ROOT literal en el comprobador; corregido este, pasó sin modificar el paquete.
+- **Siguiente paso acotado:** el usuario recarga Codex y se comprueba la carga real de la skill/MCP nuevos, sin repetir inferencia ni reinstalación por rutina.
+- **Límites:** no se dispone de baseline independiente anterior/posterior de metadata de otros plugins; las operaciones dirigieron únicamente AIKit. No hubo prueba de inferencia de instalación, rollback ni push. La prueba real previa sigue limitada al helper; DEF-001 permanece separado.
 
 ### ENT-003 — Nota 001: disponibilidad de cuentas
 

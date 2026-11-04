@@ -595,8 +595,9 @@ def test_supervisor_reconcile_write_failure_keeps_conservative(
     monkeypatch.setattr(module, "save_task", failing_save)
     outcome = run_fake(tmp_path, f"print({_message_event()!r})", context=context)
     assert outcome == 1
-    # Fallo de persistencia: el disco conserva la observación previa y el
-    # resultado no declara completed.
+    # Fallo de persistencia: el disco conserva la observación previa. El
+    # artefacto candidato puede declarar completed, pero el registro y la
+    # recuperación no lo aceptan.
     record = load_task(tmp_path, TASK_ID)
     assert record.delivery is not None
     assert record.delivery.state == "pending"

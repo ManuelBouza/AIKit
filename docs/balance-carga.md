@@ -97,6 +97,38 @@ no tiene entrega completada (`result_mismatch`). Las entregas `completed`
 heredadas que sí tienen identidad y observación terminal válidas siguen siendo
 compatibles; `TaskRecord` no requiere campos nuevos.
 
+### Evidencia persistida de reconciliación
+
+`TaskRecord` puede contener una `ReconciliationObservation` opcional. Su ausencia
+es registro legacy y no invalida una entrega histórica válida. Si está presente,
+valida identidad, intento, sesión, observación, outcome, reason, finish, timestamp,
+limitaciones y digest.
+
+- `lifecycle=provisional` es una barrera conservadora; nunca permite recuperar
+  `completed`.
+- `lifecycle=committed` significa que la observación diagnóstica y el vínculo con
+  el artefacto quedaron escritos en `record.json`; no implica éxito.
+- `identity=verified` solo se acredita si pasan los checks de propietario,
+  registro, intento, sesión e ID del mensaje observado.
+- El digest SHA-256 vincula la generación actual con los bytes exactos del
+  `result.json` preparado; no modifica el JSON público ni su forma.
+- `_recover` exige, además de los gates actuales de entrega y host terminal, que la
+  observación sea `committed`, `verified`, `accepted=true`, `outcome=completed`,
+  con identidad vigente y digest coincidente. Cualquier estado provisional,
+  invalidado, stale o digest discordante produce `pending`.
+- CLI-terminal válido sin observación conserva el comportamiento legacy; no se
+  crea una observación vacía que bloquee su éxito.
+- Las observaciones negativas quedan committed como diagnóstico y no bloquean
+  indefinidamente la entrega conservadora.
+- La generación es un entero positivo dentro del registro actual; no existe otra
+  copia para compararla independientemente.
+- La publicación usa `_atomic_replace` sobre un temporal hermano, con
+  `fsync`. En Windows, un lector abierto sin `FILE_SHARE_DELETE` puede provocar
+  fallo conservador; se preservan los bytes previos y se limpia el temporal.
+- El timeout sigue siendo por proceso: reconciliación consume el tiempo restante
+  del worker, sin reiniciar ni sumar preflight.
+- No se afirma atomicidad entre `record.json`, `result.json` y host registry.
+
 La modificación documental no cambia requisitos de instalación ni versiones.
 El exportador produce un candidato fuente; no acredita que el host haya
 recargado o instalado ese candidato.

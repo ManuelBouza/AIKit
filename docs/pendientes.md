@@ -8,13 +8,11 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ### REC-001 — Task 6: cierre global de reconciliación
 
-- **Categoría/estado:** entrega incompleta; revisión global ejecutada, cierre no aceptado (`needs_corrections`). REV-001 fue aceptado independientemente; REV-002 tiene disposición aprobada documentalmente, sin cambio de código; REV-003/004 siguen abiertos hasta implementación/revisión. Unidades 1 y 2 aceptadas independientemente; Unidad 3 aceptada independientemente tras corregir el diagnóstico presupuestario; Unidad 4 no iniciada. La prueba real mínima y la instalación siguen pendientes.
-- **Evidencia:** [plan de reconciliación](superpowers/plans/2026-11-01-reconciliacion-terminal-opencode.md), `.aikit/mcp-reconciliation-task5/report.json` y `.aikit/mcp-reconciliation-task5/coordinator-acceptance.json`. Cierre Task 5: `ed00065`; commits previos de la cadena: `912eced`, `22c8b1f`, `a3aec53`, `b9e645b`. Task 5 registró 849 pruebas aprobadas tras una ejecución con 848 aprobadas y un fallo `PermissionError`; Ruff, mypy y exportación de 42 archivos pasaron. El reintento verde no diagnosticó la causa del fallo inicial.
-- **Revisión global:** [dictamen y triage REV-001–REV-004](revision-reconciliacion-2026-11-02.md), sobre `9a00248`, sesión independiente de OpenCode. 155 pruebas focalizadas pasaron; REV-001 se reprodujo y corrigió separadamente (`.aikit/mcp-reconciliation-fix1/report.json`). El triage no demuestra la causa de DEF-001 ni acepta el cierre.
-- **Seguimiento REV-001:** revisión de cuatro archivos del snapshot `1d816fe` aceptada, sin hallazgos nuevos, por la sesión independiente original; 72 pruebas y reproducción adicional del check final. Informe y límites en el dictamen enlazado. El check final solo tiene reproducción temporal en este seguimiento, no una nueva regresión versionada.
-- **Diseño y plan:** [Diseño aprobado](superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md) y [plan de implementación](superpowers/plans/2026-11-03-evidencia-reconciliacion.md). Unidades 1 y 2 aceptadas; el bloqueo por fuente de entrega detectado en revisión se corrigió con regresión. Evidencia en `.aikit/rev003004-unit2/coordinator-acceptance.json`. No equivale al cierre de Task 6.
-- **Siguiente paso acotado:** Unidad 4: validación global, documentación y revisión de entrega. Evidencia de aceptación exclusiva de Unidad 3: `.aikit/rev003004-unit3-native/coordinator-acceptance.json`; 892 pruebas globales anteriores a la última corrección, 55 focales del autor y 35 + 1 del revisor después. Permanece un comentario informativo de test, asignado a la documentación de Unidad 4. REV-002 mantiene timeout por proceso. No habilita prueba real ni instalación.
-- **Dependencia/autorización:** coordinar la reanudación de Task 6. La prueba real requiere autorización específica. No instalar ni publicar como parte de este pendiente.
+- **Categoría/estado:** aceptación global de código de Unidades 1–4 completada. REV-001 corregido y aceptado; REV-002 resuelto por disposición documental aprobada; REV-003/004 implementados y aceptados en revisión global. La Task 6 original sigue incompleta por su prueba real mínima; la instalación permanece separada.
+- **Evidencia actual:** [plan de evidencia](superpowers/plans/2026-11-03-evidencia-reconciliacion.md), [dictamen y seguimiento](revision-reconciliacion-2026-11-02.md), `.aikit/rev003004-unit4/report.json`, `report-bound.json` y `coordinator-acceptance.json`. Autor: **893 pruebas globales**, Ruff, formato y mypy; revisor independiente: **124 focales** y paridad de **42 archivos** del nuevo candidato. El comentario informativo de Unidad 3 está corregido.
+- **Historia preservada:** Task 5 antigua `ed00065`, 849 aprobadas después de una ejecución con 848 y un PermissionError de causa no diagnosticada. Revisión inicial sobre `9a00248` encontró REV-001–004. Sus informes y fallos permanecen como evidencia histórica, no como estado del candidato nuevo.
+- **Siguiente paso acotado:** ejecutar prueba real mínima de reconciliación contra el servicio existente de OpenCode; requiere autorización específica. No repetir suite global ni revisión técnica ya aceptadas por rutina.
+- **Dependencia/autorización:** no instalar ni publicar como parte del cierre de código. La aceptación no acredita paridad con el host instalado ni resuelve DEF-001.
 
 ### DEF-001 — Fallo de arranque del supervisor
 
@@ -25,8 +23,8 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ### ENT-002 — Candidato exportado y entorno instalado
 
-- **Categoría/estado:** entrega incompleta; el candidato de fuente/exportación existe, pero no está instalado. No se ha comprobado aquí la identidad del host instalado.
-- **Evidencia:** el informe Task 5 registra exportación de 42 archivos, candidato 0.2.0 y que no se instaló ni modificó la caché. El mismo informe refiere una caché anterior `0.2.0+host.1` por handoff, no inspeccionada; trátese como antecedente, no como estado verificado.
+- **Categoría/estado:** entrega incompleta; el candidato actualizado de fuente/exportación existe, pero no está instalado. No se ha comprobado aquí la identidad del host instalado.
+- **Evidencia:** `.aikit/rev003004-unit4/dist/aikit`, candidato 0.2.0 de 42 archivos, paridad revisada por hashes y aceptación global de código. No se instaló ni activó. El candidato histórico de Task 5 es anterior a estos cambios; la aceptación de la exportación nueva no verifica el host instalado.
 - **Siguiente paso acotado:** después de REC-001, contrastar fuente, candidato y host antes de decidir despliegue.
 - **Dependencia/autorización:** instalación/actualización exige autorización propia; no se infiere del export ni de este registro.
 

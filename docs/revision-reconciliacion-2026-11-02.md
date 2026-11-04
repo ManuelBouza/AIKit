@@ -208,3 +208,43 @@ digest y commit final condicionado a identidad y propietario vigentes.
   ni comparación controlada de rendimiento.
 - Unidad 4, REV-003/004 globales y Task 6 siguen pendientes. Sin exportación,
   instalación, prueba real mínima ni push.
+
+## Unidad 4 — aceptación global de código, 2026-11-04
+
+Contrato documentado en `docs/balance-carga.md`; corregido el comentario
+informativo de Unidad 3. No se añadieron cambios funcionales en esta unidad.
+
+- Autor: Beam por Kilo, medium, gratuito; sesión reutilizada
+  `ses_e646f8e11ffe32fS2z1SqClTdW`. 39 focales y suite global **893 aprobadas**
+  (134,98 s), Ruff, formato, mypy y diff correctos. No se atribuyen a este
+  resultado las pruebas anteriores de Unidad 3.
+- Candidato 0.2.0: `.aikit/rev003004-unit4/dist/aikit`, **42 archivos**,
+  nueva exportación sin instalación ni activación.
+- Revisor independiente: Nemotron 3 Ultra 550B A55B por Kilo, high, gratuito,
+  nueva sesión `ses_e5815168dffeN8Y8WfTf4AjPOe`. El high se eligió por riesgos
+  de publicación prematura, identidad y fallos entre artefactos. Ejecutó
+  **124 focales**, Ruff, formato y mypy; revisó las cinco áreas del plan y
+  comprobó paridad de los 42 archivos por SHA-256. Dictamen **accepted**, sin
+  hallazgos accionables. Los puntos info describen comportamiento comprobado.
+- Informe original `.aikit/rev003004-unit4-review/review.json`, SHA-256
+  `2320734f32d6f65e67de17843e400b0bbb86043e44f56a2fa7f490356239e28b`.
+  Omitía sesión y enlaces a logs: se preservó y vinculó la sesión real en
+  `review-bound.json`. El coordinador recuperó metadata y resultados compactos
+  de cinco checks ya ejecutados desde el backend verificado, sin repetirlos ni
+  inferir de nuevo. `review_evidence.py` aceptó contrato/sesión/snapshot de diez
+  archivos; los hashes del candidato coinciden con el manifiesto del revisor.
+  Evidencia: `.aikit/rev003004-unit4/coordinator-acceptance.json`.
+- Disposiciones del coordinador: aceptar inspección acotada por lista permitida
+  y revisión manual de posibles secretos, sin certificación exhaustiva; aceptar
+  fixtures ACL en Windows sin afirmar validación en otros sistemas; aceptar
+  suite global del autor más focales independientes, sin duplicar la suite.
+  Límites: podrían quedar datos sensibles fuera de la inspección, comportamiento
+  de otros sistemas no probado o regresiones fuera de la cobertura focal.
+- La espera del cliente venció mientras el revisor seguía activo; se conservó
+  la sesión y se esperó su finalización determinísticamente, sin duplicar
+  inferencia. El mismo mecanismo recuperó la entrega del autor tras un reinicio
+  del entorno de herramientas del chat.
+- REV-003/004 quedan aceptados a nivel de código. Task 6 original conserva su
+  prueba real mínima pendiente de autorización; instalación/paridad con el host
+  instalado siguen separadas. No hay push, instalación ni nueva política de
+  selección de modelos en esta entrega.

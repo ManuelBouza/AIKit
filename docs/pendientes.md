@@ -22,10 +22,11 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ### ENT-002 — Candidato exportado y entorno instalado
 
-- **Categoría/estado:** entrega incompleta; el candidato actualizado de fuente/exportación existe, pero no está instalado. No se ha comprobado aquí la identidad del host instalado.
-- **Evidencia:** `.aikit/rev003004-unit4/dist/aikit`, candidato 0.2.0 de 42 archivos, paridad revisada por hashes y aceptación global de código. No se instaló ni activó. El candidato histórico de Task 5 es anterior a estos cambios; la aceptación de la exportación nueva no verifica el host instalado.
-- **Siguiente paso acotado:** crear una nueva exportación limpia y contrastar fuente, candidato y host antes de decidir despliegue. La prueba real importó módulos del candidato ejercitado y dejó 23 archivos de caché Python; no instalar directamente ese directorio de pruebas.
-- **Dependencia/autorización:** instalación/actualización exige autorización propia; no se infiere del export ni de este registro.
+- **Categoría/estado:** exportación limpia y contraste estático completados el 2026-11-04; actualización e instalación pendientes. No se modificó ni recargó el host.
+- **Evidencia:** [contraste del host](contraste-host-2026-11-04.md), `.aikit/ent002-clean-20261104/coordinator-acceptance.json`, manifiesto y comparación. Distribución nueva: 42 archivos de paquete + un catálogo, sin extras ni bytecode; hashes coinciden con el candidato de código aceptado. Caché y fuente estable: 29 idénticos, 13 diferentes y cero ausentes.
+- **Personalización a conservar:** overlay MCP `AIKIT_STATE` y `AIKIT_OPENCODE_REGISTRATION`, con rutas existentes; no se copiaron secretos ni configuración ajena. Versión candidata 0.2.0 frente a instalada 0.2.0+host.1; no asumir precedencia del cliente ni carga del runtime por el nombre del directorio.
+- **Siguiente paso acotado:** preparar actualización versionada 0.2.1, overlay local y plan de restauración, sin instalar; es recomendación del coordinador, no versión ya construida ni cambio autorizado de host.
+- **Dependencia/autorización:** instalación/actualización del host requiere autorización propia. La inspección estática no verifica el runtime vivo ni resuelve DEF-001. Conservar la distribución ejercitada con bytecode como evidencia, no como paquete de instalación.
 
 ### ENT-003 — Nota 001: disponibilidad de cuentas
 

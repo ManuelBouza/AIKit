@@ -20,13 +20,13 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 - **Siguiente paso acotado:** al retomar REC-001, valorar si este fallo impide ejecutar la revisión; diagnosticarlo solo si constituye un bloqueo, sin ampliar automáticamente el alcance.
 - **Dependencia/autorización:** diagnóstico futuro autorizado por separado; no hay permiso de corregir o rediseñar ahora.
 
-### ENT-002 — Candidato exportado y entorno instalado
+### ENT-002 — Actualización preparada, instalación pendiente
 
-- **Categoría/estado:** exportación limpia y contraste estático completados el 2026-11-04; actualización e instalación pendientes. No se modificó ni recargó el host.
-- **Evidencia:** [contraste del host](contraste-host-2026-11-04.md), `.aikit/ent002-clean-20261104/coordinator-acceptance.json`, manifiesto y comparación. Distribución nueva: 42 archivos de paquete + un catálogo, sin extras ni bytecode; hashes coinciden con el candidato de código aceptado. Caché y fuente estable: 29 idénticos, 13 diferentes y cero ausentes.
-- **Personalización a conservar:** overlay MCP `AIKIT_STATE` y `AIKIT_OPENCODE_REGISTRATION`, con rutas existentes; no se copiaron secretos ni configuración ajena. Versión candidata 0.2.0 frente a instalada 0.2.0+host.1; no asumir precedencia del cliente ni carga del runtime por el nombre del directorio.
-- **Siguiente paso acotado:** preparar actualización versionada 0.2.1, overlay local y plan de restauración, sin instalar; es recomendación del coordinador, no versión ya construida ni cambio autorizado de host.
-- **Dependencia/autorización:** instalación/actualización del host requiere autorización propia. La inspección estática no verifica el runtime vivo ni resuelve DEF-001. Conservar la distribución ejercitada con bytecode como evidencia, no como paquete de instalación.
+- **Categoría/estado:** versión 0.2.1 preparada; portable y candidato local0.2.1+host.1 validados, sin instalar ni recargar. Proyecto, lock y manifiesto fuente coherentes; sin cambios de dependencias o comportamiento.
+- **Evidencia:** [plan de actualización y restauración](actualizacion-0.2.1.md), `.aikit/ent002-update-021/package-acceptance.json`, manifiestos de ambos paquetes y metadata de checks recuperada del backend. Cada distribución:42 archivos + catálogo, cero extras.12 pruebas de exportación aprobadas; lock offline correcto. Solo plugin.json y mcp.json difieren en el candidato local; se preservaron exactamente AIKIT_STATE y AIKIT_OPENCODE_REGISTRATION.
+- **Host observado:** aikit@aikit-local registrado y habilitado0.2.0+host.1; caché/fuente anteriores conservadas. No confundir registro habilitado con runtime cargado en este chat.
+- **Siguiente paso acotado:** instalar candidato0.2.1+host.1 según el plan, con respaldo selectivo previo, fuente nueva, runtime en installedPath y restauración al fallar; después el usuario recarga Codex y se comprueba carga real.
+- **Dependencia/autorización:** requiere autorización propia de instalación; esta preparación no la ejecutó. Sin push ni cambios de otros plugins/cuentas. Prueba real previa limitada al helper; DEF-001 permanece separado.
 
 ### ENT-003 — Nota 001: disponibilidad de cuentas
 

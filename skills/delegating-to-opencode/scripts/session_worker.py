@@ -7,17 +7,20 @@ transportes de pruebas desde código; no existen flags ni variables de bypass.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, cast
 
 import delegate
 from availability_policy import ResultCode, eligible_for_attempt, record_outcome
@@ -53,12 +56,20 @@ from session_backend import (
     worker_interrupt,
 )
 from session_store import (
+    _RECONCILIATION_FINISHES,
+    _RECONCILIATION_REASONS,
     DeliveryObservation,
     DeliveryState,
     ExecutionObservation,
     ProcessIdentity,
+    ReconciliationIdentity,
+    ReconciliationObservation,
+    ReconciliationPhase,
+    ReconciliationReason,
+    ReconciliationSource,
     StoreError,
     TaskRecord,
+    _atomic_replace,
     _managed_directory,
     _require_regular_file,
     _task_directory,
@@ -70,6 +81,27 @@ from session_stream import MAX_ARTIFACT, Capture, EventStream, open_artifact
 
 CommandFactory = Callable[[TaskRecord], list[str]]
 Interrupt = Callable[[TaskRecord], bool | None]
+
+
+def _result_sha256(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _write_result_atomic(
+    attempt_directory: Path, report: dict[str, Any]
+) -> tuple[bytes, str]:
+    payload = json.dumps(report, ensure_ascii=True).encode("utf-8")
+    fd, name = tempfile.mkstemp(prefix=".result-", suffix=".tmp", dir=attempt_directory)
+    temporary = Path(name)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        _atomic_replace(temporary, attempt_directory / "result.json")
+    finally:
+        temporary.unlink(missing_ok=True)
+    return payload, _result_sha256(payload)
 
 
 def _now() -> str:
@@ -333,6 +365,17 @@ def supervise(
             context = resolve_host_context()
         if context is not None:
             verify_provenance(context, record)
+        if (
+            context is not None
+            and record.delivery is not None
+            and record.delivery.state == "completed"
+        ):
+            from bound_execution import recover_local_result
+
+            recovered = recover_local_result(context, record)
+            if recovered.get("status") == "ok":
+                print(json.dumps(recovered, ensure_ascii=True), flush=True)
+                return 0
         _reserve_marker(directory, "supervisor.claim")
     # Validación y probes reutilizan exactamente el núcleo existente.
     binding: ManagedBinding | None = None
@@ -518,6 +561,62 @@ def supervise(
             events.finish()
             reconciled_terminal = False
             reconciliation_result: Any = None
+            reconciliation_invoked = False
+            observation: ReconciliationObservation | None = None
+            barrier_failed = False
+
+            def update_observation(
+                value: ReconciliationObservation, *, final: bool = False
+            ) -> bool:
+                nonlocal record
+                try:
+                    with lock_task(root, task_id):
+                        current = load_task(root, task_id)
+                        if (
+                            current.task_id,
+                            current.attempt_id,
+                            current.server_identity,
+                            current.session,
+                        ) != (
+                            record.task_id,
+                            record.attempt_id,
+                            record.server_identity,
+                            record.session,
+                        ):
+                            return False
+                        if (
+                            observation is None
+                            and current.reconciliation != record.reconciliation
+                        ):
+                            return False
+                        if observation is not None and (
+                            current.reconciliation is None
+                            or current.reconciliation.generation
+                            != observation.generation
+                            or current.reconciliation.lifecycle != "provisional"
+                        ):
+                            return False
+                        current.reconciliation = value
+                        current.delivery = (
+                            record.delivery
+                            if final
+                            else DeliveryObservation(
+                                "pending",
+                                current.delivery.source
+                                if current.delivery
+                                else "client_observation",
+                                _now(),
+                            )
+                        )
+                        if final:
+                            current.execution = record.execution
+                            current.last_event_at = record.last_event_at
+                        save_task(root, current)
+                        record = current
+                    return True
+                except (StoreError, OSError):
+                    return False
+
             delivery: DeliveryState = "partial" if events.summary else "pending"
             if returncode != 0 or events.error:
                 delivery = "failed"
@@ -550,8 +649,40 @@ def supervise(
                 and binding is not None
                 and context is not None
             ):
+                # Reserve the generation before any remote read; host lock is separate.
+                generation = (
+                    (record.reconciliation.generation + 1)
+                    if record.reconciliation
+                    else 1
+                )
+                provisional = ReconciliationObservation(
+                    record.attempt_id,
+                    record.session,
+                    events.assistant_message_id,
+                    _now(),
+                    generation,
+                    "not_attempted",
+                    "unverified",
+                    "provisional",
+                    "local",
+                    None,
+                    None,
+                    "owner_unverified",
+                    None,
+                    None,
+                    (),
+                    None,
+                )
+                if update_observation(provisional):
+                    observation = provisional
+                    try:
+                        record_host_observation(context, record, terminal=False)
+                    except (HostRegistryError, StoreError, OSError):
+                        barrier_failed = True
+                else:
+                    barrier_failed = True
                 owner_budget = end - time.monotonic()
-                if owner_budget > 0:
+                if owner_budget > 0 and not barrier_failed:
                     try:
                         owner = binding.verify_owner(timeout=min(owner_budget, 1.0))
                     except Exception:  # noqa: BLE001
@@ -573,6 +704,7 @@ def supervise(
                         if remaining_budget > 0:
                             reconciliation_timeout = min(remaining_budget, 10.0)
                             try:
+                                reconciliation_invoked = True
                                 reconciliation_result = reconcile_terminal_message(
                                     record,
                                     binding,
@@ -594,6 +726,64 @@ def supervise(
                         ):
                             if limitation not in limitations:
                                 limitations.append(limitation)
+            if observation is not None and not barrier_failed:
+                reason = (
+                    "owner_verification_failed"
+                    if owner_precheck_failed
+                    else "budget_exhausted"
+                )
+                phase = "not_attempted"
+                identity = "unverified"
+                source = "local"
+                accepted = outcome = finish = completed_at = None
+                diagnostic_limitations: tuple[Any, ...] = ()
+                if reconciliation_result is not None:
+                    phase = (
+                        "response_observed"
+                        if reconciliation_result.response_observed
+                        else "local_failure"
+                    )
+                    source = (
+                        "durable_message"
+                        if reconciliation_result.response_observed
+                        else "local"
+                    )
+                    accepted = reconciliation_result.accepted
+                    outcome = reconciliation_result.outcome
+                    reason = reconciliation_result.reason
+                    finish = reconciliation_result.finish
+                    completed_at = reconciliation_result.completed_at
+                    diagnostic_limitations = tuple(
+                        x
+                        for x in reconciliation_result.limitations
+                        if x in _RECONCILIATION_REASONS
+                    )
+                    if accepted:
+                        identity = "verified"
+                elif reconciliation_invoked:
+                    phase, reason = "local_failure", "reconciliation_failed"
+                if reason not in _RECONCILIATION_REASONS:
+                    reason = "reconciliation_failed"
+                if finish not in _RECONCILIATION_FINISHES:
+                    finish = None
+                observation = replace(
+                    observation,
+                    phase=cast(ReconciliationPhase, phase),
+                    identity=cast(ReconciliationIdentity, identity),
+                    source=cast(ReconciliationSource, source),
+                    accepted=accepted,
+                    outcome=outcome,
+                    reason=cast(ReconciliationReason, reason),
+                    finish=finish,
+                    completed_at=completed_at,
+                    limitations=diagnostic_limitations,
+                )
+                if not update_observation(observation):
+                    barrier_failed = True
+            if barrier_failed:
+                provenance_failed = True
+                delivery = "pending"
+                reconciled_terminal = False
             if events.invalid_json:
                 limitations.append("invalid_json")
             if events.session_mismatch:
@@ -650,7 +840,8 @@ def supervise(
                 _now(),
             )
             record.last_event_at = _now()
-            persist()
+            if observation is None and not barrier_failed:
+                persist()
             if provenance_failed and context is not None:
                 delivery = "pending"
                 record.delivery = DeliveryObservation(
@@ -726,15 +917,44 @@ def supervise(
                 "line_truncated": events.line_truncated,
                 "limitations": limitations,
             }
-        try:
-            with open_artifact(directory / "result.json") as destination:
-                destination.write(json.dumps(report, ensure_ascii=True).encode("utf-8"))
-        except (OSError, StoreError):
-            limitations.append("result_save_failed")
-            if context is not None:
-                provenance_failed = True
-        if context is not None:
-            if not provenance_failed and delivery == "completed":
+        if observation is not None and not barrier_failed:
+            try:
+                _, digest = _write_result_atomic(directory, report)
+                if reconciled_terminal:
+                    if provenance_failed or context is None or binding is None:
+                        raise StoreError(
+                            "provenance_unavailable", "Provenance unavailable"
+                        )
+                    record_host_observation(context, record, terminal=True)
+                    try:
+                        final_owner = binding.verify_owner(timeout=1)
+                    except Exception as exc:  # noqa: BLE001
+                        raise ServiceError("owner_mismatch") from exc
+                    if final_owner is None:
+                        raise ServiceError("owner_mismatch")
+                committed = replace(
+                    observation, lifecycle="committed", result_sha256=digest
+                )
+                if not update_observation(committed, final=True):
+                    raise StoreError("record_save_failed", "Commit failed")
+            except (OSError, StoreError, HostRegistryError, ServiceError):
+                delivery = "pending"
+                report["status"], report["delivery"] = "pending", "pending"
+        elif not barrier_failed:
+            try:
+                with open_artifact(directory / "result.json") as destination:
+                    destination.write(
+                        json.dumps(report, ensure_ascii=True).encode("utf-8")
+                    )
+            except (OSError, StoreError):
+                limitations.append("result_save_failed")
+                if context is not None:
+                    provenance_failed = True
+            if (
+                context is not None
+                and not provenance_failed
+                and delivery == "completed"
+            ):
                 try:
                     record_host_observation(context, record, terminal=True)
                 except (HostRegistryError, StoreError, OSError):
@@ -743,21 +963,9 @@ def supervise(
             if provenance_failed:
                 delivery = "pending"
                 report["status"], report["delivery"] = "pending", "pending"
-                if (
-                    reconciled_terminal
-                    and record.delivery is not None
-                    and record.delivery.source == "durable_message"
-                ):
-                    record.delivery = DeliveryObservation(
-                        delivery, prior_delivery_source, _now()
-                    )
-                    persist()
-                    try:
-                        (directory / "result.json").write_bytes(
-                            json.dumps(report, ensure_ascii=True).encode("utf-8")
-                        )
-                    except OSError:
-                        limitations.append("result_save_failed")
+        else:
+            delivery = "pending"
+            report["status"], report["delivery"] = "pending", "pending"
         try:
             print(json.dumps(report, ensure_ascii=True), flush=True)
         except (OSError, ValueError):

@@ -174,3 +174,37 @@ del supervisor sigue pendiente de Unidad 3.
   autoría criptográfica ni propietario online por esos metadatos.
 - Aceptación exclusiva de Unidad 2. Unidades 3–4, REV-003/004 completos y
   Task 6 global siguen pendientes. Sin exportación, instalación o prueba real.
+
+## Unidad 3 — publicación y diagnóstico aceptados, 2026-11-04
+
+Se incorporan barrera provisional, diagnóstico persistido, resultado atómico con
+digest y commit final condicionado a identidad y propietario vigentes.
+
+- OpenCode agotó alternativas adecuadas o encontró límites de presupuesto;
+  Beam no alcanzó progreso suficiente de producción y el coordinador interrumpió
+  su intento. Se conservó la sesión y el trabajo parcial. El fallback nativo
+  autorizado fue GPT-6.1 Terra, high; revisión independiente GPT-6 Astra, high,
+  por los riesgos concretos de publicación, concurrencia y recuperación.
+- Autor nativo `/root/unit3_native_implementation`: suite global 892 aprobadas
+  antes de la última corrección; después, 55 focales, Ruff, formato y mypy.
+  El RED inicial incluía fallos de harness, no solo defectos funcionales.
+- Revisor `/root/unit3_native_review`: 121 focales iniciales. Rechazó el
+  diagnóstico local_failure cuando el precheck agotaba el presupuesto sin
+  invocar el helper. Corregido con regresión RED/GREEN; revalidación propia de
+  35 pruebas y una reproducción adicional, dictamen accepted.
+- Informe inicial conservado en `.aikit/rev003004-unit3-native-review/review.json`;
+  seguimiento `review-corrected.json`, SHA-256
+  `b4e8a009aa9f6b95ba8a73b250ceaa7a6d008283d493c3add35080ea8ebc8673`.
+  Coordinador comprobó metadata, tres hashes y existencia de logs, sin repetir
+  revisión técnica; `.aikit/rev003004-unit3-native/coordinator-acceptance.json`.
+- La prueba Windows conservó DACL. Un lector sin SHARE_DELETE puede impedir
+  reemplazar el resultado: se comprobó conservación de bytes y limpieza del
+  temporal propio. No se promete una transacción entre host y archivos.
+- Permanece un comentario informativo desactualizado en
+  `test_supervisor_reconcile_write_failure_keeps_conservative`, asignado a
+  Unidad 4; no hay bloqueantes de Unidad 3 pendientes.
+- Beam continuó después en la misma sesión, con medium para la investigación
+  de esfuerzo y low para correcciones documentales; no es revisión independiente
+  ni comparación controlada de rendimiento.
+- Unidad 4, REV-003/004 globales y Task 6 siguen pendientes. Sin exportación,
+  instalación, prueba real mínima ni push.

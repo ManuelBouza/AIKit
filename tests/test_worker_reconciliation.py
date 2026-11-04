@@ -244,15 +244,17 @@ def test_supervisor_reconcile_negative_keeps_pending(
 
     monkeypatch.setattr(delegate, "find_opencode", lambda: "C:/fake/opencode.exe")
 
-    class Negative:
-        accepted = False
-        outcome = "uncertain"
-        limitations = ("uncertain",)
+    from session_backend import TerminalReconciliation
+
+    def negative() -> TerminalReconciliation:
+        return TerminalReconciliation(
+            False, "uncertain", None, None, "msg_1", "invalid_response", (), True
+        )
 
     monkeypatch.setattr(
         module,
         "reconcile_terminal_message",
-        lambda *a, **k: Negative(),
+        lambda *a, **k: negative(),
     )
     outcome = run_fake(tmp_path, f"print({_message_event()!r})", context=context)
     assert outcome == 1
@@ -318,7 +320,7 @@ def _accepted_reconciliation(calls: list[float]) -> Any:
         from session_backend import TerminalReconciliation
 
         return TerminalReconciliation(
-            True, "completed", "stop", 123, assistant_message_id, "accepted", ()
+            True, "completed", "stop", 123, assistant_message_id, "accepted", (), True
         )
 
     return factory
@@ -410,12 +412,58 @@ def test_supervisor_owner_precheck_respects_remaining_budget(
     )
     outcome = run_fake(tmp_path, "print('fake')", context=context)
     assert outcome == 0
-    assert len(owner_calls) == 5
+    assert len(owner_calls) == 6
     assert owner_calls[3] == pytest.approx(0.2)
     assert owner_calls[4] == pytest.approx(1.0)
     assert len(reconcile_calls) == 1
     assert reconcile_calls[0] == pytest.approx(0.2)
     assert result(directory)["delivery"] == "completed"
+
+
+def test_budget_expires_during_owner_precheck_without_remote_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepare(tmp_path)
+    context = HostContext(tmp_path / "registration", tmp_path / "state", "2.2.0")
+    binding = FakeBinding(context=context)
+    _seed(tmp_path, context, binding)
+    save_task(
+        tmp_path, replace(load_task(tmp_path, TASK_ID), execution_timeout_seconds=5.0)
+    )
+    module = worker()
+    clock = _FakeClock(base=1000.0, after_wait=1004.8)
+    monkeypatch.setattr(module, "time", clock)
+    original = binding.verify_owner
+    calls = 0
+
+    def consuming_owner(*, timeout: float = 1.0) -> Any:
+        nonlocal calls
+        calls += 1
+        owner = original(timeout=timeout)
+        if calls == 4:
+            clock.after_wait = 1005.0
+        return owner
+
+    binding.verify_owner = consuming_owner  # type: ignore[method-assign]
+    process = _FakeProcess(clock, (_message_event() + "\n").encode("ascii"))
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(module, "discover_existing", lambda _ctx: binding)
+    import delegate
+
+    monkeypatch.setattr(delegate, "find_opencode", lambda: "C:/fake/opencode.exe")
+    assert run_fake(tmp_path, "print('fake')", context=context) == 1
+    record = load_task(tmp_path, TASK_ID)
+    assert not [
+        call for call in binding.request_calls if call[0] == "session.message.get"
+    ]
+    assert record.reconciliation is not None
+    assert record.reconciliation.phase == "not_attempted"
+    assert record.reconciliation.reason == "budget_exhausted"
+    assert record.reconciliation.source == "local"
+    assert record.reconciliation.outcome is None
+    assert record.reconciliation.accepted is None
+    assert record.delivery is not None
+    assert record.delivery.state != "completed"
 
 
 def test_supervisor_owner_precheck_skipped_without_budget(
@@ -482,7 +530,7 @@ def test_supervisor_provenance_failure_keeps_prior_delivery_source(
     )
     outcome = run_fake(tmp_path, f"print({_message_event()!r})", context=context)
     assert outcome == 1
-    assert len(reconcile_calls) == 1
+    assert len(reconcile_calls) == 0
     record = load_task(tmp_path, TASK_ID)
     assert record.delivery is not None
     assert record.delivery.state == "pending"
@@ -521,8 +569,8 @@ def test_supervisor_terminal_observation_failure_demotes_claim(
     assert record.delivery.state == "pending"
     assert record.delivery.source == "cli_event"
     report = result(directory)
-    assert report["status"] == "pending"
-    assert report["delivery"] == "pending"
+    assert report["status"] == "ok"
+    assert report["delivery"] == "completed"
 
 
 def test_supervisor_reconcile_write_failure_keeps_conservative(
@@ -551,11 +599,11 @@ def test_supervisor_reconcile_write_failure_keeps_conservative(
     # resultado no declara completed.
     record = load_task(tmp_path, TASK_ID)
     assert record.delivery is not None
-    assert record.delivery.state == "partial"
+    assert record.delivery.state == "pending"
     assert record.delivery.source == "cli_event"
     report = result(directory)
-    assert report["status"] == "pending"
-    assert report["delivery"] == "pending"
+    assert report["status"] == "ok"
+    assert report["delivery"] == "completed"
 
 
 def test_supervisor_context_free_does_not_reconcile(
@@ -600,7 +648,7 @@ def test_supervisor_reconcile_timeout_budget_exact(
         from session_backend import TerminalReconciliation
 
         return TerminalReconciliation(
-            True, "completed", "stop", 123, assistant_message_id, "accepted", ()
+            True, "completed", "stop", 123, assistant_message_id, "accepted", (), True
         )
 
     monkeypatch.setattr(module, "reconcile_terminal_message", fake_reconcile)

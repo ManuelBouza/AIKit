@@ -1,6 +1,6 @@
 # Registro de pendientes
 
-**Corte:** 2026-11-03. Punto de reanudación documental; los estados describen evidencia disponible, no garantizan que el host instalado coincida con la fuente.
+**Corte:** 2026-11-04. Punto de reanudación documental; los estados describen evidencia disponible, no garantizan que el host instalado coincida con la fuente.
 
 Este inventario acotado consolida el plan de reconciliación, documentación de `docs/`, README, `git log` y los informes de coordinación expresamente citados. No es una auditoría de toda la deuda histórica. Las notas viven en `notas/` del checkout principal, distinto de este worktree; se citan por número y nombre, sin copiar su contenido ni crear enlaces locales rotos.
 
@@ -8,12 +8,12 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 
 ### REC-001 — Task 6: cierre global de reconciliación
 
-- **Categoría/estado:** entrega incompleta; revisión global ejecutada, cierre no aceptado (`needs_corrections`). REV-001 fue aceptado independientemente; REV-002 tiene disposición aprobada documentalmente, sin cambio de código; REV-003/004 siguen abiertos hasta implementación/revisión. Unidades 1 y 2 aceptadas independientemente; unidades 3–4 no iniciadas. La prueba real mínima y la instalación siguen pendientes.
+- **Categoría/estado:** entrega incompleta; revisión global ejecutada, cierre no aceptado (`needs_corrections`). REV-001 fue aceptado independientemente; REV-002 tiene disposición aprobada documentalmente, sin cambio de código; REV-003/004 siguen abiertos hasta implementación/revisión. Unidades 1 y 2 aceptadas independientemente; Unidad 3 aceptada independientemente tras corregir el diagnóstico presupuestario; Unidad 4 no iniciada. La prueba real mínima y la instalación siguen pendientes.
 - **Evidencia:** [plan de reconciliación](superpowers/plans/2026-11-01-reconciliacion-terminal-opencode.md), `.aikit/mcp-reconciliation-task5/report.json` y `.aikit/mcp-reconciliation-task5/coordinator-acceptance.json`. Cierre Task 5: `ed00065`; commits previos de la cadena: `912eced`, `22c8b1f`, `a3aec53`, `b9e645b`. Task 5 registró 849 pruebas aprobadas tras una ejecución con 848 aprobadas y un fallo `PermissionError`; Ruff, mypy y exportación de 42 archivos pasaron. El reintento verde no diagnosticó la causa del fallo inicial.
 - **Revisión global:** [dictamen y triage REV-001–REV-004](revision-reconciliacion-2026-11-02.md), sobre `9a00248`, sesión independiente de OpenCode. 155 pruebas focalizadas pasaron; REV-001 se reprodujo y corrigió separadamente (`.aikit/mcp-reconciliation-fix1/report.json`). El triage no demuestra la causa de DEF-001 ni acepta el cierre.
 - **Seguimiento REV-001:** revisión de cuatro archivos del snapshot `1d816fe` aceptada, sin hallazgos nuevos, por la sesión independiente original; 72 pruebas y reproducción adicional del check final. Informe y límites en el dictamen enlazado. El check final solo tiene reproducción temporal en este seguimiento, no una nueva regresión versionada.
 - **Diseño y plan:** [Diseño aprobado](superpowers/specs/2026-11-03-evidencia-reconciliacion-design.md) y [plan de implementación](superpowers/plans/2026-11-03-evidencia-reconciliacion.md). Unidades 1 y 2 aceptadas; el bloqueo por fuente de entrega detectado en revisión se corrigió con regresión. Evidencia en `.aikit/rev003004-unit2/coordinator-acceptance.json`. No equivale al cierre de Task 6.
-- **Siguiente paso acotado:** ejecutar Unidad 3, escritura desde el supervisor, con autorización propia. REV-002 mantiene timeout por proceso. La aceptación de Unidad 1 no acepta el conjunto ni habilita prueba real o instalación.
+- **Siguiente paso acotado:** Unidad 4: validación global, documentación y revisión de entrega. Evidencia de aceptación exclusiva de Unidad 3: `.aikit/rev003004-unit3-native/coordinator-acceptance.json`; 892 pruebas globales anteriores a la última corrección, 55 focales del autor y 35 + 1 del revisor después. Permanece un comentario informativo de test, asignado a la documentación de Unidad 4. REV-002 mantiene timeout por proceso. No habilita prueba real ni instalación.
 - **Dependencia/autorización:** coordinar la reanudación de Task 6. La prueba real requiere autorización específica. No instalar ni publicar como parte de este pendiente.
 
 ### DEF-001 — Fallo de arranque del supervisor
@@ -49,7 +49,7 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 | IDEA-007 | Idea; nota 007 pendiente de debate. | `notas/007-separar-delegacion-de-aikit.md`; elegirla para debate explícito. | No autoriza implementación. |
 | ENT-004 | Entrega incompleta de nota 008: espera pasiva implementada en fuentes según la nota; empaquetado/instalación y verificación en entorno nuevo pendientes. | `notas/008-espera-pasiva-opencode.md`; relacionar con ENT-002 y ENT-003 sin duplicar trabajo. | Instalación requiere autorización propia. |
 | IDEA-009 | Idea en debate; uso local del método no equivale a activación global. | `notas/009-metodo-director-de-ideas.md`; retomar solo si se elige debatir su aplicación global. | No es requisito automático para cada tarea. |
-| IDEA-010 | Idea/debate incompleto, aparcado tras requisitos parciales. | [Requisitos de selección](superpowers/specs/2026-11-02-seleccion-modelo-esfuerzo-requisitos.md); el algoritmo, suficiencia, representación, desempate, excepción OpenAI y pruebas siguen sin completar. | No priorizar antes de REC-001 ni interpretar la excepción redactada como permiso global/soporte. |
+| IDEA-010 | Idea/debate incompleto, aparcado tras requisitos parciales; investigación de esfuerzo solicitada por el usuario, sin política implementada. | [Requisitos de selección](superpowers/specs/2026-11-02-seleccion-modelo-esfuerzo-requisitos.md) e [investigación sobre esfuerzo](investigaciones/2026-11-04-esfuerzo-razonamiento.md); el algoritmo, suficiencia, representación, desempate, excepción OpenAI y pruebas siguen sin completar. Beam continuó en su misma sesión con `medium` para documentar y `low` para corregir texto; no es un experimento controlado de programación ni demuestra ahorro. | No priorizar su implementación antes de REC-001 ni interpretar la excepción redactada como permiso global/soporte. |
 
 ## Protocolo mínimo de reanudación
 

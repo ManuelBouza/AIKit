@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -14,7 +15,7 @@ from tests.conftest import Harness
 
 
 def test_policy_only_contains_preferences() -> None:
-    assert delegate.load_policy() == {"prefer_free": True}
+    assert delegate.load_policy() == {"prefer_free": False}
 
 
 def test_policy_rejects_invalid_shape(tmp_path: Path) -> None:
@@ -123,3 +124,22 @@ def test_process_timeout_kills_only_own_tree(
     kill.assert_called_once_with(process)
     assert popen.call_args.kwargs["shell"] is False
     assert popen.call_args.kwargs["cwd"] == str(tmp_path)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="flags especificas de Windows")
+def test_run_process_hides_console_without_losing_process_group(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class FakeProcess:
+        pid = 4321
+        returncode = 0
+
+        def communicate(self, timeout: float | None = None) -> tuple[str, str]:
+            return "", ""
+
+    popen = Mock(return_value=FakeProcess())
+    monkeypatch.setattr(subprocess, "Popen", popen)
+    delegate.run_process(["opencode"], cwd=tmp_path, timeout=1)
+    flags = popen.call_args.kwargs["creationflags"]
+    assert flags & subprocess.CREATE_NEW_PROCESS_GROUP
+    assert flags & subprocess.CREATE_NO_WINDOW

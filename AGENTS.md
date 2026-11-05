@@ -48,9 +48,12 @@ No intercepta `spawn_agent` ni MCP. `run` exige modelo y motivo explícitos.
 `run` comprueba en el destino, global o proyecto, `provider.use openai deny` y
 `tool.use subagent:* deny`. Sin certificado rechaza la inferencia; `doctor` no
 lo exige. Consulta `docs/correcciones-revision-funcional.md` para sus límites.
-Escoge modelo y esfuerzo según la tarea: gratuitos suficientes, después Go y
-otras alternativas conectadas. Bloquea solo el proveedor directo `openai`; GPT de
-otros proveedores siguen permitidos. Usa variantes publicadas o el predeterminado.
+Escoge modelo y esfuerzo según la tarea. Capacidad primero: Go de pago ->
+otros de pago conectados -> todos los gratuitos conectados (incluido GoFree) ->
+Codex nativo si no hay opción adecuada/disponible. Lee primero la tabla local
+(`availability status --cwd <proyecto> --json`); no consultes catálogo/cuota por
+rutina. Bloquea solo el proveedor directo `openai`; GPT de otros proveedores
+siguen permitidos. Usa variantes publicadas o el predeterminado.
 Antes de cada tarea o reintento en OpenCode, anuncia su objetivo, modelo,
 esfuerzo y condición gratuita o de pago; indica cuando la tarifa sea desconocida.
 
@@ -68,9 +71,61 @@ Codex nativo. Revisa cambios parciales antes de reintentar. No eludas permisos,
 autenticación o privacidad.
 
 OpenCode es ejecutor habitual del trabajo externalizable autorizado; Codex
-conserva comprensión, roles y revisión final. Contrato de carga en
+conserva comprensión, roles y comprobación de aceptación de metadata, sin repetir
+la revisión técnica. Contrato de carga en
 `skills/delegating-to-opencode/references/carga-opencode.md`; evidencia en
 `docs/balance-carga.md`.
+
+Espera por finalización (coordinación): preferir espera acotada por proceso/tarea
+propia con límite máximo y retorno anticipado; notificación asíncrona solo si está
+publicada y en turno activo. La salida del cliente es solo señal; `pending`/
+`uncertain` nunca autoriza reintento ni duplicar inferencia. Si el cliente vence
+pero el backend sigue vivo, conservar IDs/contexto y usar reconciliador/estado
+determinista propio que despierte solo ante cambio o guardia razonable (puede
+consultar la API sin LLM). Sin SSE global, hooks ni servidores aquí, ni sleep
+fijo de 300 s ni monitorización. Duraciones por intento real en caché, no vida de
+sesión reutilizada; grupos comparables y límites honestos. Capacidades portables
+variables; instalación pendiente.
+
+## Orquestación Codex/OpenCode
+
+Codex conserva conversación, coordinación, decisiones del usuario, selección de
+modelo y validación de metadata de aceptación. Cuando hay capacidad adecuada,
+OpenCode ejecuta diseño, arquitectura, contratos, planes, exploración factual,
+diagnóstico, implementación, pruebas, correcciones, documentación, revisión
+independiente y verificación. Revisor en sesión nueva, sin redelegar ni modificar
+la entrega; devuelve decisiones de diseño al coordinador. Codex no repite la
+revisión técnica independiente.
+
+Capacidad primero: Go de pago -> otros de pago adecuados -> todos los gratuitos
+conectados (incluido GoFree) -> continuar en Codex nativo si no hay opción
+adecuada/disponible. No degradar para evitar Codex ni agotar Free inadecuados.
+Si falta modelo adecuado o disponibilidad adecuada, retornar automáticamente por
+función, anunciando y registrando motivo, sin nueva aprobación; mantener revisión
+independiente. Solo bloquea proveedor directo `openai`; GPT de otros proveedores
+sigue permitido. Primero tabla local; no sondeo global por cada elección.
+
+Formato `review.json`: `role: reviewer`, `session`, `snapshot`,
+`verdict: accepted|needs_corrections`, `checks[]` (`id`, `command`, `cwd`,
+`exit_code`, `summary`), `findings[]` (`severity: blocker|warning|info`,
+`description`), `limitations[]`. La metadata no prueba autoría ni calidad;
+`session` esperada proviene del backend real y `snapshot` lo fija el
+coordinador. `scripts/review_evidence.py` valida el contrato, snapshot, sesión y
+checks declarados; no ejecuta los comandos ni certifica su autoría. MCP preferido
+si está publicado y cabe en 60 s; CLI para tareas largas; no reintentar si hay
+intento vivo. No interceptar nativos ni Superpowers ni crear nueva skill.
+Evidencia histórica permanece histórica.
+
+Si un subagente nativo usa la CLI, devuelve el JSON de stdout directamente al
+coordinador; solo este persiste en una ruta permitida. Si falla el guardado,
+recupera la salida y registra el problema: no repitas una inferencia terminada.
+Reutiliza permisos conocidos solo para el mismo entorno y alcance; si se sabe que
+el sandbox bloquea la CLI, solicita `exec_command` con `require_escalated` desde
+el primer intento y justificación acotada. Si el entorno cambió o se desconoce,
+haz primero un preflight sin inferencia. No escales globalmente ni para eludir
+controles; ante denegación informa código y motivo, sin reintento a ciegas. No
+pruebes permisos con modelos ni elijas otra vía CLI por un caso antiguo si MCP
+está disponible.
 
 ## Comandos
 

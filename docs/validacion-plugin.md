@@ -99,3 +99,44 @@ La convivencia demostrada es de instalación y descubrimiento; no equivale a una
 evaluación completa de todas las combinaciones de workflows de Superpowers.
 No se repitió inferencia en el MCP al empaquetar: el núcleo ya tenía una prueba
 real previa con Go. Cancelación activa y publicación pública siguen fuera del alcance.
+
+## Validación de preparación 0.2.0
+
+Versión preparada, no instalada: `0.2.0`. El cliente debe recargarse tras la
+instalación para renovar el catálogo de herramientas.
+
+- Fuente exportada con `scripts/build_plugin.py` a
+  `.aikit/plugin-update-020/distribution-v020-final` (42 archivos de la lista
+  permitida + 1 catálogo = 43 en la distribución).
+- Checks congelados: `uv sync --locked`, `uv run pytest` (778 passed),
+  `uv run ruff check .`, `uv run ruff format --check .`,
+  `uv run mypy` (60 archivos, sin problemas).
+- Validación aislada del paquete exportado: imports de CLI y MCP correctos;
+  `doctor` devuelve `host_context_unavailable` sin inferencia; flags ocultos
+  verificados en el módulo exportado real (`CREATE_NO_WINDOW` y, donde aplica,
+  `CREATE_NEW_PROCESS_GROUP`/`DETACHED_PROCESS`).
+- La causa de la captura de consola del usuario no está correlacionada; no se
+  puede afirmar que el flash global esté resuelto. La versión instalada sigue
+  siendo `0.1.5` con flags antiguos conocidos.
+- No hay notificación universal en chats inactivos; tiempos vacíos de caché son
+  aceptables. La automatización diaria 001 sigue pendiente.
+- La tarea 4 de enlace no se declara E2E real sin ejecución del runtime
+  empaquetado; si requiere inferencia en vivo, queda diferida al coordinador.
+- No se realizaron sondas de modelo/proveedor ni mutaciones de perfil/config.
+
+## Cierre de corrección de consola Windows (0.2.0 preparada, no instalada)
+
+Fuente actual: commit `ca4d197` más cambio documental sin commit. El supervisor de
+Windows ya no usa `DETACHED_PROCESS`; conserva `CREATE_NO_WINDOW`. Se verificó
+supervivencia tras salida del padre en los dos casos existentes
+(`test_parent_can_exit_while_supervisor_publishes` y
+`test_detached_worker_survives_parent_disconnect_and_wait_timeout`), aceptados por
+revisor independiente. Se añadió prueba unitaria RED/GREEN sobre los flags; pasaron
+58 pruebas relacionadas, Ruff lint/formato y mypy. El usuario observó ausencia de
+consola en dos ejecuciones, incluida la del revisor. No se ejecutó prueba nativa
+posterior con `GetConsoleWindow`; por tanto no hay garantía universal de entorno.
+La versión instalada sigue siendo `0.1.5`; el candidato `0.2.0` no está instalado
+y su versión no cambió porque solo se preparó, no se publicó. El recuento completo
+de 778 pruebas es histórico de la preparación anterior, no nueva ejecución completa.
+La distribución anterior `.aikit/plugin-update-020/distribution-v020-final` es
+pre-fix y no representa el candidato actual.

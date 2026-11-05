@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -82,6 +84,40 @@ def test_portable_entrypoint_resolves_bundled_mcp(
     assert set(server) <= {"type", "command", "args", "env", "cwd"}
     script = package / server["args"][-1].removeprefix("${PLUGIN_ROOT}/")
     assert script.is_file()
+
+
+def test_exported_public_entrypoints_import(
+    builder: ModuleType, tmp_path: Path
+) -> None:
+    package = builder.export_plugin(ROOT, tmp_path / "salida")
+    scripts = package / "skills/delegating-to-opencode/scripts"
+    for name in (
+        "bound_execution.py",
+        "service_identity.py",
+        "service_connection.py",
+        "session_store.py",
+        "session_backend.py",
+        "session_worker.py",
+        "session_stream.py",
+        "host_registry.py",
+    ):
+        assert (scripts / name).is_file()
+    code = (
+        "import sys;"
+        f"sys.path.insert(0, {str(scripts)!r});"
+        "import delegate, bound_execution, mcp_server, session_worker;"
+        "print('ok')"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+        cwd=str(package),
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "ok"
 
 
 def test_existing_output_is_preserved(builder: ModuleType, tmp_path: Path) -> None:
@@ -168,3 +204,49 @@ def test_symlink_source_is_rejected(builder: ModuleType, tmp_path: Path) -> None
     with pytest.raises(ValueError, match="enlace"):
         builder.export_plugin(source, output)
     assert not output.exists()
+
+
+def test_exported_cli_main_has_no_host_or_model_side_effects(
+    builder: ModuleType, tmp_path: Path
+) -> None:
+    import os
+
+    package = builder.export_plugin(ROOT, tmp_path / "clean-export")
+    scripts = package / "skills/delegating-to-opencode/scripts"
+    env = os.environ.copy()
+    for name in (
+        "AIKIT_OPENCODE_REGISTRATION",
+        "AIKIT_STATE",
+        "AIKIT_EXPECTED_OPENCODE_VERSION",
+    ):
+        env.pop(name, None)
+    env["PYTHONPATH"] = str(scripts)
+    env["PATH"] = ""
+    task = tmp_path / "task.txt"
+    task.write_text("no inference")
+    for args in (
+        ["doctor", "--cwd", str(package)],
+        [
+            "run",
+            "--cwd",
+            str(package),
+            "--task-file",
+            str(task),
+            "--model",
+            "fake/provider",
+            "--reason",
+            "test",
+        ],
+    ):
+        completed = subprocess.run(
+            [sys.executable, str(scripts / "delegate.py"), *args],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=package,
+            timeout=10,
+        )
+        assert completed.returncode == 1, completed.stderr
+        payload = json.loads(completed.stdout)
+        assert payload["code"] == "host_context_unavailable"
+    assert not (package / ".aikit").exists()

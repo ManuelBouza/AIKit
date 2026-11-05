@@ -23,6 +23,7 @@ def test_command_preserves_order_spaces_and_variant(harness: Harness) -> None:
     assert result["status"] == "ok"
     assert transport.run_calls == [transport.calls[-1]]
     call = transport.run_calls[0]
+    assert harness.binding is not None
     assert call.argv == [
         "C:/fake/opencode.exe",
         "run",
@@ -30,7 +31,8 @@ def test_command_preserves_order_spaces_and_variant(harness: Harness) -> None:
         DEFAULT_MODEL + "#high",
         "--agent",
         "build",
-        "--standalone",
+        "--server",
+        harness.binding.registration.url,
         "--format",
         "json",
         "--",
@@ -38,6 +40,7 @@ def test_command_preserves_order_spaces_and_variant(harness: Harness) -> None:
     ]
     assert call.cwd == str(harness.project.resolve())
     assert call.timeout == 30
+    assert "--standalone" not in call.argv
     for flag in ("--variant", "--effort", "--auto", "--allow-paid"):
         assert flag not in call.argv
 
@@ -78,22 +81,39 @@ def test_error_event_message_wins_over_exit_zero(harness: Harness) -> None:
     harness.fake(run_stdout=text_event("parcial") + "\n" + error_event("sin cuota"))
     result = harness.run()
     assert result["code"] == "opencode_event_error"
-    assert "sin cuota" in result["message"]
+    assert "sin cuota" not in result["message"]
+    assert result["uncertain"] is True
 
 
 @pytest.mark.parametrize(
-    ("stdout", "timeout_error", "fail_run", "code"),
+    ("stdout", "timeout_error", "fail_run", "expected"),
     [
-        pytest.param("", False, False, "empty_output", id="sin-texto"),
-        pytest.param(None, True, False, "timeout", id="timeout"),
-        pytest.param(None, False, True, "opencode_failed", id="inicio-fallido"),
+        pytest.param("", False, False, {"status": "pending"}, id="sin-texto"),
+        pytest.param(
+            None,
+            True,
+            False,
+            {"status": "pending", "limitations": ["deadline_exceeded"]},
+            id="timeout",
+        ),
+        pytest.param(
+            None, False, True, {"code": "opencode_failed"}, id="inicio-fallido"
+        ),
     ],
 )
 def test_execution_errors(
-    harness: Harness, stdout: str | None, timeout_error: bool, fail_run: bool, code: str
+    harness: Harness,
+    stdout: str | None,
+    timeout_error: bool,
+    fail_run: bool,
+    expected: dict[str, object],
 ) -> None:
     harness.fake(run_stdout=stdout, timeout_error=timeout_error, fail_run=fail_run)
-    assert harness.run()["code"] == code
+    result = harness.run()
+    for key, value in expected.items():
+        assert result[key] == value
+    if "code" not in expected:
+        assert result["uncertain"] is True
 
 
 def test_nonzero_exit_hides_transport_output(harness: Harness) -> None:
@@ -109,19 +129,20 @@ def test_nonzero_exit_hides_transport_output(harness: Harness) -> None:
         assert secret not in result["message"]
 
 
-def test_version_failure_hides_stderr(harness: Harness) -> None:
-    harness.fake(version_returncode=3, version_stderr="TOKEN=secreto-version")
+def test_unsupported_catalog_contract_hides_transport_details(harness: Harness) -> None:
+    harness.fake(
+        version="1.0.0", catalog_returncode=1, version_stderr="TOKEN=secreto-version"
+    )
     result = harness.run()
-    assert result["code"] == "version_check_failed"
-    assert "3" in result["message"]
+    assert result["code"] == "catalog_capability_unavailable"
+    assert "requerido" in result["message"]
     assert "secreto-version" not in result["message"]
 
 
 def test_catalog_failure_hides_stderr(harness: Harness) -> None:
     harness.fake(catalog_returncode=5, catalog_stderr="TOKEN=secreto-catalogo")
     result = harness.run()
-    assert result["code"] == "catalog_unavailable"
-    assert "5" in result["message"]
+    assert result["code"] == "catalog_capability_unavailable"
     assert "secreto-catalogo" not in result["message"]
 
 
@@ -155,7 +176,7 @@ def test_success_reports_session_selection_and_summary(harness: Harness) -> None
         + finish_event(0, session="ses_abc")
     )
     result = harness.run(reason="delegación gratuita suficiente")
-    assert result == {
+    expected: dict[str, object] = {
         "status": "ok",
         "session": "ses_abc",
         "model": DEFAULT_MODEL,
@@ -165,4 +186,10 @@ def test_success_reports_session_selection_and_summary(harness: Harness) -> None
         "agent": "build",
         "summary": "informe final",
         "cost": 0,
+        "delivery": "completed",
+        "execution": "unknown",
+        "limitations": [],
     }
+    assert {key: result[key] for key in expected} == expected
+    assert result["task_id"]
+    assert result["attempt_id"]

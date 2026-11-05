@@ -22,11 +22,11 @@ implementación + pruebas/lint/tipos + correcciones/documentación. Antes de
 delegar: exploración mínima local para seguridad, skills y alcance; no
 inspección exhaustiva del coordinador. Sin ejecución externalizable no se
 llama al backend. `run` inicia inferencia; `doctor` solo
-consulta versión y catálogo. Los defectos vuelven al worker (misma sesión solo
-si el backend lo permite; hoy no ofrece reanudación, por lo que se crea tarea
-acotada nueva). No se parchea en Codex por ser "dos líneas". Codex conserva
-comprensión, decisiones del usuario, roles nativos/Superpowers, revisión
-independiente del diff y verificación final. No delegar deliberaciones ni
+consulta versión y catálogo. Los defectos vuelven al worker; la reanudación se usa solo si el backend o la
+CLI oficial expuesta por el adaptador la soportan. No prometas reanudación
+genérica ni asumas soporte de la fuente. Codex conserva
+comprensión, decisiones del usuario y roles nativos/Superpowers; comprueba la
+aceptación de metadata sin repetir la revisión técnica independiente. No delegar deliberaciones ni
 solicitudes solo de conversación.
 
 ## Ruta y requisitos
@@ -82,18 +82,32 @@ los casos.
 
 Antes de ejecutar:
 
-1. Clasifica la tarea: mecánica, integración o compleja.
-2. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
-   variantes con `doctor`.
-3. Entre opciones suficientes para la tarea y su esfuerzo, prioriza gratuitos de
-   OpenCode (también los servidos por Go), después OpenCode Go, después otras
-   alternativas adecuadas de proveedores conectados y, si ninguna sirve,
-   continúa con Codex nativo. Otros proveedores
-   conectados siguen permitidos si aportan una alternativa adecuada. No se
-   confirma cada uso de Go o pago dentro del alcance autorizado.
-4. Elige una variante acorde con la complejidad solo si su ID aparece en
+1. Lee primero la tabla local con `availability status --cwd <proyecto> --json`
+   (`HostContext.aikit_state`), sin consultas externas. Si falta, está ilegible
+   o el contexto no está acreditado, puede hacerse un único refresh coalescente;
+   no sondees por rutina.
+2. Clasifica la tarea: mecánica, integración o compleja.
+3. Consulta capacidades, herramientas, modalidades, límites, tarifas por nivel y
+   variantes con `doctor` solo cuando la tabla no baste para la elección.
+4. Entre opciones suficientes para la tarea y su esfuerzo, prioriza Go de pago,
+   después otros proveedores de pago conectados, después todos los gratuitos
+   conectados (incluidos los servidos por Go) y, si ninguna sirve, continúa con
+   Codex nativo. No degrades la tarea para evitar Codex ni agotes Free
+   inadecuados. Otros proveedores conectados siguen permitidos si aportan una
+   alternativa adecuada.
+5. Elige una variante acorde con la complejidad solo si su ID aparece en
    metadatos; sin variante, registra el ajuste predeterminado.
-5. Registra en `--reason` por qué modelo y variante bastan.
+6. Registra en `--reason` por qué modelo y variante bastan.
+
+Los hechos públicos se incorporan con `availability import --cwd <proyecto> --file <artefacto.json>`; ver `references/terminos-publicos.md`.
+
+Usa `availability refresh --cwd <proyecto> --json` solo como actualización
+explícita: servicio registrado ya encendido, sin arrancarlo ni inferir. Los
+disparadores son inicialización ausente/ilegible, contexto no acreditado, petición
+manual, rechazo real confirmado, cambio notificado/config/version detectado o
+verificación de recuperación. No hay TTL por ejecución ni programación diaria
+activada. `ok` con `errors` no equivale a catálogo/cuota válidos; una fuente
+fallida conserva su observación válida anterior y el intento fallido separado.
 
 Antes de cada tarea o reintento con inferencia, avisa al usuario qué se delega,
 el modelo/proveedor elegido, el esfuerzo (variante publicada o predeterminado)
@@ -144,9 +158,12 @@ y límites en `docs/correcciones-revision-funcional.md`.
 
 ## Orquestación y verificación
 
-Codex conserva orquestación y verificación, incluidas comprobaciones de shell.
-Capacidad primero: Free suficiente -> Go -> otras alternativas adecuadas ->
-nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
+Codex conserva coordinación, decisiones del usuario, selección de modelo y
+validación de metadata; cuando hay capacidad adecuada, OpenCode ejecuta diseño,
+arquitectura, contratos, planes, revisión técnica y verificación, incluidas
+comprobaciones de shell, con revisor independiente en sesión nueva.
+Capacidad primero: Go de pago -> otros de pago adecuados -> todos los gratuitos
+conectados (incluido GoFree) -> nativo si no hay opción adecuada/disponible. Un fallo aislado no agota
 opciones. Sin bucles ilimitados: fija presupuesto razonado de intentos/tiempo
 por tarea, revisa parciales y, si se agota, reevalúa adecuación y justifica
 cualquier retorno nativo. Si OpenCode agota el uso gratuito, `free_limit_reached`
@@ -160,6 +177,10 @@ se puedan externalizar. No uses `openai/*` ni eludas controles de permisos,
 autenticación o privacidad. El helper no cambia cuentas, reintenta ni lanza
 Codex. Informa los bloqueos reales sin presentar trabajo no ejecutado como
 completado.
+
+Para conservar resultados de CLI desde un subagente nativo y no repetir una
+inferencia tras un fallo al guardar, sigue la regla de stdout y permisos en
+[references/carga-opencode.md](references/carga-opencode.md).
 
 ## Instalación
 
@@ -179,6 +200,38 @@ con archivos, pruebas comando/resultado y riesgos pendientes. No copies la
 conversación ni vuelques logs extensos. Consulta el catálogo al seleccionar y
 reutilízalo en el mismo contexto mientras no haya señal de cambio; no es caché
 garantizada ni cuota.
+
+## Espera por finalización
+
+Prefiere la espera acotada por finalización del anfitrión sobre un proceso o
+tarea propia, con límite máximo y retorno anticipado al estar listo. Si existe
+una capacidad de notificación asíncrona realmente publicada, úsala solo para
+señales significativas de finalización, error, permiso o estado incierto durante
+un turno de espera activo; conserva multitarea e interrupciones del usuario. No
+duermas un fijo de 300 s tras lanzar, no uses modelo ni subagente de
+monitorización y no inventes nombres de herramientas ni prometas push universal a
+chat inactivo.
+
+La salida del cliente o proceso es solo señal: valida `delivery`, `attempt_id`,
+`session_id`, identidad del servidor/propietario y entrega terminal antes de
+declarar éxito. `pending`/`uncertain` nunca autoriza reintento ni duplicar
+inferencia. Si la espera del cliente vence pero el backend sigue vivo, conserva
+IDs y contexto y usa un reconciliador/estado determinista propio, que despierte
+al coordinador solo ante cambio o guardia razonable; ese fallback puede consultar
+la API sin activaciones LLM. No te suscribas a SSE global ni añadas hooks ni
+servidores aquí.
+
+Las duraciones provienen del comando `timing` sobre muestras reales por intento
+en caché; nunca la vida completa de una sesión reutilizada como velocidad del
+modelo. Separa completed/error/censored/medición; mediana, dispersión y número de
+muestras solo para grupos comparables por proveedor/modelo/esfuerzo/rol/contexto.
+Ninguna estimación retrasa una señal real de finalización ni cancela un intento
+vivo. La notificación de chat actual está probada, pero las capacidades portables
+varían y la instalación sigue pendiente. Si el repositorio objetivo se edita,
+ejecuta el observador desde un runtime estable aprobado/instalado, no importando
+código mutable del destino. No prometas control de procesos no soportado. La
+evidencia real existente está en `.aikit/opencode-wait-study/tool-wait-probes.json`;
+declara sus límites honestamente.
 
 ## Límites
 

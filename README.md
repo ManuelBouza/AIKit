@@ -15,8 +15,9 @@ criterios de evolución, reutilización y compatibilidad están en
 
 Objetivo: documentar y validar preferencias de Codex para delegar trabajo
 externalizable a OpenCode como ejecutor habitual. Codex conserva decisiones,
-revisores y verificación final; OpenCode ejecuta el trabajo y devuelve un
-resultado breve. El adaptador no sustituye una revisión independiente.
+revisores y comprobación de aceptación de metadata; OpenCode ejecuta el trabajo
+y devuelve un resultado breve. El adaptador no sustituye la revisión técnica
+independiente, que Codex no repite.
 
 Las ideas para debatir e implementar más adelante se guardan en el
 [espacio de notas](notas/IDEAS.md), con un índice y su estado.
@@ -42,11 +43,15 @@ detalle está en [MCP local de AIKit](docs/mcp-opencode.md).
 
 El trabajo externalizable se envía primero a OpenCode: exploración técnica,
 diagnóstico, implementación+tests+correcciones. Codex conserva decisiones,
-revisores y verificación final. Excepciones a nativo solo por: datos no
+revisores y verificación de la aceptación de metadata, sin repetir la revisión
+técnica independiente. Si un subagente nativo usa la CLI, devuelve su JSON por
+stdout al coordinador; este es el único que persiste. Un fallo al guardar no
+justifica repetir una inferencia ya terminada. Excepciones a nativo solo por: datos no
 externalizables, permiso, falta de opciones adecuadas/disponibles. No se
 parchea en Codex por comodidad. Ver contrato en
 `skills/delegating-to-opencode/references/carga-opencode.md` y
-`docs/balance-carga.md`. El `opencode.json` del repositorio bloquea nuevas
+`docs/balance-carga.md`. La orquestación Codex/OpenCode está en
+[docs/orquestacion-opencode.md](docs/orquestacion-opencode.md). El `opencode.json` del repositorio bloquea nuevas
 delegaciones dentro de OpenCode con `tool.use subagent:*` y el proveedor directo
 `openai` con `provider.use`; no limita otros proveedores ni subagentes
 nativos.
@@ -63,6 +68,7 @@ Comando real:
 
 ```powershell
 python scripts/install_go.py --codex-home C:\ruta\.codex --template config/codex/go.md
+python scripts/install_routing.py --codex-home C:\ruta\.codex --template config/codex/routing.md
 ```
 
 ## Requisitos
@@ -211,6 +217,47 @@ vivo.
 Detalle, límites y resultados observados:
 [MCP local de AIKit](docs/mcp-opencode.md).
 
+## Reconciliación de entrega al terminar la CLI
+
+El estado de las entregas abiertas y su siguiente paso está en el
+[registro de pendientes](docs/pendientes.md).
+
+En el código fuente actual, cuando el proceso CLI ya terminó sin un evento
+terminal `step_finish`/`step-finish` con `reason=stop`, el supervisor puede hacer
+una sola lectura read-only del mensaje asistente identificado por el `messageID`
+capturado durante ese intento. Solo lo intenta si no hubo error, la sesión y el
+propietario siguen verificados y queda presupuesto: el timeout del helper es el
+mínimo entre el tiempo restante del worker y 10 segundos; la comprobación previa
+del propietario también queda acotada por el presupuesto (máximo 1 segundo).
+No consulta el último mensaje ni hace polling.
+
+La reconciliación acredita la entrega únicamente con identidad coherente,
+`finish=stop`, sin error del mensaje y con `completed_at` numérico y finito.
+`length` es parcial; `error`, `content-filter`, `interrupted` y `cancel` son
+fallidos; `tool-calls`, `unknown`, datos incompletos, ID ausente o discrepancias
+conservan un resultado no satisfactorio o incierto. Código de salida cero, texto,
+estado `idle` o la procedencia `durable_message` por sí solos no son éxito.
+El supervisor comprueba el ID de asistente capturado y la procedencia de intento,
+sesión y propietario; no pasa un `prompt_message_id`, así que no se afirma que
+valide el enlace padre-hijo del mensaje.
+
+Se persisten el estado y la fuente de entrega (`DeliveryObservation.source`,
+`durable_message` al aceptar), además de la observación de host existente. El
+resultado JSON local mantiene su formato plano (`delivery` es una cadena), no
+añade un objeto `delivery` ni conserva `finish`, `completed_at`, el ID del
+mensaje o el `reason` del helper: esos metadatos viven solo en memoria durante la
+reconciliación. La entrega reconciliada no acredita por sí misma la ejecución del
+servidor; `execution` puede seguir en `unknown` y `server_state_unknown` se
+conserva cuando la ejecución no queda acreditada.
+
+La recuperación posterior es local e idempotente: reutiliza el resultado y la
+procedencia guardados, sin consultar el backend ni iniciar otra inferencia. Si el
+registro vigente fue demovido pero un `result.json` antiguo aún dice
+`completed`, se rechaza como `result_mismatch`. Los registros heredados que ya
+tenían una entrega `completed` válida siguen siendo compatibles. Esta descripción
+corresponde al código fuente y al paquete candidato; no afirma que una instalación
+existente se haya actualizado ni que se haya ejecutado una inferencia E2E real.
+
 ## Selección por tarea
 
 La prioridad es una decisión del coordinador: las preferencias se aplican por
@@ -221,14 +268,15 @@ motivo.
 
 Antes de ejecutar, clasifica la tarea como mecánica, integración o compleja y
 consulta capacidades, herramientas, modalidades, límites, tarifas y variantes.
-Determina primero las capacidades y el esfuerzo necesarios. Entre opciones
-suficientes, el coordinador prioriza gratuitos de OpenCode (incluidos los de
-Go), después OpenCode Go, después otras alternativas adecuadas de proveedores
-conectados y, si ninguna sirve, continúa con Codex nativo. Otros proveedores
-conectados siguen permitidos si ofrecen una alternativa adecuada; no se
-confirma cada uso dentro del alcance autorizado. El proveedor directo `openai`
-está bloqueado; los GPT de otros proveedores siguen disponibles según su
-conexión y tarifas.
+Lee primero la tabla local (`availability status --cwd <proyecto> --json`); no
+consultes catálogo/cuota por rutina. Determina primero las capacidades y el
+esfuerzo necesarios. Entre opciones suficientes, el coordinador prioriza Go de
+pago, después otros proveedores de pago conectados, después todos los gratuitos
+conectados (incluidos los de Go) y, si ninguna sirve, continúa con Codex
+nativo. Otros proveedores conectados siguen permitidos si ofrecen una
+alternativa adecuada; no se confirma cada uso dentro del alcance autorizado. El
+proveedor directo `openai` está bloqueado; los GPT de otros proveedores siguen
+disponibles según su conexión y tarifas.
 
 La variante debe existir en los metadatos. Si no hay variantes o conviene el
 ajuste predeterminado, regístralo en `--reason`; no inventes equivalencias con

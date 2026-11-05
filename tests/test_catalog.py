@@ -61,9 +61,7 @@ def test_compact_catalog_hides_model_and_variant_secrets(harness: Harness) -> No
         "output": 5.5,
         "cache": {"read": 0.1, "write": 1.5},
     }
-    assert entry["variants"] == [
-        {"id": "high", "reasoningEffort": "high", "thinkingBudget": 4096}
-    ]
+    assert entry["variants"] == [{"id": "high"}]
     assert (entry["tools"], entry["input"], entry["output"]) == (
         True,
         ["text", "image"],
@@ -232,9 +230,9 @@ def test_doctor_sort_count_and_filter(harness: Harness) -> None:
     result = harness.doctor()
     assert result["catalog_count"] == 3
     assert [entry["model"] for entry in result["catalog"]] == [
+        "opencode/caro",
         "opencode/alfa-free",
         "opencode/zeta-free",
-        "opencode/caro",
     ]
     filtered = harness.doctor(model="opencode/alfa-free")
     assert filtered["catalog_count"] == 3
@@ -254,9 +252,9 @@ def test_catalog_prefers_free_then_go_without_hiding_other_providers(
         ]
     )
     assert [item["model"] for item in harness.doctor()["catalog"]] == [
+        "opencode-go/paid",
+        "opencode/paid",
         "opencode-go/free",
         "opencode/free",
-        "opencode-go/paid",
         "other/unknown",
-        "opencode/paid",
     ]

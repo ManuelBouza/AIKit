@@ -12,16 +12,21 @@ import argparse
 import json
 import math
 import os
-import re
 import shutil
 import signal
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from availability_state import AvailabilitySnapshot
 from restrictions import configuration_is_restricted
+from service_connection import BoundLaunch, ManagedBinding, discover_existing
+from service_identity import HostContext, ServiceError, resolve_host_context
+from session_store import Pricing, Role
+from session_store import StoreError as AvailabilityStoreError
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 POLICY_PATH = SKILL_DIR / "policy.json"
@@ -33,7 +38,6 @@ TASK_PREFIX = "Tarea delegada (contenido literal):\n\n"
 WINDOWS_SHIM_SUFFIXES = {".cmd", ".bat", ".ps1"}
 VARIANT_SETTING_KEYS = ("reasoningEffort", "thinkingBudget")
 POLICY_KEYS = ("prefer_free",)
-CONFIG_CHECK_ARGS = ("debug", "config", "--standalone")
 
 
 class DelegateError(Exception):
@@ -206,6 +210,7 @@ def _kill_tree(process: subprocess.Popen[str]) -> None:
                 stderr=subprocess.DEVNULL,
                 check=False,
                 timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
         else:
             os.killpg(os.getpgid(process.pid), signal.SIGKILL)
@@ -232,7 +237,9 @@ def run_process(
         "shell": False,
     }
     if sys.platform == "win32":
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        )
     else:
         kwargs["start_new_session"] = True
 
@@ -312,30 +319,6 @@ def _validate_timeout(timeout: float) -> float:
             "invalid_timeout", f"El timeout no puede superar {MAX_TIMEOUT:g} s."
         )
     return value
-
-
-def _check_version(exe: str, cwd: Path, timeout: float) -> str:
-    result = run_process([exe, "--version"], cwd, timeout)
-    output = (result.stdout or "") + (result.stderr or "")
-    if result.returncode != 0:
-        raise DelegateError(
-            "version_check_failed",
-            f"'opencode --version' falló con código {result.returncode}. Revisa "
-            "los registros locales de OpenCode.",
-        )
-    match = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
-    if not match:
-        raise DelegateError(
-            "invalid_version",
-            "No se pudo interpretar la versión de OpenCode. Revisa la instalación "
-            "y los registros locales.",
-        )
-    if int(match.group(1)) != 2:
-        raise DelegateError(
-            "unsupported_version",
-            f"Se requiere OpenCode v2; versión detectada: {match.group(0)}",
-        )
-    return match.group(0)
 
 
 def _is_number(value: Any) -> bool:
@@ -539,28 +522,41 @@ def _public_model(model: dict[str, Any]) -> dict[str, Any]:
     return {key: model[key] for key in keys}
 
 
-def _catalog(exe: str, cwd: Path, timeout: float) -> list[dict[str, Any]]:
-    result = run_process(
-        [exe, "api", "--standalone", "GET", "/api/model"], cwd, timeout
-    )
-    if result.returncode != 0:
-        raise DelegateError(
-            "catalog_unavailable",
-            f"No se pudo obtener el catálogo (código {result.returncode}). Revisa "
-            "los registros locales de OpenCode.",
-        )
+def _project_key(path: Path) -> str:
     try:
-        payload = json.loads(result.stdout or "")
-    except json.JSONDecodeError as exc:
+        resolved = path.resolve()
+    except OSError:
+        resolved = path.absolute()
+    return os.path.normcase(os.path.normpath(str(resolved)))
+
+
+def _catalog_from_payload(payload: object, project: Path) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
         raise DelegateError(
             "catalog_unavailable",
-            "OpenCode devolvió un catálogo que no es JSON válido.",
-        ) from exc
-    data = payload.get("data") if isinstance(payload, dict) else None
+            "El servicio OpenCode no devolvió un catálogo JSON válido.",
+        )
+    location = payload.get("location")
+    directory = location.get("directory") if isinstance(location, dict) else None
+    if not isinstance(directory, str) or not directory:
+        raise DelegateError(
+            "catalog_unavailable",
+            "El catálogo no indicó la ubicación del proyecto consultado.",
+        )
+    location_path = Path(directory)
+    if not location_path.is_absolute() or _project_key(location_path) != _project_key(
+        project
+    ):
+        raise DelegateError(
+            "project_mismatch",
+            "El catálogo del servicio no corresponde al proyecto solicitado.",
+        )
+
+    data = payload.get("data")
     if not isinstance(data, list):
         raise DelegateError(
             "catalog_unavailable",
-            "OpenCode devolvió un catálogo sin la lista 'data' esperada.",
+            "El catálogo no contiene la lista 'data' esperada.",
         )
 
     models: list[dict[str, Any]] = []
@@ -572,6 +568,15 @@ def _catalog(exe: str, cwd: Path, timeout: float) -> list[dict[str, Any]]:
         seen.add(model["model"])
         models.append(model)
     return models
+
+
+def _pricing_label(selected: dict[str, Any]) -> Pricing:
+    free = selected.get("free_candidate")
+    if free is True:
+        return "free"
+    if free is False:
+        return "paid"
+    return "unknown"
 
 
 def _extract_error(value: Any) -> str:
@@ -676,37 +681,11 @@ def _free_limit_reached(stdout: str) -> bool:
     return False
 
 
-def _check_restrictions(exe: str, cwd: Path, timeout: float) -> None:
-    """Exige bloqueos verificables en la configuración efectiva del destino.
+def _build_bound_command(
+    exe: str, url: str, model: str, agent: str, task: str
+) -> list[str]:
+    """Construye el envío explícito al servicio ya verificado."""
 
-    Solo consulta: no escribe configuración ni variables de entorno. El
-    mensaje de error es fijo y no incluye salida, rutas ni contenido de la
-    configuración.
-    """
-
-    result = run_process([exe, *CONFIG_CHECK_ARGS], cwd, timeout)
-    if result.returncode != 0:
-        raise DelegateError(
-            "config_check_failed",
-            "No se pudo comprobar la configuración efectiva de OpenCode en el destino.",
-        )
-    try:
-        payload = json.loads(result.stdout or "")
-    except json.JSONDecodeError as exc:
-        raise DelegateError(
-            "config_check_failed",
-            "OpenCode no devolvió una configuración JSON legible para la "
-            "comprobación de restricciones.",
-        ) from exc
-    if not configuration_is_restricted(payload):
-        raise DelegateError(
-            "unsafe_configuration",
-            "La configuración efectiva no acredita el bloqueo del proveedor "
-            "directo openai ni de la subdelegación interna de OpenCode.",
-        )
-
-
-def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
     return [
         exe,
         "run",
@@ -714,12 +693,53 @@ def build_command(exe: str, model: str, agent: str, task: str) -> list[str]:
         model,
         "--agent",
         agent,
-        "--standalone",
+        "--server",
+        url,
         "--format",
         "json",
         "--",
         TASK_PREFIX + task,
     ]
+
+
+def _service_failure(exc: ServiceError) -> DelegateError:
+    code = exc.code
+    if code in {
+        "transport_error",
+        "network_error",
+        "timeout",
+        "invalid_response",
+        "invalid_url",
+        "redirect",
+        "response_too_large",
+        "response_too_deep",
+        "binding_closed",
+    } or code.startswith("http_"):
+        code = "service_unavailable"
+    messages = {
+        "service_unavailable": (
+            "El servicio OpenCode existente no está disponible; no se ha iniciado "
+            "otro ni se ha enviado la tarea."
+        ),
+        "owner_mismatch": (
+            "La identidad del servicio OpenCode cambió; no se reenvía la tarea."
+        ),
+        "version_mismatch": (
+            "El servicio OpenCode existente no tiene la versión soportada."
+        ),
+        "host_context_unavailable": (
+            "No hay un contexto de host OpenCode disponible para esta sesión."
+        ),
+        "registration_untrusted": (
+            "El registro del servicio OpenCode no es confiable."
+        ),
+        "process_identity_unavailable": (
+            "No se pudo acreditar la identidad del servicio OpenCode."
+        ),
+    }
+    return DelegateError(
+        code, messages.get(code, "No se pudo usar el servicio OpenCode existente.")
+    )
 
 
 def run_task(
@@ -730,6 +750,9 @@ def run_task(
     reason: str | None = None,
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Ejecuta un único intento leyendo la tarea de un archivo."""
 
@@ -741,6 +764,8 @@ def run_task(
         reason=reason,
         agent=agent,
         timeout=timeout,
+        role=role,
+        _wait_seconds=_wait_seconds,
     )
 
 
@@ -752,12 +777,11 @@ def run_text_task(
     reason: str | None = None,
     agent: str = "build",
     timeout: float = DEFAULT_TIMEOUT,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
-    """Ejecuta un único intento con la tarea ya en memoria.
-
-    Comparte con `run_task` el mismo núcleo: mismas validaciones, mismos
-    bloqueos, mismo catálogo y ningún archivo intermedio.
-    """
+    """Ejecuta un único intento con la tarea ya en memoria."""
 
     return _run_core(
         cwd=cwd,
@@ -767,7 +791,185 @@ def run_text_task(
         reason=reason,
         agent=agent,
         timeout=timeout,
+        role=role,
+        _wait_seconds=_wait_seconds,
     )
+
+
+def _preflight_remaining(deadline: float) -> float:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise ServiceError("timeout", "Preflight agotado.")
+    return remaining
+
+
+def _availability_snapshot(
+    binding: ManagedBinding,
+    host: HostContext,
+    project: Path,
+    config: object,
+    deadline: float,
+) -> AvailabilitySnapshot:
+    from availability_refresh import coalesced_refresh
+    from availability_state import configuration_signature, read_snapshot, state_path
+
+    signature = configuration_signature(config)
+    project_key = _project_key(project)
+
+    def valid(snapshot: AvailabilitySnapshot | None) -> bool:
+        return snapshot is not None and any(
+            item.project_key == project_key
+            and item.config_signature == signature
+            and item.service_version == binding.registration.version
+            and {"config.get", "model.catalog"}.issubset(item.capabilities)
+            for item in snapshot.catalog_contexts
+        )
+
+    try:
+        snapshot = read_snapshot(state_path(host.aikit_state))
+        if not valid(snapshot):
+            result = coalesced_refresh(
+                state_path(host.aikit_state),
+                binding,
+                project,
+                _preflight_remaining(deadline),
+                force=True,
+                context_signature=signature,
+                service_version=binding.registration.version,
+            )
+            snapshot = result.snapshot
+            if not valid(snapshot):
+                code = (
+                    "catalog_capability_unavailable"
+                    if "catalog_unavailable" in result.errors
+                    else "availability_context_unavailable"
+                )
+                raise DelegateError(
+                    code,
+                    "La tabla no acredita el contrato de catalogo requerido para este contexto.",
+                )
+        if snapshot is None:
+            raise DelegateError(
+                "availability_state_unavailable", "No hay tabla acreditada."
+            )
+        return snapshot
+    except (AvailabilityStoreError, OSError, ValueError) as exc:
+        raise DelegateError(
+            "availability_state_unavailable",
+            "No se pudo consultar o actualizar la tabla compartida.",
+        ) from exc
+
+
+def _prepare_run(
+    cwd: Path | str,
+    task_loader: Callable[[], str],
+    model: str | None,
+    variant: str | None,
+    reason: str | None,
+    agent: str,
+    timeout: float,
+    *,
+    role: Role = "implementer",
+    context: HostContext | None = None,
+) -> BoundLaunch:
+    """Prepara un envío validado contra el servicio existente."""
+
+    base_model, selected_variant = parse_model(model, variant)
+    clean_reason = _validate_reason(reason)
+    project = _validate_cwd(cwd)
+    task = _validate_task_text(task_loader())
+    try:
+        task_size = len(task.encode("utf-8"))
+    except UnicodeError:
+        raise DelegateError("invalid_task", "La tarea no es UTF8 valida.") from None
+    if task_size > 1024 * 1024:
+        raise DelegateError(
+            "task_too_large", "La tarea excede el limite del supervisor."
+        )
+    load_policy()
+    if agent not in AGENTS:
+        raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
+    if role not in ("implementer", "reviewer"):
+        raise DelegateError("invalid_role", f"Rol no permitido: {role}")
+    seconds = _validate_timeout(timeout)
+
+    binding: ManagedBinding | None = None
+    try:
+        host = context if context is not None else resolve_host_context()
+        deadline = time.monotonic() + min(10.0, seconds)
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        if not configuration_is_restricted(config):
+            raise DelegateError(
+                "unsafe_configuration",
+                "La configuración efectiva no acredita el bloqueo del proveedor "
+                "directo openai ni de la subdelegación interna de OpenCode.",
+            )
+
+        from availability_policy import eligible_for_attempt
+        from availability_state import admission_for, model_entry
+
+        snapshot = _availability_snapshot(binding, host, project, config, deadline)
+        project_key = _project_key(project)
+        entry = model_entry(snapshot, project_key, base_model)
+        if entry is None or entry.context_key != project_key:
+            raise DelegateError(
+                "model_unavailable",
+                f"El modelo no aparece disponible en la tabla actual: {base_model}",
+            )
+        if not eligible_for_attempt(entry):
+            raise DelegateError(
+                "model_unavailable",
+                f"El modelo no está disponible actualmente: {base_model}",
+            )
+        if (
+            selected_variant is not None
+            and selected_variant not in entry.metadata.variants
+        ):
+            available = ", ".join(entry.metadata.variants) or "ninguna"
+            raise DelegateError(
+                "invalid_variant",
+                f"La variante '{selected_variant}' no existe para {base_model}. "
+                f"Variantes disponibles: {available}.",
+            )
+
+        selected = {"free_candidate": entry.metadata.free_candidate}
+
+        exe = find_opencode()
+        if not exe:
+            raise DelegateError(
+                "opencode_missing",
+                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
+            )
+        selected_model = base_model + (
+            "#" + selected_variant if selected_variant else ""
+        )
+        return BoundLaunch(
+            binding=binding,
+            project=project,
+            argv=_build_bound_command(
+                exe, binding.registration.url, selected_model, agent, task
+            ),
+            model=base_model,
+            variant=selected_variant,
+            reason=clean_reason,
+            agent=agent,
+            timeout=seconds,
+            role=role,
+            task=task,
+            pricing=_pricing_label(selected),
+            admission=admission_for(
+                snapshot, project_key, base_model, selected_variant
+            ),
+        )
+    except ServiceError as exc:
+        if binding is not None:
+            binding.close()
+        raise _service_failure(exc) from None
+    except BaseException:
+        if binding is not None:
+            binding.close()
+        raise
 
 
 def _run_core(
@@ -778,88 +980,41 @@ def _run_core(
     reason: str | None,
     agent: str,
     timeout: float,
+    *,
+    role: Role = "implementer",
+    _wait_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Núcleo común de ejecución: valida antes de tocar procesos."""
 
     try:
-        base_model, selected_variant = parse_model(model, variant)
-        clean_reason = _validate_reason(reason)
-        project = _validate_cwd(cwd)
-        task = task_loader()
-        load_policy()
-        if agent not in AGENTS:
-            raise DelegateError("invalid_agent", f"Agente no permitido: {agent}")
-        seconds = _validate_timeout(timeout)
-
-        exe = find_opencode()
-        if not exe:
-            raise DelegateError(
-                "opencode_missing",
-                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
-            )
-        _check_version(exe, project, seconds)
-        catalog = _catalog(exe, project, seconds)
-        selected = next((item for item in catalog if item["model"] == base_model), None)
-        if selected is None:
-            raise DelegateError(
-                "model_unavailable",
-                f"El modelo no aparece habilitado en el catálogo actual: {base_model}",
-            )
-        if (
-            selected_variant is not None
-            and selected_variant not in selected["variant_ids"]
-        ):
-            available = ", ".join(selected["variant_ids"]) or "ninguna"
-            raise DelegateError(
-                "invalid_variant",
-                f"La variante '{selected_variant}' no existe para {base_model}. "
-                f"Variantes disponibles: {available}.",
-            )
-
-        selected_model = base_model + (
-            "#" + selected_variant if selected_variant else ""
+        prepared = _prepare_run(
+            cwd,
+            task_loader,
+            model,
+            variant,
+            reason,
+            agent,
+            timeout,
+            role=role,
         )
-        _check_restrictions(exe, project, seconds)
-        result = run_process(
-            build_command(exe, selected_model, agent, task), project, seconds
+        import bound_execution
+
+        wait = prepared.timeout if _wait_seconds is None else _wait_seconds
+        return bound_execution.execute_bound(
+            prepared,
+            context=prepared.binding.context,
+            wait_seconds=wait,
         )
     except DelegateError as exc:
         return _error(exc.code, exc.message)
-
-    stdout = result.stdout or ""
-    if _free_limit_reached(stdout):
-        return {
-            **_error(
-                "free_limit_reached",
-                "OpenCode ha agotado el uso gratuito; el coordinador debe evaluar "
-                "OpenCode Go y las alternativas adecuadas antes de recurrir a Codex.",
-            ),
-            "fallback": "reselect",
-        }
-    if result.returncode != 0:
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
+    except (AvailabilityStoreError, OSError):
         return _error(
-            "opencode_failed",
-            f"OpenCode terminó con código {result.returncode}. Revisa los "
-            "registros locales de OpenCode para el detalle.",
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
         )
-
-    summary, session, cost, errors = parse_events(stdout)
-    if errors:
-        return _error("opencode_event_error", "; ".join(errors))
-    if not summary:
-        return _error("empty_output", "OpenCode no devolvió texto de resumen.")
-
-    return {
-        "status": "ok",
-        "session": session,
-        "model": base_model,
-        "variant": selected_variant,
-        "effort": selected_variant or "provider_default",
-        "reason": clean_reason,
-        "agent": agent,
-        "summary": _cap(summary),
-        "cost": cost,
-    }
 
 
 def doctor(
@@ -867,8 +1022,9 @@ def doctor(
     timeout: float = DEFAULT_TIMEOUT,
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Muestra versión y catálogo compacto, opcionalmente filtrado."""
+    """Consulta el catálogo del servicio existente, sin exigir certificado."""
 
+    binding: ManagedBinding | None = None
     try:
         project = _validate_cwd(cwd)
         seconds = _validate_timeout(timeout)
@@ -885,43 +1041,284 @@ def doctor(
                 )
             if "/" in filter_model:
                 _reject_direct_openai(filter_model.partition("/")[0])
-        policy = load_policy()
+        load_policy()
 
-        exe = find_opencode()
-        if not exe:
-            raise DelegateError(
-                "opencode_missing",
-                "No se encontró 'opencode' en PATH. Instala la CLI v2 o revisa PATH.",
-            )
-        version = _check_version(exe, project, seconds)
-        catalog = [_public_model(item) for item in _catalog(exe, project, seconds)]
+        host = resolve_host_context()
+        deadline = time.monotonic() + min(10.0, seconds)
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        project_key = _project_key(project)
+        snapshot = _availability_snapshot(binding, host, project, config, deadline)
+        catalog: list[dict[str, Any]] = []
+        if snapshot is not None:
+            from availability_state import model_entry
+
+            candidates = snapshot.project_models.get(project_key, snapshot.models)
+            for model_name in candidates:
+                entry = model_entry(snapshot, project_key, model_name)
+                if entry is None:
+                    continue
+                if entry.context_key != project_key:
+                    continue
+                meta = entry.metadata
+                tiers = [
+                    {
+                        "input": tier.input,
+                        "output": tier.output,
+                        "cache": {"read": tier.cache_read, "write": tier.cache_write},
+                        "tier": (
+                            {"type": "context", "size": tier.context_size}
+                            if tier.context_size is not None
+                            else None
+                        ),
+                    }
+                    for tier in meta.pricing
+                ]
+                # Eliminar tiers sin tier para mantener la forma saneada.
+                for tier in tiers:
+                    if tier["tier"] is None:
+                        del tier["tier"]
+                catalog.append(
+                    {
+                        "model": meta.model,
+                        "name": meta.name,
+                        "pricing": tiers[0] if tiers else None,
+                        "pricing_tiers": tiers or None,
+                        "variants": [
+                            {"id": variant_id} for variant_id in meta.variants
+                        ],
+                        "tools": meta.tools,
+                        "input": list(meta.input_modalities),
+                        "output": list(meta.output_modalities),
+                        "limits": (
+                            {
+                                key: value
+                                for key, value in {
+                                    "context": meta.context_limit,
+                                    "input": meta.input_limit,
+                                    "output": meta.output_limit,
+                                }.items()
+                                if value is not None
+                            }
+                            or None
+                        ),
+                        "free_candidate": meta.free_candidate,
+                        "may_use_openai_quota": meta.may_use_openai_quota,
+                    }
+                )
         total = len(catalog)
 
-        if policy["prefer_free"]:
+        def _priority_key(item: dict[str, Any]) -> tuple[int, str]:
+            free = item.get("free_candidate")
+            paid = free is False
+            go = str(item.get("model", "")).startswith("opencode-go/")
+            if paid and go:
+                return (0, str(item.get("model", "")).lower())
+            if paid:
+                return (1, str(item.get("model", "")).lower())
+            if free is True:
+                return (2, str(item.get("model", "")).lower())
+            return (3, str(item.get("model", "")).lower())
+
+        policy = load_policy()
+        if policy.get("prefer_free") is True:
             catalog.sort(
                 key=lambda item: (
                     0
-                    if item["free_candidate"] is True
+                    if item.get("free_candidate") is True
                     else 1
-                    if item["model"].partition("/")[0] == "opencode-go"
+                    if str(item.get("model", "")).startswith("opencode-go/")
                     else 2
-                    if item["free_candidate"] is None
+                    if item.get("free_candidate") is None
                     else 3,
-                    item["model"].lower(),
+                    str(item.get("model", "")).lower(),
                 )
             )
         else:
-            catalog.sort(key=lambda item: item["model"].lower())
+            catalog.sort(key=_priority_key)
 
         if filter_model is not None:
             catalog = [item for item in catalog if item["model"] == filter_model]
 
+        public_terms = snapshot.public_terms if snapshot is not None else ()
         return {
             "status": "ok",
-            "version": version,
+            "version": binding.registration.version,
             "catalog_count": total,
             "catalog": catalog,
+            "price_zero_count": sum(
+                1 for item in catalog if item.get("free_candidate") is True
+            ),
+            "conditional_access_count": sum(
+                1 for term in public_terms if term.access_kind == "conditional_access"
+            ),
+            "public_terms_count": len(public_terms),
+            "listed_price_zero_count": sum(
+                1 for item in catalog if item.get("free_candidate") is True
+            ),
         }
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+    finally:
+        if binding is not None:
+            binding.close()
+
+
+def availability_status(cwd: Path | str) -> dict[str, Any]:
+    """Solo estado del host configurado; nunca adivina una ruta de proyecto."""
+    from availability_state import _snapshot_to_json, read_snapshot, state_path
+
+    try:
+        _validate_cwd(cwd)
+        path = state_path(resolve_host_context().aikit_state)
+        snapshot = read_snapshot(path)
+        return {
+            "status": "ok",
+            "state_path": str(path),
+            "exists": snapshot is not None,
+            "snapshot": _snapshot_to_json(snapshot) if snapshot is not None else None,
+        }
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except (AvailabilityStoreError, OSError, ValueError):
+        return _error(
+            "availability_state_unavailable", "No se pudo leer la tabla compartida."
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+
+
+def availability_refresh_command(
+    cwd: Path | str, timeout: float = DEFAULT_TIMEOUT
+) -> dict[str, Any]:
+    """Refresca la tabla usando solo un servicio ya registrado."""
+
+    project = _validate_cwd(cwd)
+    seconds = _validate_timeout(timeout)
+    deadline = time.monotonic() + min(10.0, seconds)
+    binding = None
+    try:
+        host = resolve_host_context()
+        binding = discover_existing(host, timeout=_preflight_remaining(deadline))
+        from availability_refresh import coalesced_refresh
+        from availability_state import configuration_signature, state_path
+
+        config = binding.config_sources(project, timeout=_preflight_remaining(deadline))
+        result = coalesced_refresh(
+            state_path(host.aikit_state),
+            binding,
+            project,
+            _preflight_remaining(deadline),
+            force=True,
+            context_signature=configuration_signature(config),
+            service_version=binding.registration.version,
+        )
+        return {
+            "status": "ok",
+            "refreshed": result.refreshed,
+            "generation": result.generation,
+            "errors": list(result.errors),
+            "changes": result.changes,
+            "added": list(result.added),
+            "removed": list(result.removed),
+            "changed": list(result.changed),
+            "unchanged": list(result.unchanged),
+        }
+    except ServiceError as exc:
+        failure = _service_failure(exc)
+        return _error(failure.code, failure.message)
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo consultar el estado compartido.",
+        )
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+    finally:
+        if binding is not None:
+            binding.close()
+
+
+def availability_import_public_terms_command(
+    cwd: Path | str,
+    file: Path | str,
+    *,
+    timeout: float = DEFAULT_TIMEOUT,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Incorpora hechos públicos validados al estado compartido."""
+    try:
+        _validate_cwd(cwd)
+        state_path_value = resolve_host_context().aikit_state
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+    path = Path(file)
+    try:
+        from availability_public_terms import (
+            import_public_terms_state,
+            read_public_terms_file,
+        )
+        from availability_state import state_path
+
+        terms = read_public_terms_file(path)
+        snapshot = import_public_terms_state(
+            state_path(state_path_value), terms, replace=replace
+        )
+        return {
+            "status": "ok",
+            "imported": len(terms),
+            "generation": snapshot.generation,
+            "state_path": str(state_path(state_path_value)),
+        }
+    except (OSError, ValueError) as exc:
+        return _error("public_terms_invalid", str(exc))
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable",
+            "No se pudo actualizar el estado compartido.",
+        )
+    except ServiceError as exc:
+        return _error(exc.code, exc.message)
+    except DelegateError as exc:
+        return _error(exc.code, exc.message)
+
+
+def timing_command(cwd: Path | str) -> dict[str, Any]:
+    """Resumen determinista de tiempos de intento observados."""
+    from availability_performance import summarize_timing
+    from availability_state import read_snapshot, state_path
+    from service_identity import resolve_host_context
+
+    try:
+        _validate_cwd(cwd)
+        host = resolve_host_context()
+        path = state_path(host.aikit_state)
+        snapshot = read_snapshot(path)
+        if snapshot is None:
+            return {
+                "status": "ok",
+                "timing_summary": [],
+                "message": "No availability snapshot found",
+            }
+        project_key = _project_key(Path(cwd))
+        timing_summary = summarize_timing(snapshot, project_key)
+        return {"status": "ok", "timing_summary": timing_summary}
+    except ServiceError as exc:
+        return _error(exc.code, "No hay un contexto de host configurado.")
+    except AvailabilityStoreError:
+        return _error(
+            "availability_state_unavailable", "No se pudo leer la tabla compartida."
+        )
     except DelegateError as exc:
         return _error(exc.code, exc.message)
 
@@ -964,7 +1361,54 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--variant", help="Variante real del modelo, sin '#'.")
     run_parser.add_argument("--reason", help="Motivo de selección no vacío.")
     run_parser.add_argument("--agent", choices=AGENTS, default="build")
+    run_parser.add_argument(
+        "--role",
+        choices=("implementer", "reviewer"),
+        default="implementer",
+        help="Rol explícito del intento; no se deduce de --agent.",
+    )
     run_parser.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
+
+    availability_parser = subparsers.add_parser(
+        "availability", help="Inspecciona o refresca la tabla local de disponibilidad."
+    )
+    availability_subparsers = availability_parser.add_subparsers(
+        dest="availability_command", required=True
+    )
+    status_parser = availability_subparsers.add_parser(
+        "status", help="Lee la tabla local sin consultas externas."
+    )
+    status_parser.add_argument("--cwd", required=True)
+    status_parser.add_argument("--json", action="store_true")
+    refresh_parser = availability_subparsers.add_parser(
+        "refresh", help="Refresca la tabla usando el servicio ya registrado."
+    )
+    refresh_parser.add_argument("--cwd", required=True)
+    refresh_parser.add_argument("--json", action="store_true")
+    refresh_parser.add_argument(
+        "--timeout", type=_positive_float, default=DEFAULT_TIMEOUT
+    )
+
+    for command_name, help_text in (
+        ("import", "Incorpora hechos públicos validados al estado compartido."),
+        (
+            "import-public-terms",
+            "Incorpora hechos públicos validados al estado compartido.",
+        ),
+    ):
+        sub = availability_subparsers.add_parser(command_name, help=help_text)
+        sub.add_argument("--cwd", required=True)
+        sub.add_argument("--file", required=True)
+        sub.add_argument("--json", action="store_true")
+        sub.add_argument("--replace", action="store_true")
+        sub.add_argument("--timeout", type=_positive_float, default=DEFAULT_TIMEOUT)
+
+    timing_parser = subparsers.add_parser(
+        "timing", help="Resumen determinista de tiempos de intento observados."
+    )
+    timing_parser.add_argument("--cwd", required=True)
+    timing_parser.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -973,6 +1417,25 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "doctor":
             payload = doctor(cwd=args.cwd, timeout=args.timeout, model=args.model)
+        elif args.command == "availability":
+            if args.availability_command == "status":
+                payload = availability_status(cwd=args.cwd)
+            elif args.availability_command in {
+                "import",
+                "import-public-terms",
+            }:
+                payload = availability_import_public_terms_command(
+                    cwd=args.cwd,
+                    file=args.file,
+                    timeout=args.timeout,
+                    replace=getattr(args, "replace", False),
+                )
+            else:
+                payload = availability_refresh_command(
+                    cwd=args.cwd, timeout=args.timeout
+                )
+        elif args.command == "timing":
+            payload = timing_command(cwd=args.cwd)
         else:
             payload = run_task(
                 cwd=args.cwd,
@@ -982,6 +1445,7 @@ def main(argv: list[str] | None = None) -> int:
                 reason=args.reason,
                 agent=args.agent,
                 timeout=args.timeout,
+                role=args.role,
             )
     except Exception as exc:  # noqa: BLE001 - la CLI siempre devuelve JSON breve
         payload = _error("internal_error", str(exc))

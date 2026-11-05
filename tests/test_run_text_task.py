@@ -29,11 +29,12 @@ def test_text_task_keeps_quotes_unicode_and_options_literal(
     assert argv.count("--auto") == 0
 
 
-def test_text_task_does_not_write_any_file(harness: Harness) -> None:
+def test_text_task_only_writes_managed_state(harness: Harness) -> None:
     harness.fake()
-    before = sorted(path.name for path in harness.project.iterdir())
+    before = {path.name for path in harness.project.iterdir()}
     assert harness.run_text("Tarea sin archivo")["status"] == "ok"
-    assert sorted(path.name for path in harness.project.iterdir()) == before
+    assert {path.name for path in harness.project.iterdir()} == before | {".aikit"}
+    assert not (harness.project / "Tarea sin archivo").exists()
 
 
 def test_blocked_provider_is_rejected_before_any_process(harness: Harness) -> None:
@@ -74,7 +75,8 @@ def test_free_limit_is_preserved_for_the_text_entry(harness: Harness) -> None:
     harness.fake(FakeTransport(run_stdout=output))
     result = harness.run_text("Tarea")
     assert result["code"] == "free_limit_reached"
-    assert result["fallback"] == "reselect"
+    assert result.get("fallback") != "reselect"
+    assert result["uncertain"] is True
 
 
 def test_text_task_reports_selection_and_summary(harness: Harness) -> None:
@@ -82,7 +84,7 @@ def test_text_task_reports_selection_and_summary(harness: Harness) -> None:
     result = harness.run_text(
         "Tarea", model=DEFAULT_MODEL + "#high", reason="integración acotada"
     )
-    assert result == {
+    expected = {
         "status": "ok",
         "session": "ses_prueba",
         "model": DEFAULT_MODEL,
@@ -92,7 +94,13 @@ def test_text_task_reports_selection_and_summary(harness: Harness) -> None:
         "agent": "build",
         "summary": "ok",
         "cost": 0,
+        "delivery": "completed",
+        "execution": "unknown",
+        "limitations": [],
     }
+    assert {key: result[key] for key in expected} == expected
+    assert result["task_id"]
+    assert result["attempt_id"]
 
 
 def test_text_task_uses_the_same_transport_as_the_file_entry(

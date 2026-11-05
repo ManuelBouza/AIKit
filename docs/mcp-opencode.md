@@ -112,15 +112,35 @@ validaciones de protocolo propias en el servidor.
 
 ## Tiempos y cancelación
 
-El timeout es **por proceso**. Una ejecución completa lanza hasta cuatro
-procesos de OpenCode —versión, catálogo, comprobación de configuración y
-`run`— cada uno con su propio límite. Con el máximo de 3600 s por proceso, el
-peor caso es `4 × 3600 = 14400` s más la limpieza del árbol de procesos.
+El timeout es **por proceso**. En la ruta de delegación que realiza las cuatro
+operaciones —versión, catálogo, comprobación de configuración y `run`— cada
+proceso tiene su propio límite. La suma nominal de máximos es
+`4 × 3600 = 14400` s, más limpieza; no es una garantía universal de tiempo total
+de pared para toda llamada MCP, ni incluye un límite exacto de limpieza o
+finalización HTTP.
 
-Por eso el **timeout del cliente MCP** debe cubrir ese rango: usa
-`tool_timeout_sec = 15000` (o el equivalente de tu cliente) y no un valor de
-600 s. Un cliente con 60 s por herramienta, el valor por defecto documentado
-para Codex, cortará la llamada antes de tiempo.
+Para esa ruta, configura el **timeout del cliente MCP** para cubrir el rango
+nominal: `tool_timeout_sec = 15000` (o el equivalente del cliente), no 600 s.
+Un cliente con 60 s por herramienta —el valor por defecto documentado para
+Codex— puede cortar esa llamada antes de tiempo. Las rutas que no ejecutan las
+cuatro operaciones no tienen por ello que consumir ese tiempo.
+
+### Supervisor de CLI y reconciliación
+
+El supervisor tiene ámbitos distintos, no un presupuesto total que comience
+antes del preflight:
+
+- La preparación/preflight usa los límites propios de sus operaciones y queda
+  fuera del contador de ejecución. Esto no significa que sea ilimitada; no se
+  establece aquí un máximo wall-clock agregado.
+- El worker aplica el deadline de ejecución actual a la CLI una vez iniciado el
+  proceso. No se reinicia ni amplía ese deadline para reconciliar.
+- Si procede reconciliar, el precheck de propietario y el helper consumen el
+  tiempo restante del worker; el helper está además acotado por su máximo
+  existente. No comienza un segundo presupuesto de ejecución.
+- La espera del cliente MCP (45 s para la llamada referida en esta integración)
+  es independiente. Que venza no acredita que el backend terminó, no lo cancela
+  y no autoriza reenviar o duplicar el intento.
 
 Límites explícitos de esta versión:
 
@@ -243,3 +263,21 @@ ya no depende de la `.venv` del checkout. La skill manual y su configuración
 quedaron respaldadas. Consulta [instalación](plugin-aikit.md) y
 [validación del complemento](validacion-plugin.md); el apartado anterior conserva
 la evidencia de la primera instalación del MCP independiente.
+
+## Tabla local de disponibilidad
+
+`delegate.py availability status --cwd <proyecto> --json` solo lee el estado del
+host configurado. Si falta `HostContext`, devuelve un diagnóstico; no busca una
+tabla alternativa dentro del proyecto. `availability refresh` consulta únicamente
+el servicio registrado y publica metadatos, sin ejecutar modelos ni arrancarlo.
+
+La distribución usa `prefer_free: false`: Go de pago, otros de pago y gratuitos,
+siempre entre modelos adecuados. Un archivo de usuario con `prefer_free: true`
+sigue mostrando los gratuitos primero; el runtime no lo reescribe. Para adoptar
+voluntariamente la prioridad nueva, el usuario puede cambiar ese valor a `false`.
+
+La firma de contexto cubre selección y permisos publicados por lista blanca,
+no credenciales ni identidades de cuenta. Un cambio privado de cuenta requiere
+la notificación o actualización explícita acordada; no se detecta almacenando
+hashes de secretos. Las muestras de rendimiento conservan IDs y medidas tipadas,
+sin prompts/respuestas. Un intento pendiente no se reenvía al leer la tabla.

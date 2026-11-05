@@ -5,11 +5,15 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import delegate
+from availability_state import AvailabilitySnapshot
+from service_identity import HostContext, ServiceError
 
 DEFAULT_MODEL = "opencode/mimo-v2.6-flash-free"
 FREE_COST: dict[str, Any] = {
@@ -159,13 +163,16 @@ class FakeTransport:
                 args, self.config_returncode, stdout, self.config_stderr
             )
         if len(args) >= 2 and args[1] == "run":
-            assert len(args) == 11
+            assert len(args) == 12
             assert args[2] == "--model"
             assert args[3]
             assert args[4] == "--agent"
             assert args[5] in ("build", "plan")
-            assert args[6:10] == ["--standalone", "--format", "json", "--"]
-            assert args[10].startswith(delegate.TASK_PREFIX)
+            assert args[6] == "--server"
+            assert args[7].startswith("http://127.0.0.1:")
+            assert args[8:10] == ["--format", "json"]
+            assert args[10] == "--"
+            assert args[11].startswith(delegate.TASK_PREFIX)
             if self.timeout_error:
                 raise delegate.DelegateError("timeout", "OpenCode excedió el tiempo")
             if self.fail_run:
@@ -188,3 +195,267 @@ class FakeTransport:
             for call in self.calls
             if call.argv[1:4] == ["debug", "config", "--standalone"]
         ]
+
+
+@dataclass
+class FakeBinding:
+    """Binding falso con la misma superficie observable que ManagedBinding."""
+
+    context: HostContext
+    version: str = "2.2.0"
+    sources: list[dict[str, Any]] = field(default_factory=default_config_sources)
+    catalog: list[dict[str, Any]] = field(default_factory=lambda: [api_model()])
+    catalog_location: str | None = None
+    openapi: object | None = None
+    openapi_returncode: int = 0
+    usage_limits_data: object | None = field(
+        default_factory=lambda: {
+            "go": {
+                "rolling": {"percent": 0, "limited": False, "resetsAt": 1793476425740},
+                "weekly": {"percent": 0, "limited": False, "resetsAt": 1793577600000},
+                "monthly": {"percent": 0, "limited": False, "resetsAt": 1795887585000},
+            }
+        }
+    )
+    usage_limits_error: str | None = None
+    integrations_data: object | None = field(
+        default_factory=lambda: [
+            {"id": "opencode", "name": "OpenCode", "connections": 1}
+        ]
+    )
+    integrations_returncode: int = 0
+    config_returncode: int = 0
+    config_stdout: str | None = None
+    config_stderr: str = ""
+    catalog_returncode: int = 0
+    catalog_stderr: str = ""
+    valid: bool = True
+    calls: list[tuple[str, Path | None]] = field(default_factory=list)
+    closed: bool = False
+    operations: frozenset[str] = field(
+        default_factory=lambda: frozenset(
+            {
+                "server.info",
+                "session.get",
+                "session.active",
+                "session.inbox.list",
+                "session.permission.list",
+                "session.interrupt",
+                "session.message.get",
+            }
+        )
+    )
+    responses: dict[str, Any] = field(
+        default_factory=lambda: {
+            "session.message.get": {
+                "data": {
+                    "id": "msg_1",
+                    "sessionID": "ses_prueba",
+                    "type": "assistant",
+                    "finish": "stop",
+                    "error": None,
+                    "time": {"completed": 123},
+                }
+            }
+        }
+    )
+    request_calls: list[tuple[str, str | None, str | None, float, bool | None]] = field(
+        default_factory=list
+    )
+    response_status: dict[str, int] = field(default_factory=dict)
+    child_environments: list[dict[str, str]] = field(default_factory=list)
+    registration: Any = field(init=False)
+    token: str = field(init=False)
+    owner: Any = field(init=False)
+    expected_owner: Any = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.registration = SimpleNamespace(
+            registration_id="aikit-fake-registration",
+            url="http://127.0.0.1:4096/",
+            pid=4321,
+            version=self.version,
+            credential="fake-credential",
+        )
+        self.token = "aikit-owner-v1-" + "b" * 64
+        self.owner = SimpleNamespace(
+            identity=self.token,
+            pid=4321,
+            started_at="2026-10-31T00:00:00+00:00",
+            version=self.version,
+        )
+        self.expected_owner = self.owner
+
+    @property
+    def config_calls(self) -> list[Path]:
+        return [
+            path for kind, path in self.calls if kind == "config" and path is not None
+        ]
+
+    @property
+    def catalog_calls(self) -> list[Path]:
+        return [
+            path for kind, path in self.calls if kind == "catalog" and path is not None
+        ]
+
+    def verify_owner(self, *, timeout: float = 1.0) -> Any | None:
+        if self.closed or not self.valid:
+            return None
+        return self.owner
+
+    def _require_owner(self, timeout: float) -> None:
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if self.verify_owner(timeout=timeout) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+
+    def config_sources(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("config", Path(project)))
+        self._require_owner(timeout)
+        if self.config_returncode != 0:
+            raise delegate.DelegateError(
+                "config_check_failed",
+                "No se pudo comprobar la configuración efectiva de OpenCode en el destino.",
+            )
+        if self.config_stdout is not None:
+            try:
+                return json.loads(self.config_stdout)
+            except json.JSONDecodeError as exc:
+                raise delegate.DelegateError(
+                    "config_check_failed",
+                    "OpenCode no devolvió una configuración JSON legible para la "
+                    "comprobación de restricciones.",
+                ) from exc
+        return self.sources
+
+    def model_catalog(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("catalog", Path(project)))
+        self._require_owner(timeout)
+        if self.catalog_returncode != 0:
+            raise delegate.DelegateError(
+                "catalog_unavailable",
+                f"No se pudo obtener el catálogo (código {self.catalog_returncode}). "
+                "Revisa los registros locales de OpenCode.",
+            )
+        location = self.catalog_location or str(Path(project).resolve())
+        return {"location": {"directory": location}, "data": self.catalog}
+
+    def openapi_schema(self, *, timeout: float) -> object:
+        self.calls.append(("openapi", None))
+        self._require_owner(timeout)
+        if self.openapi_returncode != 0:
+            raise delegate.DelegateError("openapi_unavailable", "No OpenAPI.")
+        if self.openapi is None:
+            return {"paths": {"/api/experimental/usage/limits": {"get": {}}}}
+        return self.openapi
+
+    def usage_limits(self, project: Path, *, timeout: float) -> object:
+        self.calls.append(("usage", Path(project)))
+        self._require_owner(timeout)
+        if self.usage_limits_error is not None:
+            raise ServiceError(self.usage_limits_error, "Fallo de uso.")
+        if self.usage_limits_data is not None:
+            payload = self.usage_limits_data
+            if isinstance(payload, dict) and "data" not in payload:
+                payload = {"location": {"directory": "fake"}, "data": payload}
+            return payload
+        return {"go": None}
+
+    def integrations(self, *, timeout: float) -> object:
+        self.calls.append(("integrations", None))
+        self._require_owner(timeout)
+        if self.integrations_returncode != 0:
+            raise ServiceError("http_error", "Fallo de integraciones.")
+        if self.integrations_data is None:
+            payload: object = [{"id": "opencode", "name": "OpenCode", "connections": 1}]
+        else:
+            payload = self.integrations_data
+        if isinstance(payload, list):
+            return {"location": {"directory": "fake"}, "data": payload}
+        return payload
+
+    def child_environment(self, base: Mapping[str, str]) -> dict[str, str]:
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        environment = {**base, "OPENCODE_PASSWORD": "fake-secret"}
+        self.child_environments.append(environment)
+        return environment
+
+    def request(
+        self,
+        operation: str,
+        *,
+        session_id: str | None = None,
+        message_id: str | None = None,
+        timeout: float = 10.0,
+        resume: bool | None = None,
+    ) -> Any:
+        from session_backend import ApiResponse
+
+        if self.closed:
+            raise ServiceError("binding_closed", "Binding cerrado.")
+        if not self.valid:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        if self.verify_owner(timeout=min(timeout, 1.0)) is None:
+            raise ServiceError("owner_mismatch", "Propietario no verificado.")
+        self.request_calls.append((operation, session_id, message_id, timeout, resume))
+        status = self.response_status.get(operation, 200)
+        body = (
+            self.responses.get(operation) if isinstance(self.responses, dict) else None
+        )
+        if self.verify_owner(timeout=0.5) is None:
+            raise ServiceError("owner_mismatch", "Propietario cambió.")
+        return ApiResponse(status, body)
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def seed_availability(
+    context: HostContext,
+    project: Path,
+    models: list[dict[str, Any]],
+    *,
+    sources: object | None = None,
+    version: str = "2.2.0",
+) -> AvailabilitySnapshot:
+    from datetime import datetime, timezone
+
+    from availability_refresh import _metadata_from_public
+    from availability_state import (
+        AvailabilitySnapshot,
+        CatalogContext,
+        ModelEntry,
+        configuration_signature,
+        state_path,
+        write_snapshot,
+    )
+
+    project_key = delegate._project_key(project)
+    entries = {}
+    for item in models:
+        model = delegate._model_record(item)
+        assert model is not None
+        public = delegate._public_model(model)
+        entries[public["model"]] = ModelEntry(
+            _metadata_from_public(public), None, project_key
+        )
+    config = sources if sources is not None else default_config_sources()
+    context_record = CatalogContext(
+        project_key,
+        (),
+        configuration_signature(config),
+        version,
+        ("config.get", "model.catalog"),
+    )
+    snapshot = AvailabilitySnapshot(
+        1,
+        1,
+        datetime.now(timezone.utc),
+        (context_record,),
+        entries,
+        (),
+        project_models={project_key: entries},
+    )
+    write_snapshot(state_path(context.aikit_state), snapshot)
+    return snapshot

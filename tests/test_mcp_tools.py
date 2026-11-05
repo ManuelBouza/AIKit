@@ -235,7 +235,9 @@ async def test_delegate_rejects_the_blocked_provider_before_any_process(
     assert transport.calls == []
 
 
-async def test_delegate_reports_free_limit_with_reselect(harness: Harness) -> None:
+async def test_delegate_reports_free_limit_without_releasing_uncertainty(
+    harness: Harness,
+) -> None:
     output = json.dumps(
         {"type": "error", "error": {"type": "provider.free-limit", "message": "x"}}
     )
@@ -250,10 +252,11 @@ async def test_delegate_reports_free_limit_with_reselect(harness: Harness) -> No
                 "reason": "tarea mecánica",
             },
         )
-    assert result.isError is True
+    assert result.isError is False
     payload = _payload(result)
     assert payload["code"] == "free_limit_reached"
-    assert payload["fallback"] == "reselect"
+    assert payload.get("fallback") != "reselect"
+    assert payload["uncertain"] is True
 
 
 async def test_delegate_rejects_an_unknown_variant(harness: Harness) -> None:

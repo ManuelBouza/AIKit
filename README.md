@@ -18,6 +18,9 @@ externalizable a OpenCode como ejecutor habitual. Codex conserva decisiones,
 revisores y verificación final; OpenCode ejecuta el trabajo y devuelve un
 resultado breve. El adaptador no sustituye una revisión independiente.
 
+Las ideas para debatir e implementar más adelante se guardan en el
+[espacio de notas](notas/IDEAS.md), con un índice y su estado.
+
 ## Activación e integración
 
 La skill personal `delegating-to-opencode` se invoca explícitamente:

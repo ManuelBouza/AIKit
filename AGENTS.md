@@ -20,8 +20,22 @@ activación o roles. Aplica también a cambios de AIKit. Consulta
 - `tests/`: pytest con transporte falso, sin inferencia.
 - `scripts/build_plugin.py`: exporta el complemento y catálogo por lista permitida.
 - `docs/`: investigación, validación y diseño.
+- `notas/`: ideas pendientes de debatir e implementar; índice en `notas/IDEAS.md`.
 - `opencode.json`: bloqueos de proveedor y subdelegación.
 - `.aikit/`: tareas y evidencias ignoradas por Git.
+
+## Notas e ideas pendientes
+
+Este canal de conversación se usa para recoger todas las ideas del usuario y
+conservarlas en `notas/`. El índice está en [notas/IDEAS.md](notas/IDEAS.md).
+
+Guarda cada idea en una nota numerada, con fecha y estado inicial «Pendiente de
+debatir», y actualiza el índice al añadirla o cambiar su estado. Las notas sirven
+para conservar ideas y dudas hasta retomarlas de una en una.
+
+Guardar una nota no aprueba su diseño ni autoriza su implementación. Retoma una
+idea para debatirla o implementarla cuando el usuario la elija y autorice el
+trabajo correspondiente, conforme a las reglas de autorización existentes.
 
 ## Regla de coordinación
 

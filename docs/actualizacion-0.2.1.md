@@ -1,6 +1,6 @@
 # Actualización AIKit 0.2.1: plan de preparación
 
-**Seguimiento 2026-11-04:** instalación autorizada y ejecutada. Ver [resultado y desviaciones](instalacion-0.2.1.md). El procedimiento siguiente conserva el plan previo; la recarga y carga real en Codex siguen pendientes.
+**Seguimiento 2026-11-04:** instalación autorizada y ejecutada. Ver [resultado y desviaciones](instalacion-0.2.1.md). El procedimiento siguiente conserva el plan previo; la carga de skill/MCP en este chat quedó verificada el 2026-11-05, sin inferencia nueva.
 
 ## Paquetes revisables
 

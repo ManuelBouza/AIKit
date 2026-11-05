@@ -28,3 +28,18 @@ Artefactos: `.aikit/ent002-install-021/`, incluidos inventory-after.json, tool-e
 Los comandos de registro se dirigieron solo a aikit-local. No hay baseline independiente de metadata de otros plugins, por lo que no se afirma haber contrastado exhaustivamente su estado. El servicio compartido de OpenCode no se reinició.
 
 **Pendiente:** el usuario recarga Codex y se comprueba la carga real de la skill/MCP nuevos. El smoke de una instancia separada no demuestra qué servidor o skill conserva este chat. No reinstalar ni repetir inferencia por ese hecho. La prueba real anterior cubrió CLI/API/helper; no se convierte en prueba del supervisor completo por instalar.
+
+## Verificación tras recarga — 2026-11-05
+
+Este chat publica la skill desde la caché **0.2.1+host.1** y las herramientas
+MCP opencode_catalog/opencode_delegate. Una llamada real a opencode_catalog,
+filtrada a un modelo, devolvió status ok; no se ejecutó una tarea con modelos.
+La consulta de metadata de procesos confirmó instancias MCP desde la caché
+nueva, sin publicar argumentos completos ni leer entornos. La versión 2.2.0
+devuelta por la consulta corresponde a OpenCode, no al plugin AIKit.
+
+Evidencia de coordinación: `.aikit/ent002-install-021/reload-verification-20261105.json`.
+ENT-002 se cierra con esa evidencia. Se conservan la desviación de respaldo y los
+límites anteriores: no es una nueva prueba de inferencia, supervisor E2E o estado
+de otros plugins. No hubo reinstalación, modificación del host ni recarga
+automática en esta comprobación.

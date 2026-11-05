@@ -1,6 +1,6 @@
 # Registro de pendientes
 
-**Corte:** 2026-11-04. Punto de reanudación documental; los estados describen evidencia disponible, no garantizan que el host instalado coincida con la fuente.
+**Corte:** 2026-11-05. Punto de reanudación documental; los estados describen evidencia disponible, no garantizan que el host instalado coincida con la fuente.
 
 Este inventario acotado consolida el plan de reconciliación, documentación de `docs/`, README, `git log` y los informes de coordinación expresamente citados. No es una auditoría de toda la deuda histórica. Las notas viven en `notas/` del checkout principal, distinto de este worktree; se citan por número y nombre, sin copiar su contenido ni crear enlaces locales rotos.
 
@@ -20,13 +20,12 @@ Este inventario acotado consolida el plan de reconciliación, documentación de 
 - **Siguiente paso acotado:** al retomar REC-001, valorar si este fallo impide ejecutar la revisión; diagnosticarlo solo si constituye un bloqueo, sin ampliar automáticamente el alcance.
 - **Dependencia/autorización:** diagnóstico futuro autorizado por separado; no hay permiso de corregir o rediseñar ahora.
 
-### ENT-002 — Instalada; carga en Codex pendiente
+### ENT-002 — Instalación y carga verificadas
 
-- **Categoría/estado:** AIKit 0.2.1+host.1 instalado y habilitado tras autorización explícita. Runtime preparado en la caché nueva; initialize/list_tools del MCP instalado confirma opencode_catalog y opencode_delegate. No equivale a carga verificada en este chat antes de recargar.
-- **Evidencia:** [resultado de instalación](instalacion-0.2.1.md), [plan y restauración](actualizacion-0.2.1.md), `.aikit/ent002-install-021/coordinator-acceptance.json`, inventario y metadata de checks recuperada del backend.43 archivos de fuente y42 de caché coinciden con el paquete aprobado. Overlay de dos paths conservado; versión anterior y sus 42 archivos intactos.
-- **Desviación:** la carpeta de respaldo inicial quedó vacía antes de actualizar. Se creó un punto de recuperación explícitamente POSTERIOR con inventario guardado antes y archivos antiguos verificados. No se presenta como respaldo previo. El primer smoke falló por PLUGIN_ROOT literal en el comprobador; corregido este, pasó sin modificar el paquete.
-- **Siguiente paso acotado:** el usuario recarga Codex y se comprueba la carga real de la skill/MCP nuevos, sin repetir inferencia ni reinstalación por rutina.
-- **Límites:** no se dispone de baseline independiente anterior/posterior de metadata de otros plugins; las operaciones dirigieron únicamente AIKit. No hubo prueba de inferencia de instalación, rollback ni push. La prueba real previa sigue limitada al helper; DEF-001 permanece separado.
+- **Categoría/estado:** cerrada el 2026-11-05. AIKit 0.2.1+host.1 instalado y habilitado; tras recarga, este chat publica la skill desde la caché nueva y ambas herramientas MCP. Una llamada real a opencode_catalog devolvió status ok con filtro de un modelo, sin inferencia. Procesos MCP observados desde 0.2.1+host.1, sin leer argumentos completos ni entornos.
+- **Evidencia:** [resultado de instalación](instalacion-0.2.1.md), [plan](actualizacion-0.2.1.md), `.aikit/ent002-install-021/coordinator-acceptance.json` y `reload-verification-20261105.json`.43 archivos de fuente/42 de caché y overlay validados previamente; runtime preparado en la caché instalada.
+- **Desviación conservada:** respaldo inicial vacío antes de actualizar; punto de recuperación posterior con inventario previo y archivos antiguos intactos. No se presenta como respaldo previo. El primer smoke falló por PLUGIN_ROOT literal del comprobador y pasó tras corregirlo sin modificar paquete.
+- **Límites:** esta comprobación no llama a opencode_delegate ni acredita supervisor E2E. OpenCode 2.2.0 es versión del backend, distinta de la versión AIKit. No hay baseline independiente anterior/posterior de metadata de otros plugins; DEF-001 continúa separado. Sin reinstalación ni inferencia en la verificación tras recarga.
 
 ### ENT-003 — Nota 001: disponibilidad de cuentas
 

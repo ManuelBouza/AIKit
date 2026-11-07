@@ -96,8 +96,9 @@ hizo commit o push.
 
 Las 29 skills son instalación local del proyecto, no una prueba de activación en
 todos los clientes o worktrees. La instalación (`_bmad/` y
-`.agents/skills/bmad-*/`) y sus salidas (`_bmad-output/`) se excluyen de Git;
-este documento conserva el procedimiento y la evidencia. Al terminar la
+`.agents/skills/bmad-*/`) se excluye de Git. Los artefactos de proyecto de
+`_bmad-output/` se versionan después de revisar su contenido, incluidas las
+fuentes `.memlog.md` de las especificaciones. Al terminar la
 instalación, los cambios generados y los cambios anteriores estaban sin commit;
 no se hizo push. npm mostró una advertencia de deprecación
 para la dependencia transitoria `glob@11.1.0`; no se ha realizado una auditoría

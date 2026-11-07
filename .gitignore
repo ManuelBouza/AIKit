@@ -9,7 +9,6 @@ __pycache__/
 .env.*
 !.env.example
 
-# Instalación local y artefactos generados de BMAD
+# Instalación local de BMAD; sus artefactos de proyecto se versionan
 /_bmad/
-/_bmad-output/
 /.agents/skills/bmad-*/

@@ -24,6 +24,14 @@ lee su SKILL.md al utilizarlas. No impongas el flujo completo a cambios pequeño
 Las recomendaciones de BMAD no autorizan tareas ni reanudan trabajos pausados:
 se mantienen el mecanismo global go y las restricciones de este proyecto.
 
+## Documentación técnica actualizada
+
+Cuando una tarea requiera consultar documentación actualizada de bibliotecas,
+frameworks u otras tecnologías cubiertas, prioriza Context7 si está disponible.
+Comprueba la versión pertinente y, si Context7 no está disponible o no cubre la
+consulta, recurre a la documentación oficial u otras fuentes primarias adecuadas.
+Respeta las fuentes y restricciones que indique el usuario para cada tarea.
+
 ## Antes de crear o modificar una skill
 
 Explora primero las skills y herramientas instaladas y lee sus instrucciones
@@ -46,16 +54,20 @@ activación o roles. Conserva los principios de reutilización descritos en
 
 ## Notas e ideas pendientes
 
-Este canal de conversación se usa para recoger todas las ideas del usuario y
-conservarlas en `notas/`. El índice está en [notas/IDEAS.md](notas/IDEAS.md).
+Registra cada idea o duda nueva del usuario en una nota numerada bajo `notas/`,
+con fecha y estado inicial «Pendiente de debatir», y añádela al backlog canónico
+[notas/IDEAS.md](notas/IDEAS.md). Conserva el contexto, las decisiones y enlaces
+a evidencias; actualiza el backlog cuando cambie el estado de la nota.
 
-Guarda cada idea en una nota numerada, con fecha y estado inicial «Pendiente de
-debatir», y actualiza el índice al añadirla o cambiar su estado. Las notas sirven
-para conservar ideas y dudas hasta retomarlas de una en una.
-
-Guardar una nota no aprueba su diseño ni autoriza su implementación. Retoma una
-idea para debatirla o implementarla cuando el usuario la elija y autorice el
-trabajo correspondiente, conforme a las reglas de autorización existentes.
+Antes de planificar una tarea, consulta el backlog para identificar ideas y
+dependencias relacionadas. Propón retomarlas cuando sea oportuno, sin asumir
+prioridades ni iniciar trabajo adicional. Registrar una idea no aprueba su diseño
+ni autoriza implementarla: respeta el mecanismo go y las decisiones del usuario.
+Si se convierte en especificación o historias BMAD, enlaza los artefactos y
+conserva el estado y la trazabilidad en el backlog; no dupliques tareas activas.
+Conserva en Git los artefactos de proyecto de `_bmad-output/`, incluidas las
+fuentes `.memlog.md` de las especificaciones, tras revisar su contenido. No
+incluyas credenciales, datos privados ni salidas temporales en los commits.
 
 ## Regla de coordinación
 

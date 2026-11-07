@@ -71,6 +71,14 @@ MCP ni se autoinstala al cargar el complemento. Su destino es AIKit o un
 mecanismo global independiente; el traslado está pendiente.
 
 Guía completa: [Mecanismo go](docs/mecanismo-go.md).
+Para construir su distribución independiente sin instalarla:
+
+```powershell
+python scripts/build_go.py --output .aikit/aikit-go-exportado
+```
+
+La salida debe ser nueva. El [contrato del artefacto](docs/contrato-artefacto-go.md)
+describe su instalación explícita y sus límites.
 
 Comando real:
 

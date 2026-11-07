@@ -64,6 +64,10 @@ el mecanismo de distribución de Codex elegido admite sus archivos y su
 instalación sin depender de la integración. Un artefacto aislado de `go` no
 demuestra todavía que AIKit completo o la integración estén separados.
 
+El [contrato del artefacto](contrato-artefacto-go.md) propone primero una
+distribución por directorio portable; la integración como plugin queda pendiente
+de comprobación y no es requisito para el primer artefacto.
+
 ## Pendientes que no cambia este inventario
 
 La nota 001 de disponibilidad, DEF-001 y las validaciones en vivo pendientes

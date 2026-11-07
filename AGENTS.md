@@ -5,6 +5,15 @@
 Evolucionar AIKit hacia un complemento instalable de configuraciones y skills
 reproducibles, complementando Superpowers y otras skills.
 
+## Uso de BMAD
+
+Para preguntas sobre BMAD o sobre qué flujo elegir, usa `bmad-help` y consulta
+el catálogo instalado en `_bmad/_config/bmad-help.csv`.
+Selecciona las demás skills según la petición y sus descripciones publicadas;
+lee su SKILL.md al utilizarlas. No impongas el flujo completo a cambios pequeños.
+Las recomendaciones de BMAD no autorizan tareas ni reanudan trabajos pausados:
+se mantienen el mecanismo global go y las restricciones de este proyecto.
+
 ## Antes de crear o modificar una skill
 
 Explora primero las skills y herramientas instaladas y lee sus instrucciones

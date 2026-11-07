@@ -1,0 +1,22 @@
+{
+  "tipo": "extracto seleccionado; no es copia íntegra",
+  "origen": ".aikit/reconciliation-real-minimum/coordinator-acceptance.json",
+  "sha256_original": "6c246efe7a120cb7bf0bdd8f6bf77a052767109ab374d6e07937e1fc26120432",
+  "campos_omitidos": "Identificadores de sesión o tarea, rutas locales y demás campos no seleccionados.",
+  "datos": {
+    "status": "accepted_with_scope_limits",
+    "scope": "Task6 real minimal CLI + durable API + candidate helper only",
+    "model": "kilo/reflection/beam-free",
+    "variant": "low",
+    "pricing": "free_catalog",
+    "inference_count": 1,
+    "durable_get_count": 1,
+    "original_probe_status": "pending; terminal filter did not match; retained without retry",
+    "real_supervisor_end_to_end": false,
+    "real_committed_evidence_or_recovery": false,
+    "existing_deterministic_validation": "author893 + independent reviewer124; global code accepted efa9c0a",
+    "installation_limit": "Imported candidate may contain runtime bytecode caches; produce a fresh clean export before installation, not from the exercised directory",
+    "ruling": "Accept planned real minimum at API/CLI/helper scope combined with already accepted integrated deterministic tests; do not claim live supervisor E2E or observed terminal loss.",
+    "cost_if_wrong": "A defect specific to live supervisor integration could remain undetected; installation validation remains separate"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "tipo": "extracto seleccionado; no es copia íntegra",
+  "origen": ".aikit/rev003004-unit4/coordinator-acceptance.json",
+  "sha256_original": "7b9d71efe5c4bcf0a3615a6c0fe1b895d02031ccfab3b7783cb529f6933cb2fe",
+  "campos_omitidos": "Identificadores de sesión o tarea, rutas locales y demás campos no seleccionados.",
+  "datos": {
+    "status": "accepted",
+    "scope": "global code acceptance Units1-4; not original Task6 real test or installation",
+    "snapshot": {
+      "docs/balance-carga.md": "c6a12f6e3daa67ea6593693db0a5e76ebcbe9295f44758476cfaff712b3e6864",
+      "skills/delegating-to-opencode/scripts/bound_execution.py": "a6817de95c867ed33b5ff0b73b33e19d1e8ee4782969196bb7af3071ed979822",
+      "skills/delegating-to-opencode/scripts/session_backend.py": "1ef1fbca885e7e70c5172dca57477bf7c36c087814a34e1932bf2577641d2fea",
+      "skills/delegating-to-opencode/scripts/session_store.py": "50c3fc5ebf33ec08f7a0ea11dc8f13330482110cefad4ebd84b95ceda3f1cf11",
+      "skills/delegating-to-opencode/scripts/session_worker.py": "545d982baa87e7fc7536d524f055b22a1f565195074075bb392804194c998069",
+      "tests/test_bound_reconciliation.py": "ed99d627513c63a53eadd652f1f893c653be5e086edef0d0ad8ec8a06fb66f6b",
+      "tests/test_reconciliation_evidence.py": "57dfc788561e2947c55a8dfc6cc7f036619a1269ad223a20dfdafa092429058a",
+      "tests/test_reconciliation_observation_store.py": "9ecbaef925e9f779b8de201eb04788de8c460e986ae7b15530ce328e3242dbb1",
+      "tests/test_terminal_reconciliation.py": "ab3f4913905d299467c95ebb2e3ac1d1b1ced05cd11988ae0e113eaffad3d704",
+      "tests/test_worker_reconciliation.py": "5dc0501d3bc733d3f1c26c5ff83daf0468ccfd1ef12de880e1924f4e890a37f3"
+    },
+    "review_original_sha256": "2320734f32d6f65e67de17843e400b0bbb86043e44f56a2fa7f490356239e28b",
+    "metadata_validation": {
+      "status": "accepted"
+    },
+    "backend_tool_checks": 5,
+    "candidate_files_verified_against_manifest": 42,
+    "rulings": [
+      {
+        "topic": "secret scan",
+        "decision": "Accept bounded allowlist/hash inspection and reviewer manual scan; no exhaustive security certification.",
+        "cost_if_wrong": "Undetected sensitive data could enter export; installation remains separate."
+      },
+      {
+        "topic": "Windows-specific fixtures",
+        "decision": "Accept tests in current Windows environment only; no claim of equivalent cross-platform ACL verification.",
+        "cost_if_wrong": "Other OS behavior remains unverified."
+      },
+      {
+        "topic": "full suite not duplicated by reviewer",
+        "decision": "Accept author893 plus independent124 targeted tests and technical review; no need to repeat identical global suite.",
+        "cost_if_wrong": "Independent check covers less breadth than full suite."
+      }
+    ],
+    "limitations": [
+      "Original reviewer omitted session/log links; coordinator retained original and bound verified session, recovered completed check tool metadata without inference or rerunning tests.",
+      "Coordinator verifies acceptance metadata and hashes; technical review remains independent.",
+      "Generation has no external copy; no crypto-authorship or multi-file transaction guarantee.",
+      "Candidate not installed; real minimum test and installed-host parity pending."
+    ]
+  }
+}

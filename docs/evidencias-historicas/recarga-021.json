@@ -1,0 +1,27 @@
+{
+  "tipo": "extracto seleccionado; no es copia íntegra",
+  "origen": ".aikit/ent002-install-021/reload-verification-20261105.json",
+  "sha256_original": "493abfc9d490e964baeab7c7a2b937c820d51b8eebdf2edca4c596ac2eb543ce",
+  "campos_omitidos": "Identificadores de sesión o tarea, rutas locales y demás campos no seleccionados.",
+  "datos": {
+    "date": "2026-11-05",
+    "skill_version": "0.2.1+host.1",
+    "available_tools": [
+      "mcp__aikit_opencode__opencode_catalog",
+      "mcp__aikit_opencode__opencode_delegate"
+    ],
+    "mcp_call": {
+      "tool": "opencode_catalog",
+      "status": "ok",
+      "opencode_version": "2.2.0",
+      "filtered_models": 1
+    },
+    "inference_started": false,
+    "limits": [
+      "Does not execute opencode_delegate or prove a new inference/session",
+      "OpenCode version2.2.0 is not AIKit plugin version"
+    ],
+    "new_cache_process_observed": true,
+    "process_metadata_scope": "Only AIKit MCP PIDs and new/old cache booleans, no complete arguments or environments"
+  }
+}

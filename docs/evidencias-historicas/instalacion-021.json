@@ -1,0 +1,29 @@
+{
+  "tipo": "extracto seleccionado; no es copia íntegra",
+  "origen": ".aikit/ent002-install-021/coordinator-acceptance.json",
+  "sha256_original": "24d6726b6cd74dbd59ce8c97bfea47ec6c3a6106d32307d5d61688b61c0d59cb",
+  "campos_omitidos": "Identificadores de sesión o tarea, rutas locales y demás campos no seleccionados.",
+  "datos": {
+    "status": "installed_verified_reload_pending",
+    "version": "0.2.1+host.1",
+    "checked_source_files": 43,
+    "checked_cache_files": 42,
+    "runtime_prepared": true,
+    "mcp_tools": [
+      "opencode_catalog",
+      "opencode_delegate"
+    ],
+    "mcp_smoke_scope": "separate installed-server instance; not loaded Codex chat",
+    "inference_smoke_performed": false,
+    "backup_created_after_install": true,
+    "initial_backup_empty": true,
+    "old_source_cache_files_verified": 42,
+    "rollback_performed": false,
+    "limitations": [
+      "No independent before/after baseline for metadata of other plugins; commands targeted only AIKit",
+      "Original pre-install backup step was omitted; recovery point uses inventory recorded before installation plus old files verified unchanged afterwards",
+      "Failed first MCP smoke used literal PLUGIN_ROOT; corrected harness passed without package changes",
+      "User reload and loaded-client verification remain pending"
+    ]
+  }
+}

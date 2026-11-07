@@ -1,0 +1,25 @@
+{
+  "tipo": "extracto seleccionado; no es copia íntegra",
+  "origen": ".aikit/seleccion-modelo-requisitos/coordinator-recovery.json",
+  "sha256_original": "b3736ef7bce10a5d81e83382f6d95956aa2bd4553855d2cbfe7d2892975adc15",
+  "campos_omitidos": "Identificadores de sesión o tarea, rutas locales y demás campos no seleccionados.",
+  "datos": {
+    "scope": "Requirements draft only; no routing or implementation changes",
+    "limitation": "The original supervisor startup failure is not fixed by this recovery.",
+    "failed_attempt": {
+      "session": null,
+      "supervisor_code": "worker_failed",
+      "stdout_file_created": false,
+      "worker_process_found_during_reconciliation": false,
+      "waiting_client_stopped": true,
+      "root_cause": "Not diagnosed; failure occurred before the CLI output files and session were created."
+    },
+    "successful_dispatch": {
+      "transport": "direct official CLI against verified existing service, using cached model metadata",
+      "model": "opencode-go/gpt-6-luna",
+      "variant": "medium",
+      "tariff": "paid_catalog",
+      "observed_inactive": true
+    }
+  }
+}

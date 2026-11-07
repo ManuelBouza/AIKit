@@ -18,6 +18,10 @@ portable. La documentación versionada conserva resúmenes de los resultados,
 pero no sustituye los originales ni demuestra su autoría. Antes de archivar
 contenido, revisar individualmente datos privados, permisos y necesidad.
 
+Se han conservado cinco [extractos seleccionados](evidencias-historicas/README.md)
+de las evidencias prioritarias. Sus campos omitidos y las huellas originales se
+documentan en cada archivo; no deben confundirse con copias íntegras.
+
 ## Evidencia relevante para reanudar
 
 - **Reconciliación y cierre REC-001:** los informes y aceptaciones citados por

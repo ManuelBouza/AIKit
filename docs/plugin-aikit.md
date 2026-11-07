@@ -1,5 +1,10 @@
 # Instalar AIKit como complemento privado
 
+> Documento del empaquetado histórico: este repositorio desarrollará AIKit y
+> Delegating to OpenCode como componentes independientes. El exportador aún genera AIKit y no se
+> ha verificado un paquete independiente. La instalación descrita aquí no
+> representa la nueva distribución; consulta [límites y migración](limites-delegacion-aikit.md).
+
 AIKit agrupa la skill existente y el MCP local. Mantiene las funciones de
 orquestación y revisión de Codex y Superpowers. No instala hooks ni conecta
 cuentas por su cuenta. Requiere Codex con soporte de plugins locales, uv,

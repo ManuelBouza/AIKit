@@ -1,17 +1,24 @@
-# AIKit: configuraciones y skills para Codex
+# AIKit y Delegating to OpenCode
 
-AIKit evoluciona hacia un complemento instalable que reúna preferencias de
-configuración y distintas skills reutilizables. Debe complementar Superpowers y
-las demás capacidades instaladas. Antes de crear o modificar una skill, se
-comprueba si una existente cubre la necesidad y se documenta la diferencia que
-justifica el cambio.
+Este repositorio desarrolla dos componentes independientes: AIKit, para
+preferencias y capacidades generales, y Delegating to OpenCode, para la skill,
+CLI, MCP y mecanismos de disponibilidad, sesiones y supervisión de OpenCode.
+AIKit podrá utilizar la integración cuando esté disponible; ninguno requiere
+la instalación del otro.
 
-El repositorio permite exportar un complemento privado con la skill y el MCP,
-sin copiar archivos privados ni el entorno del checkout. Consulta
-[Instalar AIKit](docs/plugin-aikit.md). Las cuentas y credenciales son locales
-y no forman parte de la preferencia distribuible. Los
-criterios de evolución, reutilización y compatibilidad están en
-[Principios de AIKit](docs/principios-aikit.md).
+La separación es una decisión de alcance, no una migración terminada. El
+exportador y los manifiestos todavía generan el complemento histórico AIKit;
+no hay un paquete independiente verificado. Consulta los
+[límites y pendientes de migración](docs/limites-delegacion-aikit.md) y la
+[propuesta de monorepositorio](docs/plan-monorepositorio.md). La
+[documentación del paquete histórico](docs/plugin-aikit.md) describe el estado
+anterior. Las cuentas y
+credenciales permanecen locales. Antes de crear o modificar una skill, comprueba
+las capacidades existentes y evita duplicarlas.
+
+**Uso durante el desarrollo:** por indicación del usuario, Delegating to
+OpenCode no debe utilizarse hasta nuevo aviso; se emplean herramientas nativas
+de Codex. Los ejemplos siguientes describen la integración, no autorizan su uso.
 
 Objetivo: documentar y validar preferencias de Codex para delegar trabajo
 externalizable a OpenCode como ejecutor habitual. Codex conserva decisiones,
@@ -56,11 +63,12 @@ delegaciones dentro de OpenCode con `tool.use subagent:*` y el proveedor directo
 `openai` con `provider.use`; no limita otros proveedores ni subagentes
 nativos.
 
-## Mecanismo global `go`
+## Mecanismo global `go` (componente histórico)
 
-AIKit incluye un instalador explícito para incorporar un bloque delimitado a
+El repositorio conserva temporalmente el instalador de AIKit para incorporar un bloque delimitado a
 `AGENTS.md` global sin alterar configuración ajena. No añade skills, hooks ni
-MCP ni se autoinstala al cargar el complemento.
+MCP ni se autoinstala al cargar el complemento. Su destino es AIKit o un
+mecanismo global independiente; el traslado está pendiente.
 
 Guía completa: [Mecanismo go](docs/mecanismo-go.md).
 

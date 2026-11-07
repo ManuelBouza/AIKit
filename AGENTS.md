@@ -2,8 +2,18 @@
 
 ## Propósito
 
-Evolucionar AIKit hacia un complemento instalable de configuraciones y skills
-reproducibles, complementando Superpowers y otras skills.
+Desarrollar AIKit y Delegating to OpenCode en este repositorio, como componentes
+independientes. AIKit reúne preferencias y capacidades generales; la integración
+gestiona la delegación a OpenCode y puede utilizarse sin AIKit. La separación y
+el cambio de empaquetado aún no están implementados: consulta
+`docs/limites-delegacion-aikit.md` antes de mover o retirar componentes.
+
+## Restricción temporal del usuario
+
+Hasta nuevo aviso, no ejecutar ni invocar Delegating to OpenCode para el trabajo
+de desarrollo. Usar las herramientas nativas de Codex. Las instrucciones de
+delegación posteriores describen el comportamiento histórico y no prevalecen
+sobre esta restricción.
 
 ## Uso de BMAD
 
@@ -19,15 +29,16 @@ se mantienen el mecanismo global go y las restricciones de este proyecto.
 Explora primero las skills y herramientas instaladas y lee sus instrucciones
 pertinentes. Registra cobertura, carencias y justificación. Reutiliza lo existente;
 implementa solo lo no cubierto. No dupliques Superpowers ni alteres sus archivos,
-activación o roles. Aplica también a cambios de AIKit. Consulta
-`docs/principios-aikit.md`.
+activación o roles. Conserva los principios de reutilización descritos en
+`docs/principios-aikit.md`, cuyo alcance de producto es histórico.
 
 ## Estructura
 
 - `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados
   (`delegate.py` para la CLI y `mcp_server.py` para el servidor MCP local).
 - `tests/`: pytest con transporte falso, sin inferencia.
-- `scripts/build_plugin.py`: exporta el complemento y catálogo por lista permitida.
+- `scripts/build_plugin.py`: exporta el complemento histórico AIKit; pendiente
+  de separar el empaquetado de la integración.
 - `docs/`: investigación, validación y diseño.
 - `notas/`: ideas pendientes de debatir e implementar; índice en `notas/IDEAS.md`.
 - `opencode.json`: bloqueos de proveedor y subdelegación.
@@ -151,8 +162,9 @@ python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 
 Consulta `README.md` para uso, instalación y restauración. Conserva configuración
 ajena y respaldos fuera de rutas descubribles.
-Para empaquetar, consulta `docs/plugin-aikit.md`; no instales desde la raíz del
-checkout, ya que Codex también copia archivos ignorados por Git.
+El empaquetado actual sigue siendo el histórico descrito en
+`docs/plugin-aikit.md`; aún no existe un paquete independiente verificado. No
+instales desde la raíz del checkout: Codex también copia archivos ignorados por Git.
 
 ## Estilo
 

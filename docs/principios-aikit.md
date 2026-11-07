@@ -1,5 +1,10 @@
 # Principios de evolución de AIKit
 
+> Contexto histórico de AIKit: este repositorio desarrollará AIKit y Delegating
+> to OpenCode como componentes independientes. La reutilización y compatibilidad
+> siguen siendo principios aplicables; la separación está pendiente. Consulta
+> [límites y migración](limites-delegacion-aikit.md).
+
 ## Objetivo y estado actual
 
 AIKit debe convertirse en un complemento instalable para reproducir preferencias

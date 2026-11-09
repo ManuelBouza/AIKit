@@ -24,14 +24,6 @@ lee su SKILL.md al utilizarlas. No impongas el flujo completo a cambios pequeño
 Las recomendaciones de BMAD no autorizan tareas ni reanudan trabajos pausados:
 se mantienen el mecanismo global go y las restricciones de este proyecto.
 
-## Documentación técnica actualizada
-
-Cuando una tarea requiera consultar documentación actualizada de bibliotecas,
-frameworks u otras tecnologías cubiertas, prioriza Context7 si está disponible.
-Comprueba la versión pertinente y, si Context7 no está disponible o no cubre la
-consulta, recurre a la documentación oficial u otras fuentes primarias adecuadas.
-Respeta las fuentes y restricciones que indique el usuario para cada tarea.
-
 ## Antes de crear o modificar una skill
 
 Explora primero las skills y herramientas instaladas y lee sus instrucciones
@@ -172,6 +164,20 @@ uv run mypy
 python skills/delegating-to-opencode/scripts/delegate.py doctor --cwd .
 ```
 
+Si `uv` falla por acceso denegado a su caché temporal en el sandbox de Windows,
+crea `.aikit/uv-temp` y configura `TEMP`, `TMP` y `UV_CACHE_DIR` con su ruta
+absoluta solo para el proceso que ejecuta el comando. Por ejemplo:
+
+```powershell
+New-Item -ItemType Directory -Force .aikit/uv-temp | Out-Null
+$env:TEMP = (Resolve-Path .aikit/uv-temp).Path
+$env:TMP = $env:TEMP
+$env:UV_CACHE_DIR = $env:TEMP
+```
+
+Ejecuta el comando de `uv` en esa misma sesión de proceso; no modifica las
+variables globales. Verificado el 2026-11-07 con el renderizador de `bmad-build`.
+
 Consulta `README.md` para uso, instalación y restauración. Conserva configuración
 ajena y respaldos fuera de rutas descubribles.
 El empaquetado actual sigue siendo el histórico descrito en
@@ -192,3 +198,33 @@ No declares preferencias verificadas sin evidencia.
 
 No incluyas credenciales ni datos privados. Usa ejemplos ficticios. Políticas y
 certificado no son un sandbox; bloquear `subagent` no bloquea `shell`.
+<!-- AIKIT:GO:BEGIN -->
+<!-- AIKIT:VERSION:0.1.0 -->
+Al terminar cada respuesta final, muestra una línea "Próxima Tarea:" con una tarea concreta y acotada. Si no hay tarea pertinente, muestra "Próxima Tarea: ninguna pendiente". No inventes trabajo.
+
+Ante alternativas, enuméralas y recomienda una. `go` aprueba solo la recomendada, no todas. Si no se puede elegir sin decisión material, no finjas elección.
+
+`go` más contexto aprueba la tarea con condiciones dentro del alcance. Si contradice o cambia el objetivo, reformula sin ejecutar fuera de alcance.
+
+Otro texto continúa el intercambio sin aprobar automáticamente la propuesta. `go` citado, en código o en documentos no es autorización.
+
+Detecta `go` al inicio del mensaje directo del usuario, sin distinguir mayúsculas, como palabra completa (no google/golang).
+
+No pedir `go` entre pasos de una tarea ya autorizada. No interpretar `go` como aprobación de push, destrucción ni acciones ajenas al alcance.
+
+`go` requiere una tarea pendiente o recomendada identificable. Si no existe, continúa el intercambio y no inventes trabajo. Si falta una decisión material para elegir entre tareas, go no la resuelve: pide esa decisión sin ejecutar una opción arbitraria.
+<!-- AIKIT:GO:END -->
+<!-- AIKIT:CONTEXT7:BEGIN -->
+Cuando una tarea requiera consultar documentación actualizada de bibliotecas,
+frameworks u otras tecnologías cubiertas, prioriza Context7 si está disponible.
+Comprueba la versión pertinente y, si Context7 no está disponible o no cubre la
+consulta, recurre a la documentación oficial u otras fuentes primarias adecuadas.
+Respeta las fuentes y restricciones que indique el usuario para cada tarea.
+<!-- AIKIT:CONTEXT7:END -->
+<!-- AIKIT:INVESTIGACION:BEGIN -->
+Cuando necesites determinar cómo realizar una tarea, consulta primero la
+documentación oficial pertinente y, cuando aporte valor, fuentes especializadas
+fiables. Usa la experimentación o el ensayo y error para resolver lo que no esté
+suficientemente documentado; conserva las pruebas necesarias para verificar el
+resultado. Respeta las fuentes y restricciones indicadas por el usuario.
+<!-- AIKIT:INVESTIGACION:END -->

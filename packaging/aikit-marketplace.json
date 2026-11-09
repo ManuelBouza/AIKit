@@ -1,0 +1,5 @@
+{
+  "name": "aikit-preferencias-local",
+  "interface": {"displayName": "AIKit preferencias privado"},
+  "plugins": [{"name": "aikit-preferencias", "source": {"source": "local", "path": "./aikit-preferencias"}, "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Developer Tools"}]
+}

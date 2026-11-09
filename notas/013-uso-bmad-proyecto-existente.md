@@ -2,7 +2,10 @@
 
 Fecha: 2026-11-07.
 Estado inicial: Pendiente de debatir.
-Estado actual: En debate; investigación inicial realizada.
+Estado actual: Adoptado para el trabajo del proyecto; ajustes posteriores según necesidad.
+
+Manuel confirmó que BMAD solo se activará en los proyectos que lo necesiten;
+no forma parte de la configuración global general de AIKit.
 
 ## Pregunta
 
@@ -55,3 +58,9 @@ están en `_bmad-output/implementation-artifacts/spec-junction-constructor-go.md
 Se resolvió el acceso a la caché temporal de uv usando un directorio del proyecto.
 Los artefactos de proyecto de `_bmad-output/` dejan de estar excluidos de Git;
 la instalación `_bmad/` y las personalizaciones locales permanecen excluidas.
+
+## Actualización — 2026-11-08
+
+El proyecto usa la orientación y las skills instaladas de BMAD según la tarea;
+no se ha decidido distribuir BMAD como parte del complemento AIKit. Las
+limitaciones y validaciones de cada flujo se conservan en sus artefactos.

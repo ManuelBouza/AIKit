@@ -1,0 +1,27 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "aikit-preferencias",
+  "version": "0.1.0",
+  "description": "Preferencias independientes go y Context7 para Codex.",
+  "author": {
+    "name": "Manuel"
+  },
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "AIKit preferencias",
+        "shortDescription": "Preferencias go y Context7",
+        "developerName": "Manuel",
+        "category": "Developer Tools",
+        "composerIcon": "./assets/aikit-icon.png",
+        "logo": "./assets/aikit-icon.png",
+        "capabilities": [
+          "Read",
+          "Write"
+        ]
+      },
+      "onboardingSkill": "./skills/aikit-setup/SKILL.md"
+    }
+  }
+}

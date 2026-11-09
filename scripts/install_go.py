@@ -21,7 +21,7 @@ def _print_result(changed: bool, backup: Path | None) -> None:
         "status": "changed" if changed else "unchanged",
         "backup": str(backup) if backup is not None else None,
     }
-    print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    print(json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
 
 def main() -> int:

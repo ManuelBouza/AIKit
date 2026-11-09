@@ -32,17 +32,18 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | --- | --- | --- |
 | [001 — Disponibilidad de cuentas](001-disponibilidad-cuentas.md) | En implementación | Revisar cuentas y modelos antes de inferir y mantener actualizadas sus fechas de recuperación. |
 
+## En planificación
+
+| Nota | Estado | Idea |
+| --- | --- | --- |
+| [007 — Separar delegación de AIKit](007-separar-delegacion-de-aikit.md) | En planificación | AIKit instalado con setup explícito; la migración, convivencia y validación de la integración independiente siguen pendientes. |
+
 ## Implementada en fuentes; instalación pendiente
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
-
-## En debate
-
-| Nota | Estado | Idea |
-| --- | --- | --- |
-| [013 — Uso de BMAD en el proyecto existente](013-uso-bmad-proyecto-existente.md) | En debate | Determinar cómo adaptar el flujo de desarrollo de BMAD al repositorio y conservar el trabajo existente. |
+| [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 
 ## Pendiente de debatir
 
@@ -53,11 +54,9 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [004 — Privacidad al delegar](004-guardarrailes-privacidad-opencode.md) | Pendiente de debatir | Evitar filtraciones de datos privados, empresariales y sensibles mediante guardarraíles fuertes. |
 | [005 — Prompts concisos para OpenCode](005-prompts-concisos-opencode.md) | Pendiente de debatir | Investigar cómo preparar encargos eficaces, similares a los de subagentes de Codex y sin información redundante. |
 | [006 — Herramientas y skills en OpenCode](006-herramientas-skills-opencode.md) | Pendiente de debatir | Investigar cómo habilitar Superpowers, Context7 y AIKit en OpenCode y verificar su acceso durante las tareas. |
-| [007 — Separar delegación de AIKit](007-separar-delegacion-de-aikit.md) | Pendiente de debatir | Hacer independiente delegating-to-opencode y que AIKit lo utilice como otra herramienta disponible. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Pendiente de debatir | Organizar cada solicitud en visión, estructura y requisitos, asegurando la comprensión del usuario y un contexto rico. |
 | [010 — Criterios de modelo y esfuerzo](010-criterios-modelo-y-esfuerzo.md) | Pendiente de debatir | Investigar cómo estimar cada tarea y escoger el modelo y esfuerzo que mejor encajen con sus necesidades y las capacidades disponibles, sin asignaciones fijas. |
 | [011 — Control de contexto en OpenCode](011-control-contexto-opencode.md) | Pendiente de debatir | Determinar cuándo conviene compactar el contexto antes de lanzar una nueva tarea. |
-| [014 — Preferencia de Context7 en AIKit](014-preferencia-context7.md) | Pendiente de debatir | Incorporar de forma portable la preferencia de consultar documentación técnica actualizada con Context7. |
 
 ## Implementada
 
@@ -65,3 +64,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | --- | --- | --- |
 | [012 — Referencia a BMAD en AGENTS.md](012-referencia-bmad-en-agents.md) | Implementada | Referencia breve de uso aprobada con go e incorporada a AGENTS.md, complementaria al descubrimiento de skills. |
 | [015 — Backlog de ideas compatible con BMAD](015-backlog-ideas-bmad.md) | Implementada | Organizar las notas y registrar ideas nuevas en un backlog trazable. |
+| [013 — Uso de BMAD en el proyecto existente](013-uso-bmad-proyecto-existente.md) | Adoptado en el proyecto | Aplicar las skills pertinentes; su distribución con AIKit no está decidida. |
+| [014 — Preferencia de Context7 en AIKit](014-preferencia-context7.md) | Implementada y configurada mediante setup explícito | Preferencia aplicada en global y proyecto; validada la configuración. |
+| [017 — Identidad visual de AIKit](017-identidad-visual-aikit.md) | Implementada e instalada; visible en la lista de complementos | Icono azul y naranja inspirado en la armonía evocada por aiki. |
+| [016 — Investigar antes de experimentar](016-investigacion-antes-de-experimentar.md) | Implementada e instalada en global y proyecto | Priorizar documentación y fuentes especializadas sin omitir pruebas de verificación. |

@@ -273,3 +273,33 @@ def test_cli_subprocess_unchanged(tmp_path: Path) -> None:
     payload = json.loads(proc.stdout)
     assert payload["status"] == "unchanged"
     assert payload["backup"] is None
+
+
+@pytest.mark.parametrize("location", ["profile", "backup"])
+def test_reparse_point_rejected_without_profile_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, location: str
+) -> None:
+    import os
+    import stat
+    from types import SimpleNamespace
+    from typing import cast
+
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    agents = profile / "AGENTS.md"
+    agents.write_bytes(b"ficticio\r\n")
+    linked = profile if location == "profile" else profile / "backups"
+    original_lstat = Path.lstat
+    monkeypatch.setattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400, raising=False)
+
+    def simulated_lstat(path: Path) -> os.stat_result:
+        if path == linked:
+            return cast(os.stat_result, SimpleNamespace(st_file_attributes=0x400))
+        return original_lstat(path)
+
+    monkeypatch.setattr(Path, "lstat", simulated_lstat)
+    with pytest.raises(ValueError, match="reanálisis"):
+        install_go(profile, TEMPLATE)
+    assert agents.read_bytes() == b"ficticio\r\n"
+    assert not list(profile.glob(".agents.md.tmp-*"))
+    assert not (profile / "backups").exists()

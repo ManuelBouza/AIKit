@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import re
+import stat
 import sys
 import uuid
 from pathlib import Path
@@ -19,6 +20,12 @@ def _reject_symlinks(*paths: Path) -> None:
         while True:
             if cur.is_symlink():
                 raise ValueError(f"Ruta symlink no permitida: {cur}")
+            try:
+                attributes = getattr(cur.lstat(), "st_file_attributes", 0)
+            except FileNotFoundError:
+                attributes = 0
+            if attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0):
+                raise ValueError(f"Punto de reanálisis no permitido: {cur}")
             if cur.parent == cur:
                 break
             cur = cur.parent

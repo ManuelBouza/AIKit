@@ -210,7 +210,9 @@ Otro texto continúa el intercambio sin aprobar automáticamente la propuesta. `
 
 Detecta `go` al inicio del mensaje directo del usuario, sin distinguir mayúsculas, como palabra completa (no google/golang).
 
-No pedir `go` entre pasos de una tarea ya autorizada. No interpretar `go` como aprobación de push, destrucción ni acciones ajenas al alcance.
+No pedir `go` entre pasos de una tarea ya autorizada. `go` aprueba la tarea concreta indicada en «Próxima Tarea», salvo las acciones sensibles que requieren una palabra clave; no autoriza acciones ajenas a ella.
+
+Para un push, una eliminación irreversible o una publicación o exposición pública, indica claramente en «Próxima Tarea» la acción y la palabra concreta que la autoriza, por ejemplo: «escribe push para subir los cambios». En ese caso `go` no sustituye la palabra solicitada. Una instrucción directa y explícita del usuario también autoriza la acción que describe. Aplica el mismo criterio a otras acciones sensibles según su impacto.
 
 `go` requiere una tarea pendiente o recomendada identificable. Si no existe, continúa el intercambio y no inventes trabajo. Si falta una decisión material para elegir entre tareas, go no la resuelve: pide esa decisión sin ejecutar una opción arbitraria.
 <!-- AIKIT:GO:END -->

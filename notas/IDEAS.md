@@ -68,3 +68,4 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [014 — Preferencia de Context7 en AIKit](014-preferencia-context7.md) | Implementada y configurada mediante setup explícito | Preferencia aplicada en global y proyecto; validada la configuración. |
 | [017 — Identidad visual de AIKit](017-identidad-visual-aikit.md) | Implementada e instalada; visible en la lista de complementos | Icono azul y naranja inspirado en la armonía evocada por aiki. |
 | [016 — Investigar antes de experimentar](016-investigacion-antes-de-experimentar.md) | Implementada e instalada en global y proyecto | Priorizar documentación y fuentes especializadas sin omitir pruebas de verificación. |
+| [019 — Go y acciones sensibles](019-go-autoriza-proxima-tarea.md) | Implementada e instalada | Go autoriza tareas ordinarias; para acciones sensibles se indica una palabra de autorización. |

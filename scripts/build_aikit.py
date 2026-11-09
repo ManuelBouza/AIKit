@@ -13,6 +13,7 @@ SOURCE_ROOT = Path(__file__).absolute().parents[1]
 FILES = {
     "packaging/assets/aikit-icon.png": "aikit-preferencias/assets/aikit-icon.png",
     "packaging/skills/aikit-setup/SKILL.md": "aikit-preferencias/skills/aikit-setup/SKILL.md",
+    "packaging/skills/director-de-ideas/SKILL.md": "aikit-preferencias/skills/director-de-ideas/SKILL.md",
     "packaging/skills/aikit-setup/references/herramientas.md": "aikit-preferencias/skills/aikit-setup/references/herramientas.md",
     "packaging/aikit-plugin.json": "aikit-preferencias/plugin.json",
     "packaging/aikit-marketplace.json": ".agents/plugins/marketplace.json",

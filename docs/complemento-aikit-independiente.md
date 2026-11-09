@@ -7,6 +7,10 @@ delegación. Su identidad `aikit-preferencias` es distinta de la histórica
 validado. Conserve el complemento y configuración históricos hasta decidir y
 probar la migración.
 
+La skill `director-de-ideas` ayuda a madurar ideas y aclarar decisiones antes de
+materializarlas. No exige BMAD ni reemplaza las autorizaciones vigentes. Su
+selección automática y convivencia con otras skills aún requieren verificación.
+
 Desde el repositorio fuente, instale las dependencias de compilación y construya
 un catálogo en una ruta nueva. Se necesitan Node.js y npm en el constructor:
 

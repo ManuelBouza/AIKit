@@ -44,6 +44,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
+| [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Implementada en fuentes; validación de activación pendiente | Madurar ideas y aclarar decisiones antes de materializarlas. |
 
 ## Pendiente de debatir
 
@@ -54,7 +55,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [004 — Privacidad al delegar](004-guardarrailes-privacidad-opencode.md) | Pendiente de debatir | Evitar filtraciones de datos privados, empresariales y sensibles mediante guardarraíles fuertes. |
 | [005 — Prompts concisos para OpenCode](005-prompts-concisos-opencode.md) | Pendiente de debatir | Investigar cómo preparar encargos eficaces, similares a los de subagentes de Codex y sin información redundante. |
 | [006 — Herramientas y skills en OpenCode](006-herramientas-skills-opencode.md) | Pendiente de debatir | Investigar cómo habilitar Superpowers, Context7 y AIKit en OpenCode y verificar su acceso durante las tareas. |
-| [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Pendiente de debatir | Organizar cada solicitud en visión, estructura y requisitos, asegurando la comprensión del usuario y un contexto rico. |
 | [010 — Criterios de modelo y esfuerzo](010-criterios-modelo-y-esfuerzo.md) | Pendiente de debatir | Investigar cómo estimar cada tarea y escoger el modelo y esfuerzo que mejor encajen con sus necesidades y las capacidades disponibles, sin asignaciones fijas. |
 | [011 — Control de contexto en OpenCode](011-control-contexto-opencode.md) | Pendiente de debatir | Determinar cuándo conviene compactar el contexto antes de lanzar una nueva tarea. |
 

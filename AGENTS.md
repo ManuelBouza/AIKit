@@ -32,6 +32,15 @@ implementa solo lo no cubierto. No dupliques Superpowers ni alteres sus archivos
 activación o roles. Conserva los principios de reutilización descritos en
 `docs/principios-aikit.md`, cuyo alcance de producto es histórico.
 
+## Maduración de ideas
+
+Cuando una idea necesite madurar antes de materializarse o una ambigüedad pueda
+cambiar el resultado, usa la skill Director de Ideas si está disponible. En este
+checkout, si no figura en el catálogo de skills, lee y sigue su fuente en
+`packaging/skills/director-de-ideas/SKILL.md`.
+Aclara las decisiones esenciales, respeta las autorizaciones vigentes y continúa
+directamente con tareas claras y autorizadas.
+
 ## Estructura
 
 - `skills/delegating-to-opencode/`: instrucciones, política y scripts tipados

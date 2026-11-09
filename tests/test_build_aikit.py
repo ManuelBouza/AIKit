@@ -48,6 +48,10 @@ def test_export_and_install(tmp_path: Path) -> None:
         ).read_bytes()
     onboarding = manifest["extensions"]["com.openai"]["onboardingSkill"]
     assert (package / onboarding).is_file()
+    director = "skills/director-de-ideas/SKILL.md"
+    assert (package / director).read_bytes() == (
+        ROOT / "packaging" / director
+    ).read_bytes()
     assert not (package / "mcp.json").exists()
     profile = tmp_path / "perfil"
     profile.mkdir()

@@ -1,7 +1,8 @@
 # Método del Director de Ideas
 
 Fecha: 2026-10-31.
-Estado: implementada en fuentes; validación de activación pendiente.
+Estado: implementada e instalada en el perfil de prueba; activación observada
+sin BMAD y convivencia con BMAD observada en un escenario simulado.
 
 ## Intención
 
@@ -243,3 +244,51 @@ AIKit y la instrucción de activación se añadió a `AGENTS.md` del proyecto. L
 instalación global y la selección automática aún no están verificadas.
 La especificación de implementación está en
 [`spec-director-de-ideas.md`](../_bmad-output/implementation-artifacts/spec-director-de-ideas.md).
+
+Una [prueba en sesiones temporales](../docs/evidencias/director-de-ideas-descubrimiento.md)
+observó selección de la skill con y sin un candidato de BMAD, pero las políticas
+del entorno impidieron leerla. Inyectando su contenido se observó una respuesta
+apropiada para una idea abierta. Siguen pendientes la carga real y la convivencia
+con una instalación funcional de BMAD.
+
+## Complementariedad con BMAD — 2026-11-09
+
+Manuel decide que en proyectos con BMAD el Director de Ideas y las skills de
+BMAD se complementan: el Director mantiene la comprensión, la madurez y la luz
+verde, y BMAD puede aportar exploración o cuestionamiento cuando sea pertinente.
+En proyectos sin BMAD, el Director realiza por sí mismo la tarea de aclaración.
+La skill de fuentes recoge esta decisión; la convivencia real sigue pendiente de
+prueba. El protocolo está en [prueba en Desktop](../docs/prueba-director-ideas-desktop.md).
+
+El 2026-11-10 se actualizó el complemento personal de prueba y se comprobó que
+la skill instalada coincide con la fuente. En chats nuevos se observó selección
+y lectura automáticas sin BMAD y lectura de ambas skills con BMAD. En este último
+caso no se ejecutó el flujo completo de Forge; la convivencia completa sigue
+pendiente. Detalles y límites en el protocolo de prueba enlazado arriba.
+
+Se ejecutó además una prueba ficticia aislada de los comandos de registro de
+Forge con informe y criterios de Director. La conversación no fue interactiva
+con una persona real; no demuestra el flujo completo de extremo a extremo.
+
+Posteriormente se retomó el chat de Desktop y se activó Forge junto con Director:
+se creó y cerró un registro y un informe en una carpeta aislada. La respuesta del
+escenario fue simulada y el resultado quedó como idea aclarada, no validada. El
+protocolo describe la evidencia y sus límites.
+
+## Reconciliación de cierre — 2026-11-12
+
+La prueba autorizada de Desktop terminó. Se contrastó el cierre del chat de
+coordinación con el protocolo: hubo descubrimiento y lectura sin BMAD, lectura
+explícita de ambas skills con BMAD y ejecución de Forge con respuesta ficticia.
+No se acredita selección automática de Forge, validación con usuarios reales
+ni revisión visual del informe. Estas limitaciones no convierten la prueba
+acotada terminada en una ejecución todavía activa.
+
+Este cierre reúne la actualización de complementariedad de la skill y sus
+evidencias para su registro en Git. La mejora posterior de `go` pertenece
+a la nota 020; la política futura de chats y relevo pertenece a la nota 021.
+No se reanudan por este cierre la integración OpenCode ni otros trabajos pausados.
+
+Validación del cierre: `tests/test_build_aikit.py`, 13 pruebas aprobadas;
+`git diff --check`, sin errores. El empaquetado no demuestra comportamiento
+conversacional adicional al observado en las pruebas descritas.

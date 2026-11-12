@@ -35,6 +35,9 @@ aprobación de nuevo entre pasos ya autorizados. Para acciones sensibles respeta
 las autorizaciones específicas aplicables.
 
 Conserva decisiones y dudas mediante el mecanismo existente del proyecto cuando
-sea apropiado, sin crear documentos por rutina. Reutiliza herramientas y skills
-pertinentes si están disponibles, sin exigir BMAD ni modificar flujos de terceros.
+sea apropiado, sin crear documentos por rutina. Si BMAD está disponible para el
+proyecto, complementa sus skills pertinentes: puedes recurrir a su exploración
+crítica cuando aporte valor y conservar la claridad, decisiones y autorización
+del alcance. No dupliques ni modifiques sus flujos ni actives BMAD globalmente.
+Sin BMAD, guía tú mismo la aclaración y evaluación de madurez descritas aquí.
 El usuario puede cambiar de dirección o abandonar la idea en cualquier momento.

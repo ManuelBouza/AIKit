@@ -36,6 +36,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [021 — Chats, subagentes y relevo](021-coordinacion-chats-subagentes-relevo.md) | Implementación futura; criterios investigados | Elegir el medio de trabajo, distinguir pruebas y conservar el estado al relevar al coordinador. |
 | [007 — Separar delegación de AIKit](007-separar-delegacion-de-aikit.md) | En planificación | AIKit instalado con setup explícito; la migración, convivencia y validación de la integración independiente siguen pendientes. |
 
 ## Implementada en fuentes; instalación pendiente
@@ -44,7 +45,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
-| [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Implementada en fuentes; validación de activación pendiente | Madurar ideas y aclarar decisiones antes de materializarlas. |
+| [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
 
 ## Pendiente de debatir
 

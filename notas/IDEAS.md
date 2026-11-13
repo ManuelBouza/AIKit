@@ -59,6 +59,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [006 — Herramientas y skills en OpenCode](006-herramientas-skills-opencode.md) | Pendiente de debatir | Investigar cómo habilitar Superpowers, Context7 y AIKit en OpenCode y verificar su acceso durante las tareas. |
 | [010 — Criterios de modelo y esfuerzo](010-criterios-modelo-y-esfuerzo.md) | Pendiente de debatir | Investigar cómo estimar cada tarea y escoger el modelo y esfuerzo que mejor encajen con sus necesidades y las capacidades disponibles, sin asignaciones fijas. |
 | [011 — Control de contexto en OpenCode](011-control-contexto-opencode.md) | Pendiente de debatir | Determinar cuándo conviene compactar el contexto antes de lanzar una nueva tarea. |
+| [023 — Visualización y gestión de notas](023-visualizacion-backlog.md) | Tablero local implementado y verificado | Consultar las notas en una vista local generada desde Markdown. |
 
 ## Implementada
 

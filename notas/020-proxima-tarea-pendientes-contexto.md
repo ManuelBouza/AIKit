@@ -2,7 +2,7 @@
 
 - Fecha: 2026-11-10
 - Estado inicial: Pendiente de debatir
-- Estado actual: Implementada en plantillas; caso conversacional observado; instalación global pendiente
+- Estado actual: Regla instalada globalmente; caso conversacional observado con lectura explícita
 
 ## Rectificación del contexto — 2026-11-12
 
@@ -221,3 +221,21 @@ al indicar que se deseaba filtrar datos recomendó CSV sin modificar archivos.
 El caso confirma ese comportamiento observado con lectura explícita; no prueba
 instalación global, descubrimiento automático ni todos los casos de autorización.
 No se probó la creación de una exportación: el encargo solo solicitaba asesoría.
+
+## Aplicación global — 2026-11-13
+
+Con autorización de Manuel se exportó una copia nueva del complemento y se
+ejecutó su instalador global. La vista previa mostró el cambio del bloque `go`
+y preservación del contenido posterior; la instalación devolvió `changed` con
+respaldo y una vista previa posterior no mostró diferencias. Este chat recibió
+las instrucciones globales actualizadas. En ese momento el complemento instalado
+en caché contenía la plantilla antigua; se actualizó como se describe abajo.
+
+## Actualización del complemento — 2026-11-13
+
+Se respaldaron las dos plantillas del catálogo local de prueba y se actualizaron
+desde las fuentes. `codex plugin add` reinstaló el mismo identificador y versión
+desde ese catálogo. Ambas plantillas de la caché instalada coinciden por SHA-256
+con la fuente actual. La vista previa del instalador instalado incluye la nueva
+regla y no propone cambios en el perfil global. No se verificó la carga de la
+regla en un chat nuevo tras esta actualización.

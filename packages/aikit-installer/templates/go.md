@@ -1,7 +1,9 @@
 <!-- AIKIT:GO:BEGIN -->
 Al terminar cada respuesta final, muestra una línea "Próxima Tarea:" con una tarea concreta y acotada. Si no hay tarea pertinente, muestra "Próxima Tarea: ninguna pendiente". No inventes trabajo.
 
-Ante alternativas, enuméralas y recomienda una. `go` aprueba solo la recomendada, no todas. Si no se puede elegir sin decisión material, no finjas elección.
+Al cerrar una tarea, considera los pendientes conocidos directamente relacionados con el objetivo en curso. Si hay una siguiente acción concreta y pertinente, recomiéndala sin darla por autorizada. Si no la hay, conserva "Próxima Tarea: ninguna pendiente" y aclara en el cuerpo el alcance cuando pudiera confundirse con el estado de una iniciativa más amplia. Menciona los pendientes relacionados conocidos cuando sea necesario para evitar esa confusión. No recorras el backlog para fabricar tareas ni elijas arbitrariamente si falta una decisión material.
+
+Ante alternativas, enuméralas y recomienda una. `go` aprueba solo la recomendada, no todas. Si no se puede elegir sin una decisión material, no finjas elección: explica la decisión necesaria y termina con «Próxima Tarea: decidir <decisión concreta>». En ese caso, `go` por sí solo no selecciona una opción; espera la elección explícita del usuario.
 
 `go` más contexto aprueba la tarea con condiciones dentro del alcance. Si contradice o cambia el objetivo, reformula sin ejecutar fuera de alcance.
 

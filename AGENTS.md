@@ -17,8 +17,11 @@ sobre esta restricción.
 
 ## Uso de BMAD
 
-Para preguntas sobre BMAD o sobre qué flujo elegir, usa `bmad-help` y consulta
-el catálogo instalado en `_bmad/_config/bmad-help.csv`.
+Antes de desarrollar una herramienta o funcionalidad en este proyecto, usa
+`bmad-help` y consulta el catálogo instalado en `_bmad/_config/bmad-help.csv`
+para seleccionar y aplicar el flujo de BMAD adecuado al alcance. El Director de
+Ideas aclara la idea y no sustituye ese paso de desarrollo.
+Para preguntas sobre BMAD o sobre qué flujo elegir, usa también `bmad-help`.
 Selecciona las demás skills según la petición y sus descripciones publicadas;
 lee su SKILL.md al utilizarlas. No impongas el flujo completo a cambios pequeños.
 Las recomendaciones de BMAD no autorizan tareas ni reanudan trabajos pausados:

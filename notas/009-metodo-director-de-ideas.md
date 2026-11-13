@@ -292,3 +292,14 @@ No se reanudan por este cierre la integración OpenCode ni otros trabajos pausad
 Validación del cierre: `tests/test_build_aikit.py`, 13 pruebas aprobadas;
 `git diff --check`, sin errores. El empaquetado no demuestra comportamiento
 conversacional adicional al observado en las pruebas descritas.
+
+## Corrección de relevo a BMAD — 2026-11-13
+
+Durante el tablero de notas se pasó de Director de Ideas a implementar sin
+consultar BMAD. Manuel aclaró que el Director madura la idea y BMAD guía el
+desarrollo. La instrucción del proyecto y la fuente de la skill ahora indican
+consultar `bmad-help` al iniciar desarrollo con BMAD y elegir el flujo apropiado;
+no se modifica BMAD ni se exige el flujo completo para todo cambio pequeño.
+El complemento instalado se actualizó desde su catálogo local; la copia de la
+skill instalada coincide con la fuente. La prueba de empaquetado dio 13 aprobadas.
+No se ha comprobado el comportamiento de relevo en un chat nuevo.

@@ -39,5 +39,8 @@ sea apropiado, sin crear documentos por rutina. Si BMAD está disponible para el
 proyecto, complementa sus skills pertinentes: puedes recurrir a su exploración
 crítica cuando aporte valor y conservar la claridad, decisiones y autorización
 del alcance. No dupliques ni modifiques sus flujos ni actives BMAD globalmente.
+Al pasar de madurar una idea al desarrollo en un proyecto con BMAD, consulta
+`bmad-help` y selecciona el flujo de desarrollo adecuado; la exploración del
+Director no sustituye ese flujo. Conserva el alcance y la autorización vigente.
 Sin BMAD, guía tú mismo la aclaración y evaluación de madurez descritas aquí.
 El usuario puede cambiar de dirección o abandonar la idea en cualquier momento.

@@ -21,4 +21,4 @@ Informa de las herramientas ya instaladas y habilitadas. Para cada herramienta a
 
 Con aprobación, usa la capacidad disponible del cliente para instalar el complemento exacto y completar su conexión. Si el cliente solo permite presentar una sugerencia o requiere interacción del usuario, hazlo e informa de lo que falta; no simules instalación. Vuelve a consultar el estado y confirma instalación y ámbito solo con evidencia. Indica si es necesario iniciar otro chat para disponer de las herramientas. Una herramienta que ya esté instalada y habilitada no se reinstala.
 
-No actives Delegating to OpenCode. BMAD solo se activa en los proyectos donde se necesite; no es una recomendación global de AIKit.
+No actives Delegating to OpenCode. No exijas ni actives metodologías o herramientas de terceros como requisito general de AIKit; respeta las preferencias y el contexto de cada proyecto.

@@ -303,3 +303,15 @@ no se modifica BMAD ni se exige el flujo completo para todo cambio pequeño.
 El complemento instalado se actualizó desde su catálogo local; la copia de la
 skill instalada coincide con la fuente. La prueba de empaquetado dio 13 aprobadas.
 No se ha comprobado el comportamiento de relevo en un chat nuevo.
+
+## Independencia de BMAD — 2026-11-13
+
+Manuel aclaró que Director de Ideas no puede depender de BMAD. La skill mantiene
+su funcionamiento autónomo y respeta los flujos aplicables del proyecto; la
+consulta obligatoria a `bmad-help` pertenece a las instrucciones de este
+repositorio, donde BMAD está instalado, no a la skill distribuida.
+
+Manuel precisó que AIKit en su conjunto debe servir para usos técnicos y no
+técnicos, independientemente de BMAD u otras metodologías. Las skills distribuidas
+se expresan en términos generales; la regla específica de BMAD permanece en las
+instrucciones de este repositorio, no como requisito global de AIKit.

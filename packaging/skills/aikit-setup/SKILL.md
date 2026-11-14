@@ -7,7 +7,15 @@ description: Configura las preferencias de AIKit en el perfil global de Codex o 
 
 Usa esta skill cuando el usuario solicite configurar AIKit. Instalar el complemento por sí solo no aplica las preferencias.
 
-Presenta las cinco preferencias: `--go`, `--context7`, `--investigacion`, `--escritura` y `--visualizacion`. Explica brevemente cada una y pregunta, para cada preferencia sin decisión explícita, si desea activarla, conservarla o desactivarla, y en qué ámbito: global, proyecto o ambos. Reúne las decisiones en una sola consulta cuando sea posible. No presupongas que ejecutar setup autoriza opciones que no se hayan elegido.
+Presenta estas cinco preferencias y sus efectos:
+
+- `--go`: propone la próxima tarea e interpreta `go` según las reglas de autorización.
+- `--context7`: prioriza Context7 para documentación actualizada cuando corresponda.
+- `--investigacion`: consulta documentación oficial y fuentes fiables antes de decidir cómo realizar una tarea.
+- `--escritura`: usa el estilo del usuario para escritos en su nombre destinados a terceros; aprovecha `write-like-me` cuando esté disponible.
+- `--visualizacion`: cuando se sugiera `visualize` sin petición previa, solicita autorización antes de usarlo; una solicitud expresa de la visualización ya la autoriza dentro del alcance.
+
+Para cada preferencia sin decisión explícita, pregunta si desea activarla, conservarla o desactivarla, y en qué ámbito: global, proyecto o ambos. Reúne las decisiones en una sola consulta cuando sea posible. No presupongas que ejecutar setup autoriza opciones que no se hayan elegido.
 
 Global usa `CODEX_HOME` o `~/.codex`; proyecto usa la raíz Git del directorio de trabajo actual. No sustituyas el directorio de trabajo del proyecto por el del complemento. Una opción sin decisión conserva cualquier bloque existente; no implica desactivarlo. Para desactivar explícitamente un bloque gestionado usa `--quitar-go`, `--quitar-context7`, `--quitar-investigacion`, `--quitar-escritura` o `--quitar-visualizacion`. La retirada no elimina instrucciones fuera del bloque y no garantiza desactivar reglas equivalentes en otros ámbitos o archivos.
 

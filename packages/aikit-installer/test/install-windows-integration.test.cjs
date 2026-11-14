@@ -22,14 +22,27 @@ for (const [code, destinationPresent, backupPresent, expected] of [
 ]) {
   test(`diagnóstico integrado simula fallo ${code} y conserva las rutas`, async (t) => {
     const home = profile(t);
-    const paths = { destination: path.join(home, 'AGENTS.md'), replacement: path.join(home, 'temporal'), backup: path.join(home, 'respaldo') };
+    const paths = {
+      destination: path.join(home, 'AGENTS.md'),
+      replacement: path.join(home, 'temporal'),
+      backup: path.join(home, 'respaldo'),
+    };
     if (destinationPresent) fs.writeFileSync(paths.destination, 'original');
     if (backupPresent) fs.writeFileSync(paths.backup, 'original');
     fs.writeFileSync(paths.replacement, 'nuevo');
-    const before = fs.readdirSync(home).sort().map(file => [file, fs.readFileSync(path.join(home, file), 'utf8')]);
-    const { replaceWindows } = await import(pathToFileURL(path.resolve(__dirname, '../dist/windows-replace.js')).href);
+    const before = fs
+      .readdirSync(home)
+      .sort()
+      .map((file) => [file, fs.readFileSync(path.join(home, file), 'utf8')]);
+    const { replaceWindows } = await import(
+      pathToFileURL(path.resolve(__dirname, '../dist/windows-replace.js')).href
+    );
     let calls = 0;
-    const report = replaceWindows(paths, received => { calls++; assert.deepEqual(received, paths); return { ok: false, code }; });
+    const report = replaceWindows(paths, (received) => {
+      calls++;
+      assert.deepEqual(received, paths);
+      return { ok: false, code };
+    });
     assert.equal(calls, 1);
     assert.equal(report.classification, expected);
     assert.equal(report.action, 'preserve-and-inspect');
@@ -38,18 +51,33 @@ for (const [code, destinationPresent, backupPresent, expected] of [
       replacement: { path: paths.replacement, exists: true },
       backup: { path: paths.backup, exists: backupPresent },
     });
-    assert.deepEqual(fs.readdirSync(home).sort().map(file => [file, fs.readFileSync(path.join(home, file), 'utf8')]), before);
+    assert.deepEqual(
+      fs
+        .readdirSync(home)
+        .sort()
+        .map((file) => [file, fs.readFileSync(path.join(home, file), 'utf8')]),
+      before,
+    );
   });
 }
 
 test('un fallo no verificable no borra ni reintenta', async (t) => {
   const home = profile(t);
-  const paths = { destination: path.join(home, 'AGENTS.md'), replacement: path.join(home, 'temporal'), backup: path.join(home, 'respaldo') };
+  const paths = {
+    destination: path.join(home, 'AGENTS.md'),
+    replacement: path.join(home, 'temporal'),
+    backup: path.join(home, 'respaldo'),
+  };
   fs.writeFileSync(paths.destination, 'original');
   fs.writeFileSync(paths.replacement, 'nuevo');
-  const { replaceWindows } = await import(pathToFileURL(path.resolve(__dirname, '../dist/windows-replace.js')).href);
+  const { replaceWindows } = await import(
+    pathToFileURL(path.resolve(__dirname, '../dist/windows-replace.js')).href
+  );
   let calls = 0;
-  const report = replaceWindows(paths, () => { calls++; throw new Error('fallo ficticio'); });
+  const report = replaceWindows(paths, () => {
+    calls++;
+    throw new Error('fallo ficticio');
+  });
   assert.equal(calls, 1);
   assert.equal(report.code, null);
   assert.equal(report.classification, 'unverified');
@@ -70,9 +98,15 @@ if ($env:AIKIT_TEST_ADD_RULE -eq '1') {
 $sections = [Security.AccessControl.AccessControlSections]::Access -bor [Security.AccessControl.AccessControlSections]::Owner -bor [Security.AccessControl.AccessControlSections]::Group
 [Console]::Out.Write([IO.File]::GetAccessControl($file).GetSecurityDescriptorSddlForm($sections))`;
   const encoded = Buffer.from(script, 'utf16le').toString('base64');
-  const result = spawnSync('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded], {
-    env: { ...process.env, AIKIT_TEST_HOME: home, AIKIT_TEST_ADD_RULE: addRule ? '1' : '0' }, encoding: 'utf8', timeout: 30000,
-  });
+  const result = spawnSync(
+    'powershell.exe',
+    ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+    {
+      env: { ...process.env, AIKIT_TEST_HOME: home, AIKIT_TEST_ADD_RULE: addRule ? '1' : '0' },
+      encoding: 'utf8',
+      timeout: 30000,
+    },
+  );
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
   return result.stdout;
@@ -86,7 +120,10 @@ for (const explicit of [false, true]) {
     const before = Buffer.from('# Preferencias personales\r\nContenido previo.\r\n');
     fs.writeFileSync(target, before);
     const originalAcl = acl(home, explicit);
-    const result = spawnSync(process.execPath, [cli, 'install', '--codex-home', home], { encoding: 'utf8', timeout: 30000 });
+    const result = spawnSync(process.execPath, [cli, 'install', '--codex-home', home], {
+      encoding: 'utf8',
+      timeout: 30000,
+    });
     assert.ifError(result.error);
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout);

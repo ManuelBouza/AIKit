@@ -29,9 +29,17 @@ function status(home) {
 }
 
 test('las plantillas empaquetadas coinciden con las fuentes canónicas', () => {
-  for (const name of ['go.md', 'context7.md', 'investigacion.md', 'escritura.md', 'visualizacion.md']) {
-    assert.deepEqual(fs.readFileSync(path.join(packageRoot, 'templates', name)),
-      fs.readFileSync(path.join(repositoryRoot, 'config', 'codex', name)));
+  for (const name of [
+    'go.md',
+    'context7.md',
+    'investigacion.md',
+    'escritura.md',
+    'visualizacion.md',
+  ]) {
+    assert.deepEqual(
+      fs.readFileSync(path.join(packageRoot, 'templates', name)),
+      fs.readFileSync(path.join(repositoryRoot, 'config', 'codex', name)),
+    );
   }
 });
 
@@ -51,7 +59,10 @@ test('status identifica versión aplicada y detecta divergencias sin escribir', 
   assert.equal(JSON.parse(current.stdout).status, 'current');
   assert.equal(JSON.parse(current.stdout).installedVersion, info.version);
   assert.equal(fs.readFileSync(file, 'utf8'), data);
-  const altered = data.replace('<!-- AIKIT:CONTEXT7:BEGIN -->', '<!-- AIKIT:CONTEXT7:BEGIN -->\nCambio local');
+  const altered = data.replace(
+    '<!-- AIKIT:CONTEXT7:BEGIN -->',
+    '<!-- AIKIT:CONTEXT7:BEGIN -->\nCambio local',
+  );
   fs.writeFileSync(file, altered);
   const different = status(home);
   assert.equal(different.status, 0, different.stderr);
@@ -95,7 +106,10 @@ test('vista previa, instalación y repetición conservan contenido y respaldo', 
 test('actualiza ambos bloques anteriores conservando el texto externo', (t) => {
   const home = fixture(t);
   const file = path.join(home, 'AGENTS.md');
-  fs.writeFileSync(file, 'Antes\n<!-- AIKIT:GO:BEGIN -->\nantiguo go\n<!-- AIKIT:GO:END -->\nCentro\n<!-- AIKIT:CONTEXT7:BEGIN -->\nantiguo context7\n<!-- AIKIT:CONTEXT7:END -->\nDespués\n');
+  fs.writeFileSync(
+    file,
+    'Antes\n<!-- AIKIT:GO:BEGIN -->\nantiguo go\n<!-- AIKIT:GO:END -->\nCentro\n<!-- AIKIT:CONTEXT7:BEGIN -->\nantiguo context7\n<!-- AIKIT:CONTEXT7:END -->\nDespués\n',
+  );
   const original = fs.readFileSync(file);
   const result = run(home);
   assert.equal(result.status, 0, result.stderr);
@@ -113,7 +127,8 @@ test('actualiza ambos bloques anteriores conservando el texto externo', (t) => {
 test('rechaza bloques de investigación anidados sin modificar el destino', (t) => {
   const home = fixture(t);
   const file = path.join(home, 'AGENTS.md');
-  const original = '<!-- AIKIT:INVESTIGACION:BEGIN -->\n<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:INVESTIGACION:END -->\n<!-- AIKIT:GO:END -->\n';
+  const original =
+    '<!-- AIKIT:INVESTIGACION:BEGIN -->\n<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:INVESTIGACION:END -->\n<!-- AIKIT:GO:END -->\n';
   fs.writeFileSync(file, original);
   const result = run(home);
   assert.notEqual(result.status, 0);
@@ -133,8 +148,16 @@ test('crea perfil inexistente y registra que no había archivo previo', (t) => {
 
 for (const [name, content, override] of [
   ['marcador incompleto', '<!-- AIKIT:GO:BEGIN -->\n sin cierre', null],
-  ['marcador duplicado', '<!-- AIKIT:GO:BEGIN -->\na\n<!-- AIKIT:GO:END -->\n<!-- AIKIT:GO:BEGIN -->\nb\n<!-- AIKIT:GO:END -->', null],
-  ['bloques solapados', '<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:CONTEXT7:BEGIN -->\n<!-- AIKIT:GO:END -->\n<!-- AIKIT:CONTEXT7:END -->', null],
+  [
+    'marcador duplicado',
+    '<!-- AIKIT:GO:BEGIN -->\na\n<!-- AIKIT:GO:END -->\n<!-- AIKIT:GO:BEGIN -->\nb\n<!-- AIKIT:GO:END -->',
+    null,
+  ],
+  [
+    'bloques solapados',
+    '<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:CONTEXT7:BEGIN -->\n<!-- AIKIT:GO:END -->\n<!-- AIKIT:CONTEXT7:END -->',
+    null,
+  ],
   ['override global', 'contenido ajeno', 'instrucción activa'],
 ]) {
   test(`rechaza ${name} sin modificar instrucciones`, (t) => {
@@ -158,7 +181,8 @@ test('rechaza un AGENTS.md enlazado sin modificar el destino', (t) => {
   try {
     fs.symlinkSync(target, path.join(home, 'AGENTS.md'), 'file');
   } catch (error) {
-    if (['EPERM', 'EACCES', 'ENOSYS'].includes(error.code)) return t.skip('No se pueden crear symlinks en este entorno');
+    if (['EPERM', 'EACCES', 'ENOSYS'].includes(error.code))
+      return t.skip('No se pueden crear symlinks en este entorno');
     throw error;
   }
   const result = run(home);
@@ -216,22 +240,31 @@ test('rechaza una junction real en el directorio de respaldos', (t) => {
 });
 
 test('selecciona preferencias por opción y conserva los bloques no seleccionados', (t) => {
-  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  const home = fixture(t),
+    file = path.join(home, 'AGENTS.md');
   const previous = '<!-- AIKIT:GO:BEGIN -->\nAnterior\n<!-- AIKIT:GO:END -->';
   fs.writeFileSync(file, `Propio\n${previous}\n`);
   const preview = run(home, '--escritura', '--visualizacion', '--dry-run');
   assert.equal(preview.status, 0, preview.stderr);
   const plan = JSON.parse(preview.stdout);
   assert.ok(plan.after.includes(previous));
-  for (const name of ['ESCRITURA', 'VISUALIZACION']) assert.ok(plan.after.includes(`AIKIT:${name}:BEGIN`));
-  for (const name of ['CONTEXT7', 'INVESTIGACION']) assert.ok(!plan.after.includes(`AIKIT:${name}:BEGIN`));
+  for (const name of ['ESCRITURA', 'VISUALIZACION'])
+    assert.ok(plan.after.includes(`AIKIT:${name}:BEGIN`));
+  for (const name of ['CONTEXT7', 'INVESTIGACION'])
+    assert.ok(!plan.after.includes(`AIKIT:${name}:BEGIN`));
   const installed = run(home, '--escritura', '--visualizacion');
   assert.equal(installed.status, 0, installed.stderr);
   assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
   assert.equal(JSON.parse(run(home, '--escritura', '--visualizacion').stdout).status, 'unchanged');
 });
 
-for (const [option, name] of [['--go', 'GO'], ['--context7', 'CONTEXT7'], ['--investigacion', 'INVESTIGACION'], ['--escritura', 'ESCRITURA'], ['--visualizacion', 'VISUALIZACION']]) {
+for (const [option, name] of [
+  ['--go', 'GO'],
+  ['--context7', 'CONTEXT7'],
+  ['--investigacion', 'INVESTIGACION'],
+  ['--escritura', 'ESCRITURA'],
+  ['--visualizacion', 'VISUALIZACION'],
+]) {
   test(`selección independiente ${option}`, (t) => {
     const home = fixture(t);
     const result = run(home, option, '--dry-run');
@@ -249,7 +282,8 @@ for (const content of [
   '<!-- AIKIT:VISUALIZACION:END -->',
 ]) {
   test('rechaza marcadores de preferencias inválidos', (t) => {
-    const home = fixture(t), file = path.join(home, 'AGENTS.md');
+    const home = fixture(t),
+      file = path.join(home, 'AGENTS.md');
     fs.writeFileSync(file, content);
     assert.notEqual(run(home).status, 0);
     assert.equal(fs.readFileSync(file, 'utf8'), content);
@@ -261,7 +295,11 @@ test('instala opciones en un proyecto ficticio', (t) => {
   const project = fixture(t);
   const init = spawnSync('git', ['init', '-q', project], { encoding: 'utf8' });
   assert.equal(init.status, 0, init.stderr);
-  const invoke = (...args) => spawnSync(process.execPath, [cli, 'install', '--project', ...args], { cwd: project, encoding: 'utf8' });
+  const invoke = (...args) =>
+    spawnSync(process.execPath, [cli, 'install', '--project', ...args], {
+      cwd: project,
+      encoding: 'utf8',
+    });
   const preview = invoke('--escritura', '--visualizacion', '--dry-run');
   assert.equal(preview.status, 0, preview.stderr);
   assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
@@ -273,13 +311,16 @@ test('instala opciones en un proyecto ficticio', (t) => {
   assert.equal(JSON.parse(invoke('--escritura', '--visualizacion').stdout).status, 'unchanged');
 });
 
-
 test('permite elegir preferencias diferentes por ámbito', (t) => {
-  const home = fixture(t), project = fixture(t);
+  const home = fixture(t),
+    project = fixture(t);
   assert.equal(spawnSync('git', ['init', '-q', project]).status, 0);
   const global = run(home, '--go');
   assert.equal(global.status, 0, global.stderr);
-  const local = spawnSync(process.execPath, [cli, 'install', '--project', '--escritura'], { cwd: project, encoding: 'utf8' });
+  const local = spawnSync(process.execPath, [cli, 'install', '--project', '--escritura'], {
+    cwd: project,
+    encoding: 'utf8',
+  });
   assert.equal(local.status, 0, local.stderr);
   const globalText = fs.readFileSync(path.join(home, 'AGENTS.md'), 'utf8');
   const projectText = fs.readFileSync(path.join(project, 'AGENTS.md'), 'utf8');
@@ -294,13 +335,22 @@ test('sin selección conserva las tres preferencias históricas', (t) => {
   const preview = run(home, '--dry-run');
   assert.equal(preview.status, 0, preview.stderr);
   const after = JSON.parse(preview.stdout).after;
-  for (const name of ['GO', 'CONTEXT7', 'INVESTIGACION']) assert.match(after, new RegExp(`AIKIT:${name}:BEGIN`));
-  for (const name of ['ESCRITURA', 'VISUALIZACION']) assert.doesNotMatch(after, new RegExp(`AIKIT:${name}:BEGIN`));
+  for (const name of ['GO', 'CONTEXT7', 'INVESTIGACION'])
+    assert.match(after, new RegExp(`AIKIT:${name}:BEGIN`));
+  for (const name of ['ESCRITURA', 'VISUALIZACION'])
+    assert.doesNotMatch(after, new RegExp(`AIKIT:${name}:BEGIN`));
 });
 
-for (const [option, name] of [['go', 'GO'], ['context7', 'CONTEXT7'], ['investigacion', 'INVESTIGACION'], ['escritura', 'ESCRITURA'], ['visualizacion', 'VISUALIZACION']]) {
+for (const [option, name] of [
+  ['go', 'GO'],
+  ['context7', 'CONTEXT7'],
+  ['investigacion', 'INVESTIGACION'],
+  ['escritura', 'ESCRITURA'],
+  ['visualizacion', 'VISUALIZACION'],
+]) {
   test(`retirada selectiva de ${option} conserva contenido externo y crea respaldo`, (t) => {
-    const home = fixture(t), file = path.join(home, 'AGENTS.md');
+    const home = fixture(t),
+      file = path.join(home, 'AGENTS.md');
     const original = `Antes\r\n<!-- AIKIT:${name}:BEGIN -->\r\nContenido\r\n<!-- AIKIT:${name}:END -->\r\nDespués\r\n`;
     fs.writeFileSync(file, original);
     const preview = run(home, `--quitar-${option}`, '--dry-run');
@@ -325,7 +375,8 @@ test('retirar un bloque ausente no crea AGENTS ni aplica preferencias histórica
 });
 
 test('rechaza activar y retirar la misma preferencia sin modificar nada', (t) => {
-  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  const home = fixture(t),
+    file = path.join(home, 'AGENTS.md');
   fs.writeFileSync(file, 'Texto protegido');
   const result = run(home, '--go', '--quitar-go');
   assert.notEqual(result.status, 0);
@@ -334,7 +385,8 @@ test('rechaza activar y retirar la misma preferencia sin modificar nada', (t) =>
 });
 
 test('combina activación y retirada explícitas en un ámbito', (t) => {
-  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  const home = fixture(t),
+    file = path.join(home, 'AGENTS.md');
   const block = '<!-- AIKIT:GO:BEGIN -->\nAnterior\n<!-- AIKIT:GO:END -->';
   fs.writeFileSync(file, `Propio\n${block}\n`);
   const result = run(home, '--quitar-go', '--escritura');
@@ -346,12 +398,18 @@ test('combina activación y retirada explícitas en un ámbito', (t) => {
 });
 
 test('retira una preferencia del proyecto sin afectar un perfil separado', (t) => {
-  const project = fixture(t), home = fixture(t);
+  const project = fixture(t),
+    home = fixture(t);
   assert.equal(spawnSync('git', ['init', '-q', project]).status, 0);
-  const invoke = (...args) => spawnSync(process.execPath, [cli, 'install', '--project', ...args], { cwd: project, encoding: 'utf8' });
+  const invoke = (...args) =>
+    spawnSync(process.execPath, [cli, 'install', '--project', ...args], {
+      cwd: project,
+      encoding: 'utf8',
+    });
   assert.equal(run(home, '--go').status, 0);
   assert.equal(invoke('--go').status, 0);
-  const globalFile = path.join(home, 'AGENTS.md'), projectFile = path.join(project, 'AGENTS.md');
+  const globalFile = path.join(home, 'AGENTS.md'),
+    projectFile = path.join(project, 'AGENTS.md');
   const globalBefore = fs.readFileSync(globalFile, 'utf8');
   const result = invoke('--quitar-go');
   assert.equal(result.status, 0, result.stderr);

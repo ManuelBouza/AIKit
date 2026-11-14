@@ -14,14 +14,18 @@ function setup(t) {
   return dir;
 }
 function run(cwd, args, env = {}) {
-  return spawnSync(process.execPath, [cli, ...args], { cwd, encoding: 'utf8', env: { ...process.env, ...env } });
+  return spawnSync(process.execPath, [cli, ...args], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  });
 }
 function repo(dir) {
   const result = spawnSync('git', ['init', '--quiet', dir], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
 }
 
-test('proyecto desde subdirectorio conserva texto, respaldo no versionable e idempotencia', t => {
+test('proyecto desde subdirectorio conserva texto, respaldo no versionable e idempotencia', (t) => {
   const dir = setup(t);
   const project = path.join(dir, 'repo');
   repo(project);
@@ -44,12 +48,15 @@ test('proyecto desde subdirectorio conserva texto, respaldo no versionable e ide
   const repeat = run(nested, ['install', '--project'], env);
   assert.equal(repeat.status, 0, repeat.stderr);
   assert.equal(JSON.parse(repeat.stdout).status, 'unchanged');
-  const git = spawnSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: project, encoding: 'utf8' });
+  const git = spawnSync('git', ['status', '--porcelain', '--untracked-files=all'], {
+    cwd: project,
+    encoding: 'utf8',
+  });
   assert.equal(git.status, 0, git.stderr);
   assert.doesNotMatch(git.stdout, /aikit-backups|original-replacefile/);
 });
 
-test('global usa CODEX_HOME sin tocar proyecto', t => {
+test('global usa CODEX_HOME sin tocar proyecto', (t) => {
   const dir = setup(t);
   const project = path.join(dir, 'repo');
   repo(project);
@@ -60,7 +67,7 @@ test('global usa CODEX_HOME sin tocar proyecto', t => {
   assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
 });
 
-test('proyecto rechaza override, destino fuera de Git y ámbitos incompatibles', t => {
+test('proyecto rechaza override, destino fuera de Git y ámbitos incompatibles', (t) => {
   const dir = setup(t);
   const project = path.join(dir, 'repo');
   repo(project);
@@ -70,10 +77,18 @@ test('proyecto rechaza override, destino fuera de Git y ámbitos incompatibles',
   assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
   const nonRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-nonrepo-'));
   t.after(() => fs.rmSync(nonRepo, { recursive: true, force: true }));
-  const outside = run(nonRepo, ['install', '--project']);
+  // TEMP puede vivir dentro del checkout durante la verificación de Windows.
+  // Impedir que Git descubra el repositorio padre y que la prueba lo modifique.
+  const outside = run(nonRepo, ['install', '--project'], {
+    GIT_CEILING_DIRECTORIES: path.dirname(nonRepo),
+  });
   assert.notEqual(outside.status, 0);
   assert.match(outside.stderr, /repositorio Git/);
-  for (const args of [['install', '--global', '--project'], ['install', '--project', '--codex-home', dir], ['install']]) {
+  for (const args of [
+    ['install', '--global', '--project'],
+    ['install', '--project', '--codex-home', dir],
+    ['install'],
+  ]) {
     assert.notEqual(run(project, args).status, 0);
   }
 });

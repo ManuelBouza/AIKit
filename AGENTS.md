@@ -165,6 +165,25 @@ está disponible.
 
 ## Comandos
 
+### Calidad por lenguaje
+
+Prioriza las herramientas instaladas para detectar errores automáticamente; usa
+inferencia para interpretar diagnósticos, corregir causas y revisar riesgos no
+cubiertos, sin repetir con el modelo las comprobaciones que ya realizan esas tools.
+Python usa uv, Ruff, mypy y pytest. El paquete `packages/aikit-installer` usa npm,
+tsc, ESLint con análisis de tipos, Prettier y node --test. No dupliques lógica
+entre lenguajes ni conviertas herramientas de desarrollo en requisitos del usuario.
+
+Verificación conjunta en Windows: `./scripts/verificar.ps1`. Prepara dependencias
+con `uv sync --locked` y `npm ci --include=dev`; si una preparación falla, omite sus controles
+dependientes y devuelve error. No aplica correcciones de lint/formato.
+Desarrollo del paquete TypeScript: Node 24 LTS (verificado con 24.22.1), npm y
+dependencias locales del lockfile. El runtime publicado del instalador conserva
+su requisito existente; ESLint 10 exige una versión de Node más reciente para desarrollar.
+Desde `packages/aikit-installer`: `npm ci --include=dev`, `npm run verify`; correcciones solo
+cuando proceda con `npm run lint:fix` y `npm run format`. Consulta
+`docs/calidad-python-typescript.md` para alcance y controles.
+
 Desde la raíz:
 
 ```powershell

@@ -330,19 +330,30 @@ uv run ruff format .
 ```
 
 Como atajo, el script `scripts\verificar.ps1` ejecuta la secuencia completa
-(sincronización, pruebas, Ruff y mypy) desde la raíz del repositorio, muestra la
+(sincronización, pruebas, Ruff, mypy y controles TypeScript) desde la raíz, muestra la
 salida de cada paso y termina con una tabla y un resumen `OK`/`ERROR`:
 
 ```powershell
 .\scripts\verificar.ps1
 ```
 
-Devuelve código 0 si todo pasa y 1 si algún comando falla o falta `uv`.
-Reutiliza las herramientas existentes, sin añadir otra skill ni sustituir la
-verificación de Superpowers. Validado el 29 de octubre de 2026 en Windows:
-ejecución real con PowerShell 7 (205 pruebas, Ruff y mypy correctos, código 0)
-y fallo simulado en PowerShell 5.1 y 7 (cinco pasos ejecutados, resumen de error,
-código 1 y directorio inicial conservado).
+Requiere uv, Node y npm. Prepara el paquete con `npm ci --include=dev` y comprueba
+tipos, lint, formato y pruebas; una preparación fallida omite sus controles
+dependientes y produce error. Devuelve cero solo si todos los controles pasan.
+No aplica correcciones automáticas de lint ni formato.
+
+Para comprobar solo el paquete, desde `packages/aikit-installer`:
+
+```powershell
+npm ci --include=dev
+npm run verify
+```
+
+Se recomienda Node 24 LTS para desarrollo; el runtime del instalador conserva
+su requisito existente. ESLint 10 requiere ^20.19.0, ^22.13.0 o >=24. Las pruebas
+del lanzador se ejecutan con PowerShell disponible en Windows; la pasada real
+de esta actualización utiliza PowerShell 7. Consulta
+[calidad por lenguaje](docs/calidad-python-typescript.md) para alcance y evidencia.
 
 Las pruebas usan fixtures, parametrización y un transporte falso: no invocan
 OpenCode ni consumen cuota. Los temporales de pytest viven en `.aikit/pytest-tmp`.

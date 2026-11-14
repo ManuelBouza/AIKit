@@ -13,7 +13,11 @@ test('un bloqueo previo impide escrituras y se conserva para inspección', (t) =
   const lock = path.join(home, '.aikit-instructions.lock');
   fs.writeFileSync(target, 'instrucción existente\n');
   fs.writeFileSync(lock, 'bloqueo previo');
-  const result = spawnSync(process.execPath, [path.resolve(__dirname, '../dist/cli.js'), 'install', '--codex-home', home], { encoding: 'utf8' });
+  const result = spawnSync(
+    process.execPath,
+    [path.resolve(__dirname, '../dist/cli.js'), 'install', '--codex-home', home],
+    { encoding: 'utf8' },
+  );
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /bloqueo/);
   assert.equal(fs.readFileSync(target, 'utf8'), 'instrucción existente\n');

@@ -17,16 +17,32 @@ for (const [code, layout, expected] of [
     fs.mkdirSync(root, { recursive: true });
     const dir = fs.mkdtempSync(path.join(root, 'recuperacion-'));
     t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-    const paths = Object.fromEntries(['destination', 'replacement', 'backup'].map(name => [name, path.join(dir, name)]));
+    const paths = Object.fromEntries(
+      ['destination', 'replacement', 'backup'].map((name) => [name, path.join(dir, name)]),
+    );
     for (const [name, content] of Object.entries(layout)) fs.writeFileSync(paths[name], content);
-    const before = fs.readdirSync(dir).sort().map(name => [name, fs.readFileSync(path.join(dir, name), 'utf8')]);
-    const observations = Object.fromEntries(Object.entries(paths).map(([name, file]) => [name, { path: file, exists: fs.existsSync(file) }]));
+    const before = fs
+      .readdirSync(dir)
+      .sort()
+      .map((name) => [name, fs.readFileSync(path.join(dir, name), 'utf8')]);
+    const observations = Object.fromEntries(
+      Object.entries(paths).map(([name, file]) => [
+        name,
+        { path: file, exists: fs.existsSync(file) },
+      ]),
+    );
     const { diagnoseReplaceFailure } = await import(moduleUrl);
     const report = diagnoseReplaceFailure({ code, ...observations });
     assert.equal(report.classification, expected);
     assert.equal(report.action, 'preserve-and-inspect');
     assert.deepEqual(report.paths, observations);
-    assert.deepEqual(fs.readdirSync(dir).sort().map(name => [name, fs.readFileSync(path.join(dir, name), 'utf8')]), before);
+    assert.deepEqual(
+      fs
+        .readdirSync(dir)
+        .sort()
+        .map((name) => [name, fs.readFileSync(path.join(dir, name), 'utf8')]),
+      before,
+    );
   });
 }
 

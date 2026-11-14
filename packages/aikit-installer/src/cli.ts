@@ -37,10 +37,13 @@ function readOptional(file: string): Buffer | null {
 function count(text: string, marker: string): number { return text.split(marker).length - 1; }
 
 function validateCrossed(text: string): void {
-  const markers = [...text.matchAll(/<!-- AIKIT:(GO|CONTEXT7|INVESTIGACION):(BEGIN|END) -->/g)];
+  const markers = [...text.matchAll(/<!-- AIKIT:(GO|CONTEXT7|INVESTIGACION|ESCRITURA|VISUALIZACION):(BEGIN|END) -->/g)];
   let open = null;
+  const seen = new Set<string>();
   for (const marker of markers) {
     if (marker[2] === 'BEGIN') {
+      if (seen.has(marker[1])) throw new Error('Bloque AIKit duplicado');
+      seen.add(marker[1]);
       if (open) throw new Error('Bloques AIKit solapados o anidados');
       open = marker[1];
     } else {
@@ -74,9 +77,12 @@ function main(args: string[]): void {
   let scope: 'global' | 'project' | undefined;
   let explicitCodexHome = false;
   let dry = false;
+  let escritura = false, visualizacion = false;
   while (args.length) {
     const arg = args.shift();
     if (arg === '--dry-run') dry = true;
+    else if (arg === '--escritura') escritura = true;
+    else if (arg === '--visualizacion') visualizacion = true;
     else if (arg === '--global' || arg === '--project') {
       if (scope) throw new Error('Indique un único ámbito: --global o --project');
       scope = arg === '--global' ? 'global' : 'project';
@@ -116,7 +122,10 @@ function main(args: string[]): void {
   const before = original ? decoder.decode(original) : '';
   validateCrossed(before);
   let after = before;
-  for (const [name, filename] of [['GO', 'go.md'], ['CONTEXT7', 'context7.md'], ['INVESTIGACION', 'investigacion.md']]) {
+  const blocks = [['GO', 'go.md'], ['CONTEXT7', 'context7.md'], ['INVESTIGACION', 'investigacion.md']];
+  if (escritura) blocks.push(['ESCRITURA', 'escritura.md']);
+  if (visualizacion) blocks.push(['VISUALIZACION', 'visualizacion.md']);
+  for (const [name, filename] of blocks) {
     after = merge(after, name, decoder.decode(fs.readFileSync(path.join(root, 'templates', filename))));
   }
   const replacement = Buffer.from(after, 'utf8');

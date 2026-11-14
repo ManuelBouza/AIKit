@@ -29,7 +29,7 @@ function status(home) {
 }
 
 test('las plantillas empaquetadas coinciden con las fuentes canónicas', () => {
-  for (const name of ['go.md', 'context7.md', 'investigacion.md']) {
+  for (const name of ['go.md', 'context7.md', 'investigacion.md', 'escritura.md', 'visualizacion.md']) {
     assert.deepEqual(fs.readFileSync(path.join(packageRoot, 'templates', name)),
       fs.readFileSync(path.join(repositoryRoot, 'config', 'codex', name)));
   }
@@ -214,3 +214,76 @@ test('rechaza una junction real en el directorio de respaldos', (t) => {
   assert.deepEqual(fs.readdirSync(target), []);
   assert.deepEqual(fs.readdirSync(home).sort(), ['AGENTS.md', 'backups']);
 });
+
+for (const options of [[], ['--escritura'], ['--visualizacion'], ['--escritura', '--visualizacion']]) {
+  test(`opciones independientes ${options.join(' ') || 'ninguna'}`, (t) => {
+    const home = fixture(t);
+    const file = path.join(home, 'AGENTS.md');
+    const other = '<!-- AIKIT:VISUALIZACION:BEGIN -->\nPreferencia previa\n<!-- AIKIT:VISUALIZACION:END -->';
+    const original = `Texto ajeno\n${other}\n`;
+    fs.writeFileSync(file, original);
+    const preview = run(home, ...options, '--dry-run');
+    assert.equal(preview.status, 0, preview.stderr);
+    const plan = JSON.parse(preview.stdout);
+    assert.equal(fs.readFileSync(file, 'utf8'), original);
+    assert.equal(plan.after.includes('AIKIT:ESCRITURA:BEGIN'), options.includes('--escritura'));
+    if (!options.includes('--visualizacion')) assert.ok(plan.after.includes(other));
+    else assert.doesNotMatch(plan.after, /Preferencia previa/);
+    const result = run(home, ...options);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
+    assert.equal(fs.readFileSync(JSON.parse(result.stdout).backup, 'utf8'), original);
+    const repeat = run(home, ...options);
+    assert.equal(JSON.parse(repeat.stdout).status, 'unchanged');
+    assert.equal(JSON.parse(repeat.stdout).backup, null);
+  });
+}
+
+for (const content of [
+  '<!-- AIKIT:ESCRITURA:BEGIN -->\na\n<!-- AIKIT:ESCRITURA:END -->\n<!-- AIKIT:ESCRITURA:BEGIN -->\nb\n<!-- AIKIT:ESCRITURA:END -->',
+  '<!-- AIKIT:VISUALIZACION:BEGIN -->\n<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:VISUALIZACION:END -->\n<!-- AIKIT:GO:END -->',
+  '<!-- AIKIT:VISUALIZACION:END -->',
+]) {
+  test('rechaza marcadores opcionales inválidos aunque no estén seleccionados', (t) => {
+    const home = fixture(t), file = path.join(home, 'AGENTS.md');
+    fs.writeFileSync(file, content);
+    assert.notEqual(run(home).status, 0);
+    assert.equal(fs.readFileSync(file, 'utf8'), content);
+    assert.equal(fs.existsSync(path.join(home, 'backups')), false);
+  });
+}
+
+test('instala opciones en un proyecto ficticio', (t) => {
+  const project = fixture(t);
+  const init = spawnSync('git', ['init', '-q', project], { encoding: 'utf8' });
+  assert.equal(init.status, 0, init.stderr);
+  const invoke = (...args) => spawnSync(process.execPath, [cli, 'install', '--project', ...args], { cwd: project, encoding: 'utf8' });
+  const preview = invoke('--escritura', '--visualizacion', '--dry-run');
+  assert.equal(preview.status, 0, preview.stderr);
+  assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
+  const result = invoke('--escritura', '--visualizacion');
+  assert.equal(result.status, 0, result.stderr);
+  const contents = fs.readFileSync(path.join(project, 'AGENTS.md'), 'utf8');
+  assert.match(contents, /AIKIT:ESCRITURA:BEGIN/);
+  assert.match(contents, /AIKIT:VISUALIZACION:BEGIN/);
+  assert.equal(JSON.parse(invoke('--escritura', '--visualizacion').stdout).status, 'unchanged');
+});
+
+for (const options of [[], ['--visualizacion']]) {
+  test(`conserva exactamente escritura previa al omitirla: ${options.join(' ') || 'sin opciones'}`, (t) => {
+    const home = fixture(t);
+    const file = path.join(home, 'AGENTS.md');
+    const block = '<!-- AIKIT:ESCRITURA:BEGIN -->\r\nTexto propio anterior.\r\n<!-- AIKIT:ESCRITURA:END -->';
+    const original = `Antes\r\n${block}\r\nDespués\r\n`;
+    fs.writeFileSync(file, original);
+    const preview = run(home, ...options, '--dry-run');
+    assert.equal(preview.status, 0, preview.stderr);
+    const plan = JSON.parse(preview.stdout);
+    assert.equal(fs.readFileSync(file, 'utf8'), original);
+    assert.ok(plan.after.includes(block));
+    const installed = run(home, ...options);
+    assert.equal(installed.status, 0, installed.stderr);
+    assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
+    assert.ok(fs.readFileSync(file, 'utf8').includes(block));
+  });
+}

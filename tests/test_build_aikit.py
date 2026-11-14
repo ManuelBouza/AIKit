@@ -142,12 +142,26 @@ def test_packaged_node_installer_runs_without_source_checkout(tmp_path: Path) ->
     agents = profile / "AGENTS.md"
     agents.write_text("Instrucción ajena\n", encoding="utf-8")
     cli = package / "installer/dist/cli.js"
-    for template in ("go.md", "context7.md", "investigacion.md"):
+    for template in (
+        "go.md",
+        "context7.md",
+        "investigacion.md",
+        "escritura.md",
+        "visualizacion.md",
+    ):
         assert (package / "installer/templates" / template).read_bytes() == (
             ROOT / "config/codex" / template
         ).read_bytes()
     result = subprocess.run(
-        [node, str(cli), "install", "--codex-home", str(profile)],
+        [
+            node,
+            str(cli),
+            "install",
+            "--codex-home",
+            str(profile),
+            "--escritura",
+            "--visualizacion",
+        ],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -161,6 +175,8 @@ def test_packaged_node_installer_runs_without_source_checkout(tmp_path: Path) ->
     assert "AIKIT:GO:BEGIN" in content
     assert "AIKIT:CONTEXT7:BEGIN" in content
     assert "AIKIT:INVESTIGACION:BEGIN" in content
+    assert "AIKIT:ESCRITURA:BEGIN" in content
+    assert "AIKIT:VISUALIZACION:BEGIN" in content
 
 
 @pytest.mark.parametrize("location", ["source", "output"])
@@ -222,3 +238,24 @@ def test_installer_json_with_ascii_stdout(tmp_path: Path, name: str) -> None:
     payload = json.loads(result.stdout)
     assert payload["status"] == "changed"
     assert Path(payload["backup"]).read_bytes() == b"contenido previo\n"
+
+
+@pytest.mark.parametrize("name", ["escritura.md", "visualizacion.md"])
+def test_export_rejects_divergent_optional_template(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    source = tmp_path / "source"
+    for relative in FILES:
+        destination = source / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, destination)
+    (source / "packages/aikit-installer/templates" / name).write_text(
+        "divergente", encoding="utf-8"
+    )
+    monkeypatch.setattr(
+        subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0)
+    )
+    output = tmp_path / "output"
+    with pytest.raises(ValueError, match="Plantilla del instalador desactualizada"):
+        export_aikit(source, output)
+    assert not output.exists()

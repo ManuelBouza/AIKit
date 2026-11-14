@@ -47,6 +47,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
 | [020 — Próxima Tarea y pendientes del contexto](020-proxima-tarea-pendientes-contexto.md) | Regla global y complemento actualizados; vista previa sin cambios | Evitar confundir el cierre de una tarea acotada con la ausencia de pendientes de la iniciativa relacionada. |
+| [022 — Uso contextual de write-like-me y visualize](022-preferencias-write-like-me-visualize.md) | Implementada en fuentes; instalación real pendiente | Aplicar las preferencias de escritura y visualización mediante opciones independientes. |
 
 ## Pendiente de debatir
 

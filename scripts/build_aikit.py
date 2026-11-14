@@ -20,6 +20,8 @@ FILES = {
     "docs/complemento-aikit-independiente.md": "aikit-preferencias/README.md",
     "config/codex/go.md": "aikit-preferencias/config/codex/go.md",
     "config/codex/context7.md": "aikit-preferencias/config/codex/context7.md",
+    "config/codex/escritura.md": "aikit-preferencias/config/codex/escritura.md",
+    "config/codex/visualizacion.md": "aikit-preferencias/config/codex/visualizacion.md",
     "config/codex/investigacion.md": "aikit-preferencias/config/codex/investigacion.md",
     "scripts/global_instructions.py": "aikit-preferencias/scripts/global_instructions.py",
     "scripts/install_go.py": "aikit-preferencias/scripts/install_go.py",
@@ -28,6 +30,8 @@ FILES = {
     "packages/aikit-installer/LICENSE": "aikit-preferencias/installer/LICENSE",
     "packages/aikit-installer/templates/go.md": "aikit-preferencias/installer/templates/go.md",
     "packages/aikit-installer/templates/context7.md": "aikit-preferencias/installer/templates/context7.md",
+    "packages/aikit-installer/templates/escritura.md": "aikit-preferencias/installer/templates/escritura.md",
+    "packages/aikit-installer/templates/visualizacion.md": "aikit-preferencias/installer/templates/visualizacion.md",
     "packages/aikit-installer/templates/investigacion.md": "aikit-preferencias/installer/templates/investigacion.md",
     "packages/aikit-installer/dist/cli.js": "aikit-preferencias/installer/dist/cli.js",
     "packages/aikit-installer/dist/windows-replace.js": "aikit-preferencias/installer/dist/windows-replace.js",
@@ -69,7 +73,13 @@ def export_aikit(source: Path, output: Path) -> Path:
         if not candidate.resolve().is_relative_to(source):
             raise ValueError(f"Archivo fuera del origen: {relative}")
         files[destination_name] = candidate.read_bytes()
-    for name in ("go.md", "context7.md", "investigacion.md"):
+    for name in (
+        "go.md",
+        "context7.md",
+        "investigacion.md",
+        "escritura.md",
+        "visualizacion.md",
+    ):
         if (
             files[f"aikit-preferencias/installer/templates/{name}"]
             != files[f"aikit-preferencias/config/codex/{name}"]

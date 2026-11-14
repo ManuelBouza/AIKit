@@ -65,3 +65,27 @@ El instalador incluye un bloque gestionado que prioriza documentación oficial y
 fuentes especializadas cuando aporten valor antes de experimentar, manteniendo
 las pruebas necesarias para verificar resultados. Una instalación anterior debe
 actualizarse y ejecutar setup para aplicar el nuevo bloque.
+
+## Preferencias opcionales de comunicación
+
+El instalador admite `--escritura` y `--visualizacion` de forma independiente,
+en ámbito `--global` o `--project`. Añádelas también a `--dry-run` para revisar
+la vista previa. Sin una opción, su bloque existente se conserva sin cambios.
+La escritura utiliza `write-like-me` si está disponible sin exigir instalación;
+la visualización sugerida requiere autorización previa, mientras que una petición
+expresa ya la autoriza dentro de su alcance. Estas instrucciones dependen del
+cliente y de sus prioridades; las pruebas no demuestran su cumplimiento en una
+conversación real.
+
+Cobertura consultada: `write-like-me` busca referencias de estilo y puede continuar
+sin muestras adecuadas; `visualize` crea visualizaciones en conversación. Ambas
+capacidades cubren su ejecución; las plantillas solo expresan las preferencias
+que faltaban, sin duplicar ni instalar esas skills.
+
+Validación (Windows, 13-11-2026): `npm test` con perfiles y repositorios
+ficticios: 40 pruebas correctas y dos omitidas por no poder crear junctions;
+`pytest tests/test_build_aikit.py`: 15 correctas, incluyendo exportación y
+divergencias. Se esperaba preservar el contenido ajeno y las opciones no elegidas,
+rechazar marcadores inválidos y evitar respaldo al repetir; así se observó. No
+se ha probado el comportamiento conversacional ni la aplicación efectiva de las
+instrucciones en clientes; no se modificó el perfil real.

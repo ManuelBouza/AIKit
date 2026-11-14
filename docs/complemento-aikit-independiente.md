@@ -55,8 +55,8 @@ pruébelo en uno ficticio. Las operaciones conservan el contenido ajeno, crean r
 archivo y son idempotentes; rechazan marcadores inválidos y un
 `AGENTS.override.md` no vacío. Compruebe el resultado y los respaldos antes de
 usar cualquier perfil. La instalación global automática no está verificada.
-La retirada selectiva de bloques, desinstalación y migración permanecen pendientes
-de diseño y verificación; desinstalar el complemento no garantiza retirar bloques.
+La retirada selectiva de bloques gestionados se prueba en perfiles ficticios;
+la desinstalación completa y la migración permanecen pendientes; desinstalar el complemento no garantiza retirar bloques.
 La evidencia de CLI previa está en el repositorio fuente, en
 `_bmad-output/specs/spec-complementos-independientes/instalacion-y-migracion.md`.
 # Preferencia de investigación
@@ -75,8 +75,10 @@ instalador acepta una selección por invocación y ámbito; setup ejecuta una po
 ámbito con selecciones. Usa `--dry-run` para revisar los cambios. Por
 compatibilidad, una invocación sin opciones de preferencia aplica `go`, `context7` e
 `investigacion`: no la
-uses para representar «ninguna». Los bloques no seleccionados se conservan; no
-se desactivan. Las aplicaciones a varios ámbitos no son atómicas.
+uses para representar «ninguna». Los bloques sin decisión se conservan. Para retirar un bloque gestionado de un
+ámbito, usa `--quitar-go`, `--quitar-context7`, `--quitar-investigacion`,
+`--quitar-escritura` o `--quitar-visualizacion`, con vista previa y respaldo.
+La retirada no elimina reglas equivalentes en otros archivos o ámbitos. Las aplicaciones a varios ámbitos no son atómicas.
 La escritura utiliza `write-like-me` si está disponible sin exigir instalación;
 la visualización sugerida requiere autorización previa, mientras que una petición
 expresa ya la autoriza dentro de su alcance. Estas instrucciones dependen del

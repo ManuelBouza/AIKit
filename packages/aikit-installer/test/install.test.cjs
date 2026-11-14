@@ -297,3 +297,64 @@ test('sin selección conserva las tres preferencias históricas', (t) => {
   for (const name of ['GO', 'CONTEXT7', 'INVESTIGACION']) assert.match(after, new RegExp(`AIKIT:${name}:BEGIN`));
   for (const name of ['ESCRITURA', 'VISUALIZACION']) assert.doesNotMatch(after, new RegExp(`AIKIT:${name}:BEGIN`));
 });
+
+for (const [option, name] of [['go', 'GO'], ['context7', 'CONTEXT7'], ['investigacion', 'INVESTIGACION'], ['escritura', 'ESCRITURA'], ['visualizacion', 'VISUALIZACION']]) {
+  test(`retirada selectiva de ${option} conserva contenido externo y crea respaldo`, (t) => {
+    const home = fixture(t), file = path.join(home, 'AGENTS.md');
+    const original = `Antes\r\n<!-- AIKIT:${name}:BEGIN -->\r\nContenido\r\n<!-- AIKIT:${name}:END -->\r\nDespués\r\n`;
+    fs.writeFileSync(file, original);
+    const preview = run(home, `--quitar-${option}`, '--dry-run');
+    assert.equal(preview.status, 0, preview.stderr);
+    const plan = JSON.parse(preview.stdout);
+    assert.equal(fs.readFileSync(file, 'utf8'), original);
+    assert.equal(plan.after, 'Antes\r\n\r\nDespués\r\n');
+    const applied = run(home, `--quitar-${option}`);
+    assert.equal(applied.status, 0, applied.stderr);
+    assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
+    assert.equal(fs.readFileSync(JSON.parse(applied.stdout).backup, 'utf8'), original);
+    assert.equal(JSON.parse(run(home, `--quitar-${option}`).stdout).status, 'unchanged');
+  });
+}
+
+test('retirar un bloque ausente no crea AGENTS ni aplica preferencias históricas', (t) => {
+  const home = fixture(t);
+  const result = run(home, '--quitar-go');
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'unchanged');
+  assert.equal(fs.existsSync(path.join(home, 'AGENTS.md')), false);
+});
+
+test('rechaza activar y retirar la misma preferencia sin modificar nada', (t) => {
+  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  fs.writeFileSync(file, 'Texto protegido');
+  const result = run(home, '--go', '--quitar-go');
+  assert.notEqual(result.status, 0);
+  assert.equal(fs.readFileSync(file, 'utf8'), 'Texto protegido');
+  assert.equal(fs.existsSync(path.join(home, 'backups')), false);
+});
+
+test('combina activación y retirada explícitas en un ámbito', (t) => {
+  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  const block = '<!-- AIKIT:GO:BEGIN -->\nAnterior\n<!-- AIKIT:GO:END -->';
+  fs.writeFileSync(file, `Propio\n${block}\n`);
+  const result = run(home, '--quitar-go', '--escritura');
+  assert.equal(result.status, 0, result.stderr);
+  const after = fs.readFileSync(file, 'utf8');
+  assert.doesNotMatch(after, /AIKIT:GO:BEGIN/);
+  assert.match(after, /AIKIT:ESCRITURA:BEGIN/);
+  assert.doesNotMatch(after, /AIKIT:CONTEXT7:BEGIN/);
+});
+
+test('retira una preferencia del proyecto sin afectar un perfil separado', (t) => {
+  const project = fixture(t), home = fixture(t);
+  assert.equal(spawnSync('git', ['init', '-q', project]).status, 0);
+  const invoke = (...args) => spawnSync(process.execPath, [cli, 'install', '--project', ...args], { cwd: project, encoding: 'utf8' });
+  assert.equal(run(home, '--go').status, 0);
+  assert.equal(invoke('--go').status, 0);
+  const globalFile = path.join(home, 'AGENTS.md'), projectFile = path.join(project, 'AGENTS.md');
+  const globalBefore = fs.readFileSync(globalFile, 'utf8');
+  const result = invoke('--quitar-go');
+  assert.equal(result.status, 0, result.stderr);
+  assert.doesNotMatch(fs.readFileSync(projectFile, 'utf8'), /AIKIT:GO:BEGIN/);
+  assert.equal(fs.readFileSync(globalFile, 'utf8'), globalBefore);
+});

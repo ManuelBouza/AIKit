@@ -78,11 +78,13 @@ function main(args: string[]): void {
   let explicitCodexHome = false;
   let dry = false;
   const selected = new Set<string>();
+  const removed = new Set<string>();
   const optionNames: Record<string, string> = { '--go': 'GO', '--context7': 'CONTEXT7', '--investigacion': 'INVESTIGACION', '--escritura': 'ESCRITURA', '--visualizacion': 'VISUALIZACION' };
   while (args.length) {
     const arg = args.shift();
     if (arg === '--dry-run') dry = true;
     else if (arg && optionNames[arg]) selected.add(optionNames[arg]);
+    else if (arg?.startsWith('--quitar-') && optionNames[`--${arg.slice(9)}`]) removed.add(optionNames[`--${arg.slice(9)}`]);
     else if (arg === '--global' || arg === '--project') {
       if (scope) throw new Error('Indique un único ámbito: --global o --project');
       scope = arg === '--global' ? 'global' : 'project';
@@ -90,6 +92,7 @@ function main(args: string[]): void {
     else if (arg === '--codex-home' && args.length && args[0]) { targetDirectory = args.shift()!; explicitCodexHome = true; }
     else throw new Error(`Opción inválida: ${arg}`);
   }
+  for (const name of removed) if (selected.has(name)) throw new Error(`No se puede activar y quitar ${name} a la vez`);
   if (scope === 'project' && explicitCodexHome) throw new Error('--codex-home solo es válido para el ámbito global');
   if (!scope && explicitCodexHome) scope = 'global'; // compatibilidad con perfiles ficticios y CLI anterior
   if (!scope) {
@@ -124,11 +127,17 @@ function main(args: string[]): void {
   let after = before;
   const blocks = [['GO', 'go.md'], ['CONTEXT7', 'context7.md'], ['INVESTIGACION', 'investigacion.md'], ['ESCRITURA', 'escritura.md'], ['VISUALIZACION', 'visualizacion.md']];
   for (const [name, filename] of blocks) {
-    if (selected.size ? !selected.has(name) : ['ESCRITURA', 'VISUALIZACION'].includes(name)) continue;
+    if (removed.has(name)) {
+      const begin = `<!-- AIKIT:${name}:BEGIN -->`, end = `<!-- AIKIT:${name}:END -->`;
+      const start = after.indexOf(begin);
+      if (start !== -1) after = after.slice(0, start) + after.slice(after.indexOf(end, start) + end.length);
+      continue;
+    }
+    if ((selected.size || removed.size) ? !selected.has(name) : ['ESCRITURA', 'VISUALIZACION'].includes(name)) continue;
     after = merge(after, name, decoder.decode(fs.readFileSync(path.join(root, 'templates', filename))));
   }
   const replacement = Buffer.from(after, 'utf8');
-  const changed = !original || !original.equals(replacement);
+  const changed = original ? !original.equals(replacement) : replacement.length > 0;
   if (command === 'status') {
     const match = before.match(/<!-- AIKIT:VERSION:([^\s]+) -->/g) || [];
     const withinGo = before.match(/<!-- AIKIT:GO:BEGIN -->[\s\S]*?<!-- AIKIT:GO:END -->/)?.[0] || '';

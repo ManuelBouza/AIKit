@@ -215,27 +215,31 @@ test('rechaza una junction real en el directorio de respaldos', (t) => {
   assert.deepEqual(fs.readdirSync(home).sort(), ['AGENTS.md', 'backups']);
 });
 
-for (const options of [[], ['--escritura'], ['--visualizacion'], ['--escritura', '--visualizacion']]) {
-  test(`opciones independientes ${options.join(' ') || 'ninguna'}`, (t) => {
+test('selecciona preferencias por opción y conserva los bloques no seleccionados', (t) => {
+  const home = fixture(t), file = path.join(home, 'AGENTS.md');
+  const previous = '<!-- AIKIT:GO:BEGIN -->\nAnterior\n<!-- AIKIT:GO:END -->';
+  fs.writeFileSync(file, `Propio\n${previous}\n`);
+  const preview = run(home, '--escritura', '--visualizacion', '--dry-run');
+  assert.equal(preview.status, 0, preview.stderr);
+  const plan = JSON.parse(preview.stdout);
+  assert.ok(plan.after.includes(previous));
+  for (const name of ['ESCRITURA', 'VISUALIZACION']) assert.ok(plan.after.includes(`AIKIT:${name}:BEGIN`));
+  for (const name of ['CONTEXT7', 'INVESTIGACION']) assert.ok(!plan.after.includes(`AIKIT:${name}:BEGIN`));
+  const installed = run(home, '--escritura', '--visualizacion');
+  assert.equal(installed.status, 0, installed.stderr);
+  assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
+  assert.equal(JSON.parse(run(home, '--escritura', '--visualizacion').stdout).status, 'unchanged');
+});
+
+for (const [option, name] of [['--go', 'GO'], ['--context7', 'CONTEXT7'], ['--investigacion', 'INVESTIGACION'], ['--escritura', 'ESCRITURA'], ['--visualizacion', 'VISUALIZACION']]) {
+  test(`selección independiente ${option}`, (t) => {
     const home = fixture(t);
-    const file = path.join(home, 'AGENTS.md');
-    const other = '<!-- AIKIT:VISUALIZACION:BEGIN -->\nPreferencia previa\n<!-- AIKIT:VISUALIZACION:END -->';
-    const original = `Texto ajeno\n${other}\n`;
-    fs.writeFileSync(file, original);
-    const preview = run(home, ...options, '--dry-run');
-    assert.equal(preview.status, 0, preview.stderr);
-    const plan = JSON.parse(preview.stdout);
-    assert.equal(fs.readFileSync(file, 'utf8'), original);
-    assert.equal(plan.after.includes('AIKIT:ESCRITURA:BEGIN'), options.includes('--escritura'));
-    if (!options.includes('--visualizacion')) assert.ok(plan.after.includes(other));
-    else assert.doesNotMatch(plan.after, /Preferencia previa/);
-    const result = run(home, ...options);
+    const result = run(home, option, '--dry-run');
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
-    assert.equal(fs.readFileSync(JSON.parse(result.stdout).backup, 'utf8'), original);
-    const repeat = run(home, ...options);
-    assert.equal(JSON.parse(repeat.stdout).status, 'unchanged');
-    assert.equal(JSON.parse(repeat.stdout).backup, null);
+    const after = JSON.parse(result.stdout).after;
+    for (const candidate of ['GO', 'CONTEXT7', 'INVESTIGACION', 'ESCRITURA', 'VISUALIZACION']) {
+      assert.equal(after.includes(`AIKIT:${candidate}:BEGIN`), candidate === name);
+    }
   });
 }
 
@@ -244,7 +248,7 @@ for (const content of [
   '<!-- AIKIT:VISUALIZACION:BEGIN -->\n<!-- AIKIT:GO:BEGIN -->\n<!-- AIKIT:VISUALIZACION:END -->\n<!-- AIKIT:GO:END -->',
   '<!-- AIKIT:VISUALIZACION:END -->',
 ]) {
-  test('rechaza marcadores opcionales inválidos aunque no estén seleccionados', (t) => {
+  test('rechaza marcadores de preferencias inválidos', (t) => {
     const home = fixture(t), file = path.join(home, 'AGENTS.md');
     fs.writeFileSync(file, content);
     assert.notEqual(run(home).status, 0);
@@ -269,21 +273,27 @@ test('instala opciones en un proyecto ficticio', (t) => {
   assert.equal(JSON.parse(invoke('--escritura', '--visualizacion').stdout).status, 'unchanged');
 });
 
-for (const options of [[], ['--visualizacion']]) {
-  test(`conserva exactamente escritura previa al omitirla: ${options.join(' ') || 'sin opciones'}`, (t) => {
-    const home = fixture(t);
-    const file = path.join(home, 'AGENTS.md');
-    const block = '<!-- AIKIT:ESCRITURA:BEGIN -->\r\nTexto propio anterior.\r\n<!-- AIKIT:ESCRITURA:END -->';
-    const original = `Antes\r\n${block}\r\nDespués\r\n`;
-    fs.writeFileSync(file, original);
-    const preview = run(home, ...options, '--dry-run');
-    assert.equal(preview.status, 0, preview.stderr);
-    const plan = JSON.parse(preview.stdout);
-    assert.equal(fs.readFileSync(file, 'utf8'), original);
-    assert.ok(plan.after.includes(block));
-    const installed = run(home, ...options);
-    assert.equal(installed.status, 0, installed.stderr);
-    assert.equal(fs.readFileSync(file, 'utf8'), plan.after);
-    assert.ok(fs.readFileSync(file, 'utf8').includes(block));
-  });
-}
+
+test('permite elegir preferencias diferentes por ámbito', (t) => {
+  const home = fixture(t), project = fixture(t);
+  assert.equal(spawnSync('git', ['init', '-q', project]).status, 0);
+  const global = run(home, '--go');
+  assert.equal(global.status, 0, global.stderr);
+  const local = spawnSync(process.execPath, [cli, 'install', '--project', '--escritura'], { cwd: project, encoding: 'utf8' });
+  assert.equal(local.status, 0, local.stderr);
+  const globalText = fs.readFileSync(path.join(home, 'AGENTS.md'), 'utf8');
+  const projectText = fs.readFileSync(path.join(project, 'AGENTS.md'), 'utf8');
+  assert.match(globalText, /AIKIT:GO:BEGIN/);
+  assert.doesNotMatch(globalText, /AIKIT:ESCRITURA:BEGIN/);
+  assert.match(projectText, /AIKIT:ESCRITURA:BEGIN/);
+  assert.doesNotMatch(projectText, /AIKIT:GO:BEGIN/);
+});
+
+test('sin selección conserva las tres preferencias históricas', (t) => {
+  const home = fixture(t);
+  const preview = run(home, '--dry-run');
+  assert.equal(preview.status, 0, preview.stderr);
+  const after = JSON.parse(preview.stdout).after;
+  for (const name of ['GO', 'CONTEXT7', 'INVESTIGACION']) assert.match(after, new RegExp(`AIKIT:${name}:BEGIN`));
+  for (const name of ['ESCRITURA', 'VISUALIZACION']) assert.doesNotMatch(after, new RegExp(`AIKIT:${name}:BEGIN`));
+});

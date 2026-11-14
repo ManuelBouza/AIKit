@@ -68,9 +68,15 @@ actualizarse y ejecutar setup para aplicar el nuevo bloque.
 
 ## Preferencias opcionales de comunicación
 
-El instalador admite `--escritura` y `--visualizacion` de forma independiente,
-en ámbito `--global` o `--project`. Añádelas también a `--dry-run` para revisar
-la vista previa. Sin una opción, su bloque existente se conserva sin cambios.
+Al ejecutar `aikit-setup`, el usuario elige para cada preferencia si se aplica
+globalmente, al proyecto, a ambos o a ninguno. Las opciones son `--go`,
+`--context7`, `--investigacion`, `--escritura` y `--visualizacion`. El
+instalador acepta una selección por invocación y ámbito; setup ejecuta una por
+ámbito con selecciones. Usa `--dry-run` para revisar los cambios. Por
+compatibilidad, una invocación sin opciones de preferencia aplica `go`, `context7` e
+`investigacion`: no la
+uses para representar «ninguna». Los bloques no seleccionados se conservan; no
+se desactivan. Las aplicaciones a varios ámbitos no son atómicas.
 La escritura utiliza `write-like-me` si está disponible sin exigir instalación;
 la visualización sugerida requiere autorización previa, mientras que una petición
 expresa ya la autoriza dentro de su alcance. Estas instrucciones dependen del

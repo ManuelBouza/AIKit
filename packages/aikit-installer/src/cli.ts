@@ -77,12 +77,12 @@ function main(args: string[]): void {
   let scope: 'global' | 'project' | undefined;
   let explicitCodexHome = false;
   let dry = false;
-  let escritura = false, visualizacion = false;
+  const selected = new Set<string>();
+  const optionNames: Record<string, string> = { '--go': 'GO', '--context7': 'CONTEXT7', '--investigacion': 'INVESTIGACION', '--escritura': 'ESCRITURA', '--visualizacion': 'VISUALIZACION' };
   while (args.length) {
     const arg = args.shift();
     if (arg === '--dry-run') dry = true;
-    else if (arg === '--escritura') escritura = true;
-    else if (arg === '--visualizacion') visualizacion = true;
+    else if (arg && optionNames[arg]) selected.add(optionNames[arg]);
     else if (arg === '--global' || arg === '--project') {
       if (scope) throw new Error('Indique un único ámbito: --global o --project');
       scope = arg === '--global' ? 'global' : 'project';
@@ -122,10 +122,9 @@ function main(args: string[]): void {
   const before = original ? decoder.decode(original) : '';
   validateCrossed(before);
   let after = before;
-  const blocks = [['GO', 'go.md'], ['CONTEXT7', 'context7.md'], ['INVESTIGACION', 'investigacion.md']];
-  if (escritura) blocks.push(['ESCRITURA', 'escritura.md']);
-  if (visualizacion) blocks.push(['VISUALIZACION', 'visualizacion.md']);
+  const blocks = [['GO', 'go.md'], ['CONTEXT7', 'context7.md'], ['INVESTIGACION', 'investigacion.md'], ['ESCRITURA', 'escritura.md'], ['VISUALIZACION', 'visualizacion.md']];
   for (const [name, filename] of blocks) {
+    if (selected.size ? !selected.has(name) : ['ESCRITURA', 'VISUALIZACION'].includes(name)) continue;
     after = merge(after, name, decoder.decode(fs.readFileSync(path.join(root, 'templates', filename))));
   }
   const replacement = Buffer.from(after, 'utf8');

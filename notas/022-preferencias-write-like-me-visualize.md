@@ -90,3 +90,9 @@ pruebas Node aprobadas, dos junctions omitidas; 15 pruebas de exportación
 aprobadas. La revisión identificó y corrigió dos carencias. No se ha actualizado
 el complemento instalado ni aplicado estas preferencias al perfil real.
 Especificación: [preferencias de comunicación](../_bmad-output/implementation-artifacts/spec-022-preferencias-comunicacion.md).
+
+## Cambio de decisión — 2026-11-14
+
+El usuario decide para cada preferencia si se aplica globalmente, al proyecto,
+a ambos o a ninguno. Las opciones no seleccionadas conservan sus bloques previos.
+La instalación real continúa pendiente.

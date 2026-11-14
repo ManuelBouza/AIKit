@@ -13,7 +13,7 @@ Presenta estas cinco preferencias y sus efectos:
 - `--context7`: prioriza Context7 para documentación actualizada cuando corresponda.
 - `--investigacion`: consulta documentación oficial y fuentes fiables antes de decidir cómo realizar una tarea.
 - `--escritura`: usa el estilo del usuario para escritos en su nombre destinados a terceros; aprovecha `write-like-me` cuando esté disponible.
-- `--visualizacion`: cuando se sugiera `visualize` sin petición previa, solicita autorización antes de usarlo; una solicitud expresa de la visualización ya la autoriza dentro del alcance.
+- `--visualizacion`: explica expresamente ambas situaciones al presentar esta opción: si se sugiere `visualize` sin petición previa, se solicita autorización antes de usarlo; si el usuario solicita expresamente la visualización, esa solicitud ya autoriza crearla dentro del alcance.
 
 Para cada preferencia sin decisión explícita, pregunta si desea activarla, conservarla o desactivarla, y en qué ámbito: global, proyecto o ambos. Reúne las decisiones en una sola consulta cuando sea posible. No presupongas que ejecutar setup autoriza opciones que no se hayan elegido.
 

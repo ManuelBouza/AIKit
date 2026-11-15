@@ -9,6 +9,13 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Invocación explícita 2026-11-15: se observó selección de la skill y respuesta
+prudente al caso ficticio, pero la sesión informó bloqueo de lectura local de su
+referencia. No se acredita carga completa. El
+[informe de invocación](../docs/invocacion-aislada-skill-coordinacion.md) conserva
+evidencias y distingue la declaración del agente de un diagnóstico comprobado.
+Queda pendiente diagnosticar la lectura efectiva antes de repetir el ensayo.
+
 Prueba de carga 2026-11-15: el cliente Codex reconoció la skill en un proyecto
 y perfil temporales externos, sin heredar skills de AIKit ni ejecutar inferencia.
 El [informe de descubrimiento](../docs/carga-aislada-skill-coordinacion.md) conserva

@@ -9,6 +9,14 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Intento oficial autorizado 2026-11-15: setupCompleted informó éxito, pero no
+cambiaron descriptor ni archivos del helper y reapareció fallo de preparación.
+Se detuvo sin nuevas pruebas, sin repetir setup y sin cambios manuales de ACL.
+El [resultado y respaldo](../docs/resultado-reparacion-oficial-sandbox.md) explican
+también una consulta de ayuda mal formada que no se cuenta como prueba de lectura.
+La reparación y carga completa siguen sin acreditarse; se recomienda preparar
+un reporte redactado para soporte antes de intervenir manualmente.
+
 Procedimiento preparado 2026-11-15: se recomienda un intento de configuración
 oficial elevada con respaldo y verificación, según el
 [procedimiento de reparación](../docs/procedimiento-reparacion-sandbox-windows.md).

@@ -5,6 +5,16 @@ en el paquete existente. Requiere Node 24; no añade dependencias de producción
 un comando al instalador. No activa coordinación, automatizaciones ni chats reales.
 Las identidades suministradas son datos de prueba, no autenticación de Codex.
 
+El 2026-11-15 se conectó este auxiliar con dos chats reales de prueba mediante
+mensajes y un runner local; véanse [resultados y límites de esa prueba guiada](prueba-integracion-mensajes-coordinacion.md).
+El demo sigue siendo independiente y esto no activa el protocolo de producción.
+
+Para aplicar el flujo en cada rol, consultar las instrucciones del
+[coordinador](coordinacion/coordinador.md), del
+[chat de tarea](coordinacion/tarea.md) y el
+[contrato operativo compartido](coordinacion/flujo-avisos.md).
+Son documentos de uso, no una skill instalada ni un adaptador de transporte.
+
 Desde `packages/aikit-installer`, ejecutar `npm run build`. Crear explícitamente
 una carpeta ficticia vacía y pasar su ruta absoluta:
 

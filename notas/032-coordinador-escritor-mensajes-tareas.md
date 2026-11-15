@@ -2,12 +2,43 @@
 
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
-Estado actual: Primer auxiliar local verificado; integración entre mensajes reales y auxiliar pendiente.
+Estado actual: Integración guiada verificada; instrucciones de avisos y acuses en fuentes; activación pendiente.
 
 Actualización 2026-11-15: la nota 025 ya dispone de un
 [auxiliar local de prueba](../docs/auxiliar-coordinacion.md). Aún falta conectar
 los avisos recibidos de chats reales con ese almacenamiento; las pruebas de
-mensajería de esta nota y las del auxiliar siguen siendo demostraciones separadas.
+mensajería de esta nota y las del auxiliar siguen siendo demostraciones separadas
+en esa primera actualización. La prueba conjunta posterior se documenta a continuación.
+
+## Integración con el auxiliar — 2026-11-15
+
+Manuel autorizó conectar los chats de prueba al auxiliar. El mismo emisor envió
+tres mensajes separados al receptor: revisión 3 Finalizada, copia idéntica y
+revisión 2 En curso. El receptor fue el único escritor canónico y ejecutó
+`apply`, `rebuildIndex` y consulta desde una nueva instancia en cada recepción.
+El coordinador principal contrastó los historiales y verificó los archivos con
+un comprobador determinista, código 0: tres recepciones, dos recibos, ninguna
+incidencia, generación 3 y estado final revisión 3 Finalizada. El duplicado
+conservó el recibo original y la generación 2.
+
+El [informe de integración](../docs/prueba-integracion-mensajes-coordinacion.md)
+conserva identificadores, entorno, evidencia y límites. Se usó una raíz ficticia
+privada y ejecución Windows fuera del sandbox por la política ACL del auxiliar.
+El resultado acredita este recorrido guiado; no activa un adaptador de producto,
+ni acredita autenticación automática, concurrencia o recuperación conjunta.
+Falta incorporar el flujo a las instrucciones de coordinador y tarea, con vía
+manual para clientes sin mensajería.
+
+## Instrucciones reutilizables — 2026-11-15
+
+El flujo probado se incorpora a las guías del
+[coordinador](../docs/coordinacion/coordinador.md) y de la
+[tarea](../docs/coordinacion/tarea.md), enlazadas desde el contrato. Se distingue
+procedencia contrastada de identidad declarada, aviso de autorización, acuse
+aplicado de pendiente y registro canónico de derivados. Se conserva el transporte
+manual y se explicitan las funciones todavía ausentes del auxiliar.
+La incorporación documental no instala ni activa coordinación; no se enviaron
+mensajes ni se modificaron chats en esta tarea.
 
 Manuel aceptó posteriormente el contrato de avisos, acuses y recuperación de la
 especificación vinculada a la nota 025. Esta decisión sustituye el carácter

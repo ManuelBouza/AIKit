@@ -6,7 +6,7 @@ Conserva cuestiones abiertas y no implica autorización de implementación.
 
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
-Estado actual: Primer auxiliar local implementado y verificado; integración con chats pendiente.
+Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
 Manuel autorizó implementar y probar el primer auxiliar en un proyecto ficticio.
@@ -17,6 +17,20 @@ incluyen esquema estricto, diario, acuses y recuperación supervisada. Tipos, li
 formato y 83 pruebas pasan; seis omisiones documentadas y tres sondas Windows
 nativas adicionales sin omisiones. POSIX real sigue pendiente. La coordinación
 completa aún no está implementada; el prototipo usa asignación fija y primer ciclo.
+
+Actualización posterior 2026-11-15: la [prueba conjunta con mensajes reales](../docs/prueba-integracion-mensajes-coordinacion.md)
+conectó el emisor en worktree con el receptor y el auxiliar. Se verificaron aviso
+aplicado, copia idéntica y revisión antigua, con tres recepciones, dos recibos y
+estado final revisión 3 Finalizada. La prueba guiada no activa coordinación de
+producción; falta incorporar la recepción validada a las instrucciones de ambos roles.
+
+Las [instrucciones del coordinador](../docs/coordinacion/coordinador.md) y del
+[chat de tarea](../docs/coordinacion/tarea.md), con su
+[flujo compartido](../docs/coordinacion/flujo-avisos.md), incorporan ahora envío
+recuperable, contraste de origen, escritura única, consulta de acuses y límites
+del auxiliar. Son fuentes documentales; falta distribuirlas y activarlas mediante
+el mecanismo de producto que se implemente. No se instaló una skill ni se activó
+la coordinación. La automatización, relevo y demás capacidades siguen pendientes.
 
 ## Aceptación posterior del contrato — 2026-11-14
 

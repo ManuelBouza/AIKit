@@ -1,5 +1,17 @@
 # Protocolo y límites de coordinación
 
+## Instrucciones de uso — 2026-11-15
+
+El flujo de avisos y acuses se concreta en las guías del
+[coordinador](../../../docs/coordinacion/coordinador.md) y del
+[chat de tarea](../../../docs/coordinacion/tarea.md), con
+[formato e interpretación compartidos](../../../docs/coordinacion/flujo-avisos.md).
+El [auxiliar local](../../../docs/auxiliar-coordinacion.md) implementa una parte
+del contrato y la [prueba conjunta](../../../docs/prueba-integracion-mensajes-coordinacion.md)
+verificó el recorrido guiado entre chats. Esto actualiza las menciones históricas
+a implementación pendiente que aparecen abajo: no acredita todavía el conjunto
+de capacidades, ni activa una skill, transporte automático o programación.
+
 ## Roles y registros acordados
 
 - Coordinador: mantiene visión global e índice administrativo, identifica encargos y chats, consulta entregas y registra acuses sin aprobar el cierre. Manuel le autoriza a crear chats cuando sea pertinente, sujeto a las reglas del cliente. Coordina y realiza la integración solicitada por los chats, revisándola como en una PR, sin sustituir sus verificaciones propias.

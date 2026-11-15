@@ -1,5 +1,19 @@
 # Complemento AIKit independiente
 
+Incluye `coordinacion-chats` y su referencia de avisos y acuses. La skill requiere
+coordinación autorizada y una asignación identificable para operar. Instalar el
+complemento la hace disponible; la configuración del coordinador y la activación
+por proyecto son pasos separados. El auxiliar de registro es un prototipo y no
+se distribuye con esta skill. No requiere Git, BMAD u OpenCode para aplicar sus
+instrucciones; ofrece traslado manual cuando el cliente carece de mensajería.
+
+Validación de distribución (15-11-2026): 15 pruebas del exportador, Ruff y mypy
+correctos. En un perfil ficticio, CLI 0.169.0-alpha.11.1 instala el complemento y
+skills/list descubre `aikit-preferencias:coordinacion-chats` habilitada desde su
+caché, con SKILL.md y referencia idénticos a las fuentes. No se actualizó el perfil
+habitual ni se activó coordinación. La versión 0.1.0 se conserva para esta prueba;
+la versión de entrega debe decidirse antes de una actualización real.
+
 Este paquete contiene las preferencias `go`, Context7 e investigación previa,
 sin MCP ni skill de
 delegación. Su identidad `aikit-preferencias` es distinta de la histórica

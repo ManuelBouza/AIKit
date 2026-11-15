@@ -11,6 +11,8 @@ from build_go import _reject_links
 
 SOURCE_ROOT = Path(__file__).absolute().parents[1]
 FILES = {
+    "packaging/skills/coordinacion-chats/SKILL.md": "aikit-preferencias/skills/coordinacion-chats/SKILL.md",
+    "packaging/skills/coordinacion-chats/references/avisos.md": "aikit-preferencias/skills/coordinacion-chats/references/avisos.md",
     "packaging/assets/aikit-icon.png": "aikit-preferencias/assets/aikit-icon.png",
     "packaging/skills/aikit-setup/SKILL.md": "aikit-preferencias/skills/aikit-setup/SKILL.md",
     "packaging/skills/director-de-ideas/SKILL.md": "aikit-preferencias/skills/director-de-ideas/SKILL.md",

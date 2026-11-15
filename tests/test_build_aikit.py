@@ -53,6 +53,16 @@ def test_export_and_install(tmp_path: Path) -> None:
         ROOT / "packaging" / director
     ).read_bytes()
     assert not (package / "mcp.json").exists()
+    coordination = package / "skills/coordinacion-chats"
+    for relative in ("SKILL.md", "references/avisos.md"):
+        assert (coordination / relative).read_bytes() == (
+            ROOT / "packaging/skills/coordinacion-chats" / relative
+        ).read_bytes()
+    assert "(references/avisos.md)" in (coordination / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    assert not (package / "skills/delegating-to-opencode").exists()
+    assert not (package / "packages/aikit-coordination").exists()
     profile = tmp_path / "perfil"
     profile.mkdir()
     agents = profile / "AGENTS.md"

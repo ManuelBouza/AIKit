@@ -9,6 +9,12 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Prueba de carga 2026-11-15: el cliente Codex reconoció la skill en un proyecto
+y perfil temporales externos, sin heredar skills de AIKit ni ejecutar inferencia.
+El [informe de descubrimiento](../docs/carga-aislada-skill-coordinacion.md) conserva
+resultado y límites. Queda pendiente su distribución e instalación real; el
+descubrimiento aislado no activa la coordinación ni acredita ejecución por un modelo.
+
 Actualización de empaquetado 2026-11-15: la
 [skill de avisos y acuses](../packaging/skills/coordinacion-chats/SKILL.md) está
 preparada en fuentes, con validación estructural, evaluación textual de cuatro

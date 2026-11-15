@@ -9,6 +9,12 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Contraste documental 2026-11-15: la [investigación de fuentes](../docs/contraste-documental-sandbox-windows.md)
+prioriza una discrepancia de derechos/identidad al reaplicar la DACL del helper,
+sin darla por demostrada localmente. Se separa del selector Windows omitido en
+la prueba. No se hicieron ensayos ni reparaciones; la siguiente comprobación
+pertinente es inspeccionar permisos y token en solo lectura.
+
 Diagnóstico posterior: el stderr confirma rechazo real de las lecturas. Al
 explicitar el backend Windows omitido por ignore-user-config, el rechazo genérico
 cambia por helper_sandbox_lock_failed y acceso denegado al preparar .sandbox-bin.

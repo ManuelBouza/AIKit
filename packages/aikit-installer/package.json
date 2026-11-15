@@ -31,6 +31,11 @@
     "dist",
     "templates"
   ],
+  "overrides": {
+    "@typescript-eslint/typescript-estree@8.72.2": {
+      "minimatch": "11.0.8"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "^22.20.5",

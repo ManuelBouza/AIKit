@@ -173,3 +173,30 @@ Logs locales ignorados por Git: .aikit/033-verificacion-final.log,
 .aikit/033-probe-*.log y .aikit/033-audit.json. No se enviaron a un modelo para
 repetir la comprobación automática; la revisión independiente se centró en riesgos
 del lanzador y cobertura no acreditada por lint o tipos.
+
+### Resolución posterior de los avisos npm
+
+La auditoría online identificó un único origen para los siete avisos:
+minimatch 10.2.6, transitivo de typescript-estree 8.72.2. El aviso
+[GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) fija la
+corrección desde 11.0.1. typescript-eslint 8.72.2 sigue siendo la versión más
+reciente consultada y declara minimatch ^10.2.2; la degradación automática propuesta
+por npm no soporta nuestro TypeScript 5.9 ni ESLint 10.
+
+Se añadió un override limitado a typescript-estree 8.72.2 para usar minimatch
+11.0.8, ya utilizado por ESLint. Queda fuera del rango original del consumidor:
+la compatibilidad se valida para este proyecto, no se atribuye al soporte upstream.
+La prueba tooling.test.cjs ejercita projectService/allowDefaultProject con un
+archivo oculto, usando la llamada minimatch(path, pattern, {dot: true}) del parser.
+Revisar y retirar el override cuando el consumidor admita una versión corregida.
+
+npm conservó inicialmente una entrada obsoleta al recalcular el lockfile; se
+respaldó y retiró esa entrada para que npm la regenerara, sin inventar integridades
+ni editar módulos instalados. npm ci reproducible, npm ls sin dependencias inválidas
+y npm audit online confirman ahora cero vulnerabilidades.
+Evidencia local: .aikit/033-audit-corregida.json.
+Validación posterior: npm run verify devolvió 0 (tipos, lint, formato y pruebas);
+52 pruebas Node pasaron y dos pruebas de junctions se omitieron por restricciones
+del sandbox. La nueva prueba del parser pasó. Python no cambió y no se repitió su
+suite. Ejecutar auditoría online al actualizar dependencias; revisar el override
+cuando typescript-estree publique compatibilidad con minimatch corregido.

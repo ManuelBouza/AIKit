@@ -53,7 +53,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm de desarrollo pendientes | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |
 | [002 — OpenCode como subagente acotado](002-opencode-como-subagente-acotado.md) | Pendiente de debatir | Investigar cómo Codex lanza, supervisa y recibe la finalización de sus subagentes para reproducir ese ciclo con OpenCode y tareas acotadas. |
 | [003 — Coste de delegación](003-heuristica-coste-delegacion.md) | Pendiente de debatir | Decidir con una heurística rápida cuándo ejecutar directamente en Codex y cuándo lanzar un subagente. |
 | [004 — Privacidad al delegar](004-guardarrailes-privacidad-opencode.md) | Pendiente de debatir | Evitar filtraciones de datos privados, empresariales y sensibles mediante guardarraíles fuertes. |
@@ -67,6 +66,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm resueltos | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |
 | [012 — Referencia a BMAD en AGENTS.md](012-referencia-bmad-en-agents.md) | Implementada | Referencia breve de uso aprobada con go e incorporada a AGENTS.md, complementaria al descubrimiento de skills. |
 | [015 — Backlog de ideas compatible con BMAD](015-backlog-ideas-bmad.md) | Implementada | Organizar las notas y registrar ideas nuevas en un backlog trazable. |
 | [013 — Uso de BMAD en el proyecto existente](013-uso-bmad-proyecto-existente.md) | Adoptado en el proyecto | Aplicar las skills pertinentes; su distribución con AIKit no está decidida. |

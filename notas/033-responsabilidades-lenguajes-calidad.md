@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
-Estado actual: Implementada y verificada; avisos npm de desarrollo pendientes.
+Estado actual: Implementada y verificada; avisos npm resueltos.
 
 Manuel aclara que no pretende declarar un lenguaje mejor que otro: necesita
 responsabilidades bien definidas para Python y TypeScript y aplicación coherente
@@ -41,3 +41,8 @@ dependencias de desarrollo, pendientes de resolución compatible; no se aplicó 
 La pasada conjunta final devolvió código 0: 946 pruebas Python y 53 pruebas Node,
 sin omisiones, con tipos, lint y formato correctos. Los avisos npm se conservan
 como pendiente independiente; no impiden que los controles configurados funcionen.
+
+Resolución posterior autorizada mediante go: override acotado de minimatch 11.0.8
+en typescript-estree 8.72.2, fuera de su rango original y probado para el uso actual
+del parser. npm ci y npm ls válidos; auditoría online posterior con cero avisos.
+La prueba de regresión y los límites del override constan en la documentación.

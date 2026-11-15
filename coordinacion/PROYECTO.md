@@ -10,6 +10,14 @@
   turno 01a1e006-0481-7f93-9ee9-35937478f1bd.
 - Alta: 2026-11-15.
 - Escritor: solo el coordinador vigente; no hay bloqueo técnico automático.
+- Comunicación inicial: mediante el coordinador, por decisión de Manuel del
+  2026-11-15. Las tareas le trasladan resultados, bloqueos y necesidades.
+  La comunicación directa entre tareas se conserva para una evolución futura;
+  no está habilitada por este acuerdo ni se descarta definitivamente.
+- Chats de Tarea: el coordinador decide su creación o reutilización para el
+  trabajo autorizado, con propósito concreto o especializado dentro del mismo
+  mecanismo. Documenta identidad, alcance, estado y referencias para recuperarlos;
+  no se establece una categoría separada de especialistas.
 - Conservación: Git para el registro del proyecto; no incluir credenciales,
   datos privados ni salidas temporales en commits.
 - Alcance: seguimiento manual, con origen y decisión identificables para cada

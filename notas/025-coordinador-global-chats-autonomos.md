@@ -1,5 +1,163 @@
 # Coordinador global y chats de tarea autónomos
 
+Actualización de roles implementada y verificada en fuentes, 2026-11-15:
+[entrega y revisión](../_bmad-output/implementation-artifacts/spec-025-actualizacion-roles.md).
+La skill incorpora responsabilidades, selección y reutilización de Chats de
+Tarea concretos o especializados, traspasos mediante coordinador, revisión
+técnica delegada y estructura manual. Setup incluye descubrimiento y activación
+local guiada; exportador y pruebas incluyen la nueva referencia. Validadores,
+Ruff/mypy y 15 pruebas pasan; exportación final comprobada tras correcciones y
+revisión independiente accepted. Seis escenarios ficticios evaluados, sin chats
+reales. La caché instalada 0.1.1 sigue intacta y aún no contiene esta entrega.
+Pendientes preparar actualización instalada, piloto en AIKit y después otro
+proyecto. No se implementa el control general de cobertura de la nota 039 ni
+se modifica el auxiliar experimental.
+
+Preparación de actualización completada, 2026-11-15:
+[alcance, cobertura, cambios y aceptación](../docs/coordinacion/preparacion-actualizacion-skill.md).
+Se reutiliza coordinacion-chats para ambos roles y se prevé una entrada explícita
+en setup, sin declarar implementado el control general de la nota 039. Catálogo
+BMAD y skill-creator consultados; bmad-build recomendado para implementar y
+verificar. Esta entrega solo prepara: fuentes de la skill y caché sin modificar,
+implementación, actualización instalada y piloto pendientes.
+
+Simplificación acordada con Manuel, 2026-11-15: el coordinador decide los Chats
+de Tarea necesarios para el trabajo autorizado. Con la misma mecánica puede
+crear un chat para un encargo concreto o para actuar como especialista; no se
+añade un sistema distinto de especializaciones. El coordinador documenta e
+identifica propósito, alcance, estado, encargos y referencias de contexto para
+su uso y reutilización futuros, comprobando antes los chats existentes. Esta
+responsabilidad no convierte a las tareas en coordinadores ni amplía permisos
+del cliente. Acuerdo incorporado al contrato; actualización de la skill pendiente.
+
+Decisión de Manuel sobre especializaciones, 2026-11-15: surgirán según las
+necesidades del proyecto. No definir ni crear por adelantado un catálogo de
+agentes especialistas permanentes. Se mantienen un coordinador y los agentes
+de tarea necesarios, con especialización y apoyos ajustados al encargo.
+
+Decisión de Manuel, 2026-11-15: se elige inicialmente la comunicación mediante
+el coordinador. La comunicación directa entre tareas se conserva como opción
+futura para intercambios necesarios sin depender de él, pendiente de definir y
+validar sus límites; no queda habilitada ahora. Se aclara que el coordinador ya
+es un especialista por su función de coordinación y responsabilidad continuada;
+posponer otros especialistas permanentes no elimina ese rol. El
+[contrato](../docs/coordinacion/contrato-responsabilidades-propuesto.md) incorpora
+estas decisiones, las entidades diferenciadas y el contenido de los traspasos.
+
+Investigación adicional solicitada por Manuel, 2026-11-15:
+[Dot, Grok Bot de xAI, OpenClaw, Cursor y A2A](../docs/coordinacion/tendencias-agentes-persistentes.md).
+Se contrastan interconexión, memoria, responsabilidades y selección entre
+ejecución directa, apoyos acotados y tareas con continuidad. Se recomienda
+distinguir responsabilidad, chat, encargo/ciclo y ejecución; reutilizar contexto
+pertinente y mantener un responsable por traspaso. No se activa comunicación entre
+pares ni especialistas permanentes. Pendiente incorporar las conclusiones
+aceptadas al contrato antes del piloto; se mantiene el coordinador dedicado a
+coordinación y la revisión técnica delegada.
+
+Aclaración expresa del usuario, 2026-11-15: el coordinador se dedica a coordinar
+todo el proyecto y no ejecuta implementaciones ni code review. Usa subagentes
+para apoyos acotados de una sola ejecución; las entregas con continuidad propia
+corresponden a Chats de Tarea. Su revisión es de coordinación, apoyándose en los
+dictámenes técnicos de revisores. Se elimina «Chat actual» como categoría y se
+aclara la distinción entre agente, chat y rol en el
+[contrato actualizado](../docs/coordinacion/contrato-responsabilidades-propuesto.md).
+Esta decisión sustituye las recomendaciones previas de ejecución directa por el
+coordinador que se conservan abajo como historial. La skill instalada sigue sin
+recibir esta actualización; quedan pendientes su incorporación y validación.
+
+Contrato propuesto preparado, 2026-11-15:
+[responsabilidades y selección del medio de trabajo](../docs/coordinacion/contrato-responsabilidades-propuesto.md).
+Incorpora los ajustes del contraste documental: ejecución directa sin límite
+arbitrario de tamaño, beneficio necesario para separar, reutilización del
+responsable, contexto mínimo, comunicación por hitos, reevaluación e integración
+sin duplicar la ejecución. Es el borrador consolidado para la siguiente revisión;
+los apartados preliminares siguientes conservan el historial. Pendientes la
+prueba piloto y la incorporación de lo aceptado a la skill y a setup; no se han
+creado chats ni activado nuevas capacidades con esta entrega.
+
+Contraste documental del reparto, 2026-11-15:
+[análisis de fuentes primarias y ajustes recomendados](../docs/coordinacion/contraste-reparto-agentes.md).
+La evidencia respalda empezar con la opción más simple y delegar con límites;
+una entrega independiente no basta por sí sola para abrir otro chat. Se propone
+valorar contexto, continuidad, dependencias y coste de coordinación; el coordinador
+también puede ejecutar encargos coherentes cuando separarlos no aporte beneficio.
+Los ajustes siguen como propuesta; no modifican la skill instalada ni acreditan
+el rendimiento del mecanismo en producción.
+
+## Afinado de responsabilidades previo a nuevas pruebas — 2026-11-15
+
+Manuel solicita probar y afinar el mecanismo primero en AIKit y después en otro
+proyecto. Antes preocupa concretar qué trabajo corresponde al coordinador, cuál
+requiere un chat de tarea y qué responsabilidades conserva cada chat. Se vincula
+con los criterios de medios de trabajo de la nota 021; no se crea otra iniciativa.
+
+Propuesta para debatir, todavía no política aprobada:
+
+- El coordinador conserva decisiones transversales, reparto y dependencias,
+  registro canónico, revisión e integración final y seguimiento de pendientes.
+  Puede atender consultas y mantenimiento pequeño sin abrir un chat por cada acción.
+- Un chat de tarea se justifica por un resultado propio, delimitado y verificable,
+  con contexto y continuidad propios o conversación específica con el usuario;
+  no por cada comando, archivo o paso de una tarea.
+- La tarea ejecuta el encargo, mantiene estado y título, verifica su entrega,
+  comunica bloqueos y solicita integración. Conserva evidencias y limpia recursos
+  propios cuando corresponda. No amplía alcance ni modifica el registro canónico,
+  las ramas principales o recursos de otras tareas por iniciativa propia.
+- Una subtarea breve dentro del mismo objetivo puede resolverse con herramientas
+  o, cuando esté autorizado, subagentes; no necesita convertirse en chat visible.
+- Antes de asignar, concretar resultado, alcance, exclusiones, recursos, permisos,
+  dependencias, criterios de aceptación y canal de comunicación. Separar lo que
+  ya está autorizado de lo que requiere una decisión del usuario.
+- Probar primero un encargo real acotado de principio a fin en AIKit, incluyendo
+  solicitud de integración y cierre; después contrastar la portabilidad en otro
+  proyecto sin imponer herramientas específicas. No crear chats ni elegir otro
+  proyecto hasta disponer de autorización y encargo concretos.
+
+### Ejemplos y criterio operativo propuestos — 2026-11-15
+
+Manuel autoriza concretar el reparto con ejemplos del proyecto. Esta elaboración
+no autoriza ejecutar las iniciativas usadas como ejemplo ni abrir nuevos chats.
+
+| Trabajo | Responsable propuesto | Motivo |
+| --- | --- | --- |
+| Aclarar prioridades, alcance o responsabilidades con el usuario | Coordinador | Afecta al conjunto y a las asignaciones. |
+| Registrar una idea, actualizar el backlog y regenerar el tablero | Coordinador | Mantenimiento breve del seguimiento del proyecto. |
+| Implementar la integración de capacidades en setup, nota 039 | Chat de tarea, tras delimitar y autorizar el encargo | Entrega propia con diseño, código, controles y posible continuidad. |
+| Diseñar e implementar las preferencias por lenguaje, nota 034 | Chat de tarea, cuando se retome | Capacidad independiente; coordinar antes su dependencia con setup. |
+| Ejecutar lint, tipos o pruebas de una entrega | El responsable de esa entrega, con herramientas | Son pasos del encargo, no tareas que justifiquen otro chat. |
+| Corregir un defecto detectado durante la revisión | Chat responsable de la entrega | Mantiene la continuidad; el coordinador concreta el hallazgo. |
+| Revisar e integrar una entrega en main | Coordinador | Conserva la decisión y operación de integración; usa los apoyos de revisión autorizados. |
+| Resolver choque entre dos entregas o cambios de alcance relacionados | Coordinador con las tareas afectadas y el usuario cuando corresponda | Evitar correcciones cruzadas y decisiones incompatibles. |
+| Persistir y limpiar rama, worktree y temporales propios tras integración comprobada | Chat de tarea | Conserva la responsabilidad de sus recursos y comunica pendientes. |
+| Archivar el chat tras comprobar cierre y pendientes | Coordinador | Responsabilidad acordada, sujeta a capacidades y autorizaciones efectivas. |
+
+Secuencia de decisión propuesta:
+
+1. Si es una decisión transversal, registro canónico o integración final, permanece
+   en el coordinador.
+2. Si forma parte de una entrega ya asignada, vuelve a su chat responsable.
+   No abrir otro por cada corrección o paso. Si el chat está archivado, comprobar
+   que puede recuperarse y que el contexto sigue siendo válido antes de continuar.
+3. Si es trabajo breve sin continuidad propia, resolverlo en el chat responsable
+   actual con herramientas y los apoyos autorizados.
+4. Si tiene resultado independiente, límites y aceptación verificables y necesita
+   continuidad o conversación propia, proponer un chat de tarea. Una idea todavía
+   ambigua se aclara antes de asignar su implementación.
+5. Evaluar aislamiento y dependencias antes de ejecutarlo: un chat separado no
+   implica paralelismo. Sin Git, secuenciar las escrituras conforme al acuerdo;
+   con Git/worktrees, coordinar igualmente recursos compartidos e integración.
+
+El coordinador responde por la aceptación e integridad de la integración, sin
+garantizar infalibilidad ni sustituir las verificaciones de cada tarea. Cada chat
+de tarea puede decidir detalles técnicos dentro del encargo; devuelve decisiones
+materiales que cambien alcance, permisos o afecten a otros trabajos. No crea
+otros chats de tarea ni asume autoridad sobre el proyecto.
+
+Pendiente: aprobar el criterio operativo y preparar un encargo piloto acotado;
+después elegir y autorizar su ejecución y la prueba en un segundo proyecto.
+La coordinación activa sigue siendo manual; este registro no implementa nuevas
+capacidades ni cambia los permisos de las herramientas del cliente.
+
 Especificación BMAD en preparación:
 [`spec-coordinacion-chats`](../_bmad-output/specs/spec-coordinacion-chats/SPEC.md).
 Conserva cuestiones abiertas y no implica autorización de implementación.

@@ -53,6 +53,8 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Pendiente de debatir | Contrastar la idea madurada con documentación oficial y fuentes especializadas antes de proponer su implementación con herramientas actuales y adecuadas al proyecto. |
+| [039 — Setup como centro de activación](039-setup-centro-activacion-capacidades.md) | Pendiente de debatir | Incorporar todas las preferencias y skills propias a aikit-setup y detectar automáticamente las omisiones de integración. |
 | [038 — Autonomía para Git y GitHub](038-autonomia-git-github-setup.md) | Pendiente de debatir | Configurar en aikit-setup autonomía global o local para operaciones técnicas de Git y GitHub, preservando información y consultando solo cuando sea estrictamente necesario. |
 | [037 — Captura de prácticas efectivas para AIKit](037-captura-practicas-efectivas-aikit.md) | Pendiente de debatir | Detectar configuraciones, preferencias y procedimientos que funcionan y registrarlos como candidatos para futuras preferencias o skills. |
 | [035 — aikit-help: guía de capacidades](035-aikit-help-guia-capacidades.md) | Pendiente de debatir | Explicar AIKit, orientar su uso en un repositorio y facilitar a ChatGPT el descubrimiento de las funcionalidades del complemento. |
@@ -65,7 +67,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [029 — Estado visible en el nombre del chat](029-estado-visible-nombre-chat.md) | En debate; responsabilidad del chat acordada | Mostrar el estado en el nombre y mantenerlo actualizado desde el chat de tarea. |
 | [027 — Automatización de la coordinación](027-automatizacion-coordinacion.md) | En debate; intención de automatización registrada | Revisar estados y ejecutar acciones de coordinación con una tarea programada. |
 | [026 — Archivado de chats coordinados](026-archivado-chats-coordinacion.md) | En debate; responsabilidad del coordinador acordada | Archivar chats de tareas terminadas y recuperarlos para continuar su trabajo. |
-| [025 — Coordinador global y chats autónomos](025-coordinador-global-chats-autonomos.md) | Skill instalada; coordinación manual activada en AIKit; capacidades adicionales pendientes | Coordinar encargos autónomos mediante una skill y reglas locales, con estados y entregas en Markdown y sin dependencia de Git. |
+| [025 — Coordinador global y chats autónomos](025-coordinador-global-chats-autonomos.md) | Coordinación manual activa; actualización de roles verificada en fuentes, instalación y piloto pendientes | Coordinar encargos y reutilizar chats, con responsabilidades delimitadas y entrada local guiada en setup; capacidades adicionales pendientes. |
 | [024 — Setup BMAD y patrón de integraciones](024-setup-bmad-patron-integraciones.md) | Pendiente de debatir | Configurar preferencias BMAD con ámbito local por defecto, confirmación global y descubrimiento e instalación explícita de adaptaciones. |
 | [002 — OpenCode como subagente acotado](002-opencode-como-subagente-acotado.md) | Pendiente de debatir | Investigar cómo Codex lanza, supervisa y recibe la finalización de sus subagentes para reproducir ese ciclo con OpenCode y tareas acotadas. |
 | [003 — Coste de delegación](003-heuristica-coste-delegacion.md) | Pendiente de debatir | Decidir con una heurística rápida cuándo ejecutar directamente en Codex y cuándo lanzar un subagente. |

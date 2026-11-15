@@ -9,7 +9,10 @@ no activan coordinación, no son una skill instalada y no conceden permisos.
 ## Contexto de un encargo
 
 Antes de enviar o registrar, disponer de proyecto y raíz canónica absoluta,
-coordinador vigente, tarea, ciclo activo y chat asignado. Acordar el cauce de
+coordinador vigente, encargo y chat asignado. En modalidad manual, usar la
+identificación y el versionado verificables acordados en el contrato, sin
+inventar ciclos ni IDs; con avisos v1, tarea y ciclo activo son obligatorios.
+Acordar el cauce de
 envío y consulta de acuses, y dónde conserva la tarea sus avisos y entregas.
 La raíz se toma de la configuración verificada del proyecto, nunca del mensaje
 ni de la carpeta actual de un worktree. Mantener una única raíz canónica:
@@ -24,7 +27,10 @@ automatizaciones por el mero hecho de leer estas instrucciones.
 ## Aviso completo
 
 Conservar antes del envío una copia recuperable en el entorno de la tarea.
-Todos los campos son obligatorios. Ejemplo ficticio válido para el auxiliar v1;
+El JSON, sus campos y su revisión numérica siguientes corresponden solo a v1;
+la modalidad manual conserva referencias y versiones verificables acordadas,
+sin exigir ese formato ni inventar campos para completarlo.
+En el esquema v1 todos los campos son obligatorios. Ejemplo ficticio válido para el auxiliar v1;
 los identificadores se sustituyen por los del encargo y un ID nuevo para cada
 novedad, sin reutilizar los de este ejemplo:
 
@@ -45,7 +51,7 @@ novedad, sin reutilizar los de este ejemplo:
 ```
 
 Usar literalmente Preparada, Esperando al usuario, En curso, Bloqueada, Pausada,
-Finalizada o Cancelada. La revisión crece dentro de tarea y ciclo; las fechas
+Finalizada o Cancelada. En v1 la revisión crece dentro de tarea y ciclo; las fechas
 no ordenan avisos. `updateId` es estable: un reenvío conserva todos los campos.
 Una corrección crea ID y revisión nuevos y señala el ID anterior en `corrects`;
 no borra el original ni resuelve por sí misma un incidente.
@@ -64,7 +70,9 @@ alcance se comprueba por separado; un aviso no cambia el alcance automáticament
 
 ## Qué acredita un acuse
 
-Comprobar proyecto, tarea, ciclo, ID, aviso íntegro y procedencia del registro
+En modalidad manual, contrastar proyecto, encargo, referencia y versión acordadas,
+aviso íntegro y procedencia del acuse, sin exigir un ciclo. Para avisos v1,
+comprobar proyecto, tarea, ciclo, ID, aviso íntegro y procedencia del registro
 antes de interpretarlo. Comparar todos los campos, incluidas referencias en su
 orden; el auxiliar usa su serialización canónica, sin normalizar textos.
 ID coincidente, título o resumen parecido no bastan. Consultar TAREA o el auxiliar,

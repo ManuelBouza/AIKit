@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -54,13 +55,28 @@ def test_export_and_install(tmp_path: Path) -> None:
     ).read_bytes()
     assert not (package / "mcp.json").exists()
     coordination = package / "skills/coordinacion-chats"
-    for relative in ("SKILL.md", "references/avisos.md"):
+    for relative in (
+        "SKILL.md",
+        "references/avisos.md",
+        "references/responsabilidades.md",
+    ):
         assert (coordination / relative).read_bytes() == (
             ROOT / "packaging/skills/coordinacion-chats" / relative
         ).read_bytes()
     assert "(references/avisos.md)" in (coordination / "SKILL.md").read_text(
         encoding="utf-8"
     )
+    for document in (
+        coordination / "SKILL.md",
+        coordination / "references/responsabilidades.md",
+        package / "skills/aikit-setup/SKILL.md",
+    ):
+        for target in re.findall(
+            r"\]\(([^)]+)\)", document.read_text(encoding="utf-8")
+        ):
+            destination = (document.parent / target).resolve()
+            assert destination.is_relative_to(package.resolve()), target
+            assert destination.is_file(), target
     assert not (package / "skills/delegating-to-opencode").exists()
     assert not (package / "packages/aikit-coordination").exists()
     profile = tmp_path / "perfil"

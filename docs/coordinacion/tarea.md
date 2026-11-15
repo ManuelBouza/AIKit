@@ -4,15 +4,25 @@ Aplicar el [flujo compartido](flujo-avisos.md). Mantener la responsabilidad del
 encargo, estado declarado, título, entrega, verificaciones y limpieza. La tarea
 comunica sus datos; solo el coordinador escribe el registro canónico.
 
+Aplicar también las [responsabilidades de la skill](../../packaging/skills/coordinacion-chats/references/responsabilidades.md).
+Un chat con propósito especializado usa esta misma mecánica. Las correcciones
+relacionadas permanecen con su responsable comprobado; no requieren otro chat
+por cada paso. Las necesidades de otro trabajo se trasladan al coordinador,
+sin habilitar comunicación directa entre tareas. El coordinador decide y
+documenta creación o reutilización; la tarea no crea otros Chats de Tarea.
+
 ## Preparar y enviar
 
-Al arrancar, confirmar encargo y alcance con el usuario, proyecto, tarea, ciclo,
-chat asignado, coordinador vigente y cauces de envío/consulta. No empezar un
+Al arrancar, contrastar con el encargo autorizado alcance, proyecto, identificación
+del encargo, chat asignado, coordinador vigente y cauces de envío/consulta.
+En registro manual usar identificación/versionado verificables acordados; con
+avisos v1, tarea y ciclo son obligatorios. No inventarlos. No empezar un
 alcance nuevo por una entrada informativa. En un worktree conservar la entrega
 y los avisos en el entorno propio; no crear una segunda raíz `coordinacion/`.
 
 Ante un cambio significativo o hito pertinente, preparar el aviso completo con
-ID estable y revisión creciente. Conservar su contenido recuperable antes de
+referencia estable y versionado acordado (ID y revisión creciente en v1).
+Conservar su contenido recuperable antes de
 enviarlo y registrar su ubicación. Si no puede persistirse, informar y no afirmar
 que hay envío recuperable. Incluir referencias accesibles al coordinador, sin
 suponer que puede abrir una ruta del worktree o un recurso privado.
@@ -35,11 +45,12 @@ un duplicado puede remitir a ese recibo. Antiguo confirma recepción sin aplicac
 pendiente, conflicto e incierto conservan una intervención pendiente. No deducir
 registro desde el envío exitoso, el silencio, el título o los índices derivados.
 
-Ante un envío incierto, conservar ID/contenido y consultar primero registro e
+Ante un envío incierto, conservar referencia y contenido y consultar primero registro e
 historial accesibles. Sin acceso, solicitar al usuario o al coordinador por el
 cauce autorizado el acuse identificado; informar de la limitación. No reenviar
 ciegamente por timeout. Un reenvío justificado y autorizado usa el mismo aviso;
-una novedad real o corrección usa ID y revisión nuevos, manteniendo el original.
+una novedad real o corrección usa nueva referencia y versión acordadas (ID y
+revisión nuevos en v1), manteniendo el original.
 
 ## Título, integración y cierre
 
@@ -51,7 +62,7 @@ no presentar el título como confirmación del registro. Sin herramienta, facili
 el nombre exacto para cambio manual. Respetar cambios intencionales del usuario.
 
 Cuando integrar forme parte del encargo, preparar la solicitud antes del cierre:
-tarea/ciclo, alcance, destino, versión exacta si hay Git, verificaciones y
+identificación del encargo (tarea/ciclo en v1), alcance, destino, versión exacta si hay Git, verificaciones y
 pendientes. Referenciarla en el aviso. Esperar el resultado de integración del
 coordinador y verificarlo antes de limpiar recursos que aún necesite. La tarea
 gestiona su rama; el coordinador, las ramas principales. Sin Git, una tarea de

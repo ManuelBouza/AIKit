@@ -9,6 +9,12 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Reporte para soporte preparado 2026-11-15:
+[borrador redactado](../docs/reporte-soporte-sandbox-windows.md), con entorno,
+secuencia observada, errores y límites. No enviado ni acompañado de logs privados.
+La lectura completa de la skill y la reparación siguen pendientes; el borrador
+permite revisar la comunicación antes de autorizar un envío concreto.
+
 Intento oficial autorizado 2026-11-15: setupCompleted informó éxito, pero no
 cambiaron descriptor ni archivos del helper y reapareció fallo de preparación.
 Se detuvo sin nuevas pruebas, sin repetir setup y sin cambios manuales de ACL.

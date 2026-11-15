@@ -53,6 +53,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [038 — Autonomía para Git y GitHub](038-autonomia-git-github-setup.md) | Pendiente de debatir | Configurar en aikit-setup autonomía global o local para operaciones técnicas de Git y GitHub, preservando información y consultando solo cuando sea estrictamente necesario. |
 | [037 — Captura de prácticas efectivas para AIKit](037-captura-practicas-efectivas-aikit.md) | Pendiente de debatir | Detectar configuraciones, preferencias y procedimientos que funcionan y registrarlos como candidatos para futuras preferencias o skills. |
 | [035 — aikit-help: guía de capacidades](035-aikit-help-guia-capacidades.md) | Pendiente de debatir | Explicar AIKit, orientar su uso en un repositorio y facilitar a ChatGPT el descubrimiento de las funcionalidades del complemento. |
 | [036 — Investigación antes de pruebas](036-reforzar-investigacion-antes-de-pruebas.md) | Pendiente de debatir | Revisar y reforzar la aplicación de la regla de consultar documentación oficial y fuentes especializadas antes de experimentar. |

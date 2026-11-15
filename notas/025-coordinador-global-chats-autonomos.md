@@ -9,6 +9,14 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Actualización de empaquetado 2026-11-15: la
+[skill de avisos y acuses](../packaging/skills/coordinacion-chats/SKILL.md) está
+preparada en fuentes, con validación estructural, evaluación textual de cuatro
+casos y revisión independiente corregida. Véase la
+[evidencia de alcance](../_bmad-output/implementation-artifacts/spec-025-skill-coordinacion.md).
+No está instalada ni incluida en el exportador histórico; falta la prueba aislada
+de carga. Esta skill acotada no implementa todas las capacidades de la nota 025.
+
 Manuel autorizó implementar y probar el primer auxiliar en un proyecto ficticio.
 El alcance está en la [especificación de implementación](../_bmad-output/implementation-artifacts/spec-025-auxiliar-registro.md).
 Esta entrega no activa la mensajería, archivado o programación de chats reales.

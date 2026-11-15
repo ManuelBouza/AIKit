@@ -9,6 +9,13 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Inspección de solo lectura 2026-11-15: el helper presenta propietario
+Administradores, DACL protegida y ACE de usuario Modify sin WRITE_DAC. El proceso
+de inspección no tiene rol administrador activo; logs confirman el fallo de
+preparación. El [informe de permisos](../docs/inspeccion-permisos-sandbox-windows.md)
+distingue estos hechos del token histórico del helper, que no se capturó.
+No se repararon permisos; la invocación completa de la skill sigue pendiente.
+
 Contraste documental 2026-11-15: la [investigación de fuentes](../docs/contraste-documental-sandbox-windows.md)
 prioriza una discrepancia de derechos/identidad al reaplicar la DACL del helper,
 sin darla por demostrada localmente. Se separa del selector Windows omitido en

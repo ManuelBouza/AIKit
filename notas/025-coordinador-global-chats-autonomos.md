@@ -9,6 +9,12 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Procedimiento preparado 2026-11-15: se recomienda un intento de configuración
+oficial elevada con respaldo y verificación, según el
+[procedimiento de reparación](../docs/procedimiento-reparacion-sandbox-windows.md).
+No ejecutado. Distingue restaurar DACL de revertir toda la configuración del
+sandbox; la corrección manual WRITE_DAC sigue siendo una alternativa separada.
+
 Inspección de solo lectura 2026-11-15: el helper presenta propietario
 Administradores, DACL protegida y ACE de usuario Modify sin WRITE_DAC. El proceso
 de inspección no tiene rol administrador activo; logs confirman el fallo de

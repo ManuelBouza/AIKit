@@ -9,6 +9,13 @@ Estado inicial: Pendiente de debatir.
 Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
 
+Diagnóstico posterior: el stderr confirma rechazo real de las lecturas. Al
+explicitar el backend Windows omitido por ignore-user-config, el rechazo genérico
+cambia por helper_sandbox_lock_failed y acceso denegado al preparar .sandbox-bin.
+El [informe](../docs/invocacion-aislada-skill-coordinacion.md#diagnóstico-posterior--2026-11-15)
+conserva la comparación. Sigue pendiente la lectura completa; no se alteraron ACL
+ni configuración del sandbox compartido.
+
 Invocación explícita 2026-11-15: se observó selección de la skill y respuesta
 prudente al caso ficticio, pero la sesión informó bloqueo de lectura local de su
 referencia. No se acredita carga completa. El

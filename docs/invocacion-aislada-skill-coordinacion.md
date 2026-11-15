@@ -38,3 +38,33 @@ de la referencia sigue sin acreditarse. No se activó coordinación del proyecto
 ni se modificaron chats existentes. Antes de repetir la prueba, diagnosticar las
 capacidades y política efectiva de lectura de la sesión; no omitir reglas ni
 ampliar permisos de ejecución para forzar un resultado positivo.
+
+## Diagnóstico posterior — 2026-11-15
+
+El stderr del segundo intento sí contiene dos rechazos de `exec_command` antes
+de crear proceso, ambos para Get-Content de la skill/referencia. Los eventos JSONL
+no los mostraban, pero el stderr confirma que no fue solo una afirmación del modelo.
+La evaluación del comando exacto frente al único archivo de reglas del perfil
+devolvió `matchedRules: []`; eso no descarta otras capas de política.
+
+El perfil local selecciona `windows.sandbox = elevated`, mientras el ensayo usa
+`--ignore-user-config`. El [issue oficial 42172](https://github.com/openai/codex/issues/42172)
+describe el mismo síntoma al omitir ese selector en Windows. Es un reporte de
+usuarios, no prueba por sí solo la causa local. La
+[referencia de configuración](https://learn.chatgpt.com/docs/config-file/config-reference)
+documenta windows.sandbox como selección de implementación nativa.
+
+Se hizo una comparación acotada: mismo lanzador y caso, añadiendo solamente
+`-c windows.sandbox="elevated"`, conservando read-only, reglas e ignorar config.
+No se modificó configuración persistente ni se activaron aprobaciones automáticas.
+Evidencia: `.aikit/aikit-025-invocacion-235nzaak/`, código de salida 0.
+El error pasó a `helper_sandbox_lock_failed`, al preparar
+`~/.codex/.sandbox-bin`: `SetNamedSecurityInfoW sandbox dir failed: 5`.
+
+Conclusión limitada: explicitar el backend elimina el rechazo genérico en este
+ensayo, pero queda un fallo de preparación/permisos del helper. No se acredita
+lectura de la referencia ni que la skill sea defectuosa. No se cambiaron ACL,
+propietarios, reglas o archivos del helper para intentar desbloquearlo. El paso
+siguiente es preparar una reparación del sandbox nativo conforme a la
+[documentación Windows](https://learn.chatgpt.com/docs/windows/windows-sandbox),
+con alcance y recuperación definidos antes de alterar el entorno compartido.

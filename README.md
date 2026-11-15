@@ -355,6 +355,10 @@ del lanzador se ejecutan con PowerShell disponible en Windows; la pasada real
 de esta actualización utiliza PowerShell 7. Consulta
 [calidad por lenguaje](docs/calidad-python-typescript.md) para alcance y evidencia.
 
+El [auxiliar de coordinación](docs/auxiliar-coordinacion.md) es un prototipo local
+para una carpeta ficticia vacía. Demuestra registro, acuses y recuperación; aún
+no activa la coordinación con chats reales ni forma parte del setup.
+
 Las pruebas usan fixtures, parametrización y un transporte falso: no invocan
 OpenCode ni consumen cuota. Los temporales de pytest viven en `.aikit/pytest-tmp`.
 Si el sandbox restringe la caché de uv, usa

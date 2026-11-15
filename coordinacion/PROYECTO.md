@@ -4,9 +4,10 @@
 - Raíz canónica: C:/Manuel/Projects/AIKit/coordinacion/.
 - Proyecto Codex: 4ac70d03-d0eb-43ab-a38c-7bb84ff7d85b.
 - Identidad del registro: 684a47fa-cf69-47a2-9625-5e7a8db806af.
-- Coordinador: 01a1dfb7-840e-7243-8577-ff634015c31f.
-- Autoridad: traspaso confirmado en el historial del coordinador anterior
-  01a1da03-23f1-7eb0-b0a0-5cb5184e6941 y activación autorizada por Manuel.
+- Coordinador: 01a1da03-23f1-7eb0-b0a0-5cb5184e6941.
+- Autoridad: decisión expresa de Manuel de regresar al coordinador anterior,
+  contrastada en el historial del chat 01a1dfb7-840e-7243-8577-ff634015c31f,
+  turno 01a1e006-0481-7f93-9ee9-35937478f1bd.
 - Alta: 2026-11-15.
 - Escritor: solo el coordinador vigente; no hay bloqueo técnico automático.
 - Conservación: Git para el registro del proyecto; no incluir credenciales,
@@ -14,3 +15,15 @@
 - Alcance: seguimiento manual, con origen y decisión identificables para cada
   aviso; no acredita garantías transaccionales ni acuses del auxiliar v1.
 - Historial de prueba: .aikit/025-prueba-chat-principal/; separado de este registro.
+
+## Historial de autoridad manual
+
+- 2026-11-15: alta autorizada por Manuel con coordinador
+  01a1dfb7-840e-7243-8577-ff634015c31f, después del traspaso desde
+  01a1da03-23f1-7eb0-b0a0-5cb5184e6941.
+- 2026-11-15: Manuel solicita «vamos a regresar al coordiandor anteriro... y
+  archirvar este». Se recibe y contrasta el traspaso y vuelve a ser coordinador
+  01a1da03-23f1-7eb0-b0a0-5cb5184e6941. El chat reemplazado gestiona su propio
+  archivado; esta entrada no afirma que ya se haya archivado.
+  El cambio afecta solo a este registro manual, no al auxiliar v1 ni a su prueba.
+  Se conservan los worktrees y el stash; su revisión propuesta sigue sin aprobar.

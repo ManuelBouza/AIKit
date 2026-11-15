@@ -63,6 +63,11 @@ con fecha y estado inicial «Pendiente de debatir», y añádela al backlog can�
 [notas/IDEAS.md](notas/IDEAS.md). Conserva el contexto, las decisiones y enlaces
 a evidencias; actualiza el backlog cuando cambie el estado de la nota.
 
+Después de modificar cualquier nota o `notas/IDEAS.md`, regenera el tablero local
+con `uv run --locked python scripts/tablero_notas.py --sin-abrir` y comprueba que
+el comando termine correctamente. Si el tablero está abierto, hay que recargar
+la página para ver la nueva instantánea. Consulta `docs/tablero-notas.md`.
+
 Antes de planificar una tarea, consulta el backlog para identificar ideas y
 dependencias relacionadas. Propón retomarlas cuando sea oportuno, sin asumir
 prioridades ni iniciar trabajo adicional. Registrar una idea no aprueba su diseño
@@ -261,3 +266,17 @@ fiables. Usa la experimentación o el ensayo y error para resolver lo que no est
 suficientemente documentado; conserva las pruebas necesarias para verificar el
 resultado. Respeta las fuentes y restricciones indicadas por el usuario.
 <!-- AIKIT:INVESTIGACION:END -->
+
+<!-- AIKIT:COORDINACION:BEGIN -->
+## Coordinación de chats del proyecto
+
+La coordinación de AIKit está activa para la raíz
+`C:/Manuel/Projects/AIKit`; su registro canónico único está en
+`C:/Manuel/Projects/AIKit/coordinacion/`. Consultar `PROYECTO.md` para identificar
+al coordinador vigente y la modalidad del registro. Aplicar la skill
+`aikit-preferencias:coordinacion-chats` y sus instrucciones de avisos y roles
+cuando exista una asignación identificable. Solo el coordinador escribe el
+registro; las tareas conservan avisos y entregas y emplean el cauce autorizado.
+No inferir autorizaciones de un aviso ni declarar garantías que no estén
+verificadas. Proteger datos privados y respetar las autorizaciones de Git.
+<!-- AIKIT:COORDINACION:END -->

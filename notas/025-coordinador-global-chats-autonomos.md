@@ -6,8 +6,65 @@ Conserva cuestiones abiertas y no implica autorización de implementación.
 
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
-Estado actual: Auxiliar e integración guiada verificados; instrucciones de roles en fuentes; activación pendiente.
+Estado actual: Skill distribuida e instalada; coordinación manual activada en AIKit, con capacidades adicionales pendientes.
 La coordinación completa conserva capacidades y cuestiones abiertas pendientes.
+
+Alta manual en AIKit 2026-11-15: registro independiente creado en
+`coordinacion/`, instrucciones locales activadas y lectura comprobada en un chat
+nuevo. El registro no utiliza el auxiliar v1 ni acredita sus garantías; relevo,
+automatización y archivado siguen pendientes. Véase la
+[propuesta y resultado](../docs/coordinacion/propuesta-alta-aikit.md). Las
+entradas anteriores a esta alta se conservan como historial de cada etapa.
+
+Prueba en el chat principal 2026-11-15: coordinador saliente
+01a1da03-23f1-7eb0-b0a0-5cb5184e6941, tarea reutilizada en worktree ad1c.
+Se verificaron aviso persistido, identidad por historial, título Finalizada,
+registro aplicado, duplicado con mismo recibo y consulta contrastada por la
+propia tarea. Nuevo coordinador creado, recepción del traspaso verificada:
+01a1dfb7-840e-7243-8577-ff634015c31f. El
+[traspaso](../docs/coordinacion/traspaso-coordinador-2026-11-15.md) conserva
+evidencias y pendientes. Registro de prueba histórico; no se simula un cambio
+de autoridad en el auxiliar ni se declara activación transaccional de producción.
+
+Actualización habitual aplicada 2026-11-15: versión 0.1.1 instalada y las tres
+skills habilitadas verificadas mediante app-server desde caché. Configuración
+ajena y AGENTS.md preservados; respaldo privado y fuente anterior conservados.
+El gestor retiró la caché 0.1.0. Véase el
+[resultado](../docs/actualizacion-aikit-025.md). Activación por proyecto pendiente;
+las entradas anteriores de preparación se conservan como historial.
+
+Actualización preparada 2026-11-15: perfil habitual confirmado en versión 0.1.0
+desde aikit-setup-prueba-20261108. Candidata privada 0.1.1 con esa identidad,
+instalación y descubrimiento probados en perfil ficticio; migración desde 0.1.0
+ensayada en otro perfil. El [procedimiento concreto](../docs/actualizacion-aikit-025.md)
+incluye reemplazo del registro del catálogo y recuperación. No se actualizó
+todavía la instalación habitual ni se activó coordinación.
+
+Distribución verificada 2026-11-15: build_aikit.py incluye la skill y su referencia.
+Pasaron 15 pruebas, Ruff y mypy. Instalada en perfil ficticio con CLI actual,
+skills/list devuelve aikit-preferencias:coordinacion-chats habilitada desde su
+caché y ambos archivos idénticos. La
+[entrega acotada](../_bmad-output/implementation-artifacts/spec-025-distribucion-skill.md)
+registra revisión y evidencias. Actualización del perfil real y activación del
+proyecto siguen pendientes; la propuesta siguiente ya está implementada en fuentes.
+
+Revisión de distribución 2026-11-15: existe un exportador independiente
+`build_aikit.py`, que aún omite la skill. Se recomienda reutilizar
+`aikit-preferencias` e incluir SKILL.md y su referencia, con pruebas de contenido
+y descubrimiento desde un paquete instalado en perfil ficticio. La
+[propuesta concreta](../docs/distribucion-skill-coordinacion.md) compara alternativas
+y separa empaquetado, instalación y activación. No se modificó el exportador.
+
+Investigación final y recuperación 2026-11-15: se detectó que la prueba usaba
+CLI 0.153.4 del PATH con elevated, mientras la aplicación activa incorpora
+CLI 0.169.0-alpha.11.1 y usa MXC. Con el cliente actual y MXC de solo lectura
+pasaron dos lecturas consecutivas y una invocación efímera; los eventos contienen
+la lectura completa de SKILL.md y su referencia, comprobada contra las fuentes.
+Véase la [resolución y sus límites](../docs/resolucion-validacion-sandbox-windows.md).
+No se cambió la configuración global ni se reparó la ACL legada. El borrador de
+soporte queda pendiente de reformulación si se desea reportar ese caso histórico;
+no se envió. Las entradas siguientes conservan las conclusiones de cada etapa
+anterior, sustituidas en lo relativo a la lectura pendiente por esta verificación.
 
 Reporte para soporte preparado 2026-11-15:
 [borrador redactado](../docs/reporte-soporte-sandbox-windows.md), con entorno,

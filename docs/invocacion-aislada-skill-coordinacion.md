@@ -68,3 +68,10 @@ propietarios, reglas o archivos del helper para intentar desbloquearlo. El paso
 siguiente es preparar una reparación del sandbox nativo conforme a la
 [documentación Windows](https://learn.chatgpt.com/docs/windows/windows-sandbox),
 con alcance y recuperación definidos antes de alterar el entorno compartido.
+
+## Actualización posterior — 2026-11-15
+
+La [prueba con el cliente actual y MXC](resolucion-validacion-sandbox-windows.md)
+ya acredita la lectura completa de la skill y su referencia. Este documento
+conserva los intentos anteriores con CLI 0.153.4 y sus limitaciones; el bloqueo
+de esa validación se ha resuelto sin reparar la ACL del sandbox legado.

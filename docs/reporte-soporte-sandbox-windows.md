@@ -2,6 +2,14 @@
 
 Borrador para soporte. Fecha: 15 de noviembre de 2026. No enviado.
 
+**Actualización posterior: no enviar este borrador sin reformularlo.** La
+[investigación final](resolucion-validacion-sandbox-windows.md) identificó que
+las pruebas usaban CLI 0.153.4 del PATH, mientras la aplicación activa
+26.1111.2228.0 incorpora CLI 0.169.0-alpha.11.1 y utiliza MXC. Con esa CLI y MXC
+en solo lectura pasaron dos lecturas consecutivas y la invocación completa de
+la skill. El texto siguiente conserva el diagnóstico histórico del backend
+legado; su ACL no se ha reparado. El bloqueo de la validación ya está resuelto.
+
 ## Problema
 
 Estoy intentando validar la lectura de una skill local en un proyecto temporal,

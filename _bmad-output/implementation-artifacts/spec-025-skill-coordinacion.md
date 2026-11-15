@@ -50,5 +50,12 @@ no instalar ni activar la skill, ni distribuir el auxiliar como producto termina
   esa condición quedó reforzada por el hallazgo independiente, sin atribuir a la
   primera evaluación una comprobación posterior.
 - git diff --check correcto. No se ejecutaron mensajes ni se instaló la skill.
-  La fuente queda lista para una prueba aislada de carga; no está incorporada al
-  exportador histórico del complemento, que usa una lista explícita de archivos.
+  La fuente no está incorporada al exportador histórico del complemento, que usa
+  una lista explícita de archivos.
+- Actualización 2026-11-15: descubrimiento aislado y posterior invocación explícita
+  verificados. Con CLI actual 0.169.0-alpha.11.1 y MXC read-only, el evento de
+  ejecución acredita lectura íntegra de SKILL.md y su referencia, contrastada por
+  parser con las fuentes. El caso ficticio conserva evidencia e integración
+  pendiente. La [resolución](../../docs/resolucion-validacion-sandbox-windows.md)
+  distingue el fallo anterior de CLI 0.153.4/elevated y los límites de la prueba.
+  Distribución y activación siguen pendientes.

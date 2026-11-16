@@ -1,5 +1,8 @@
 # Paquete AIKit 0.1.2 preparado para el perfil habitual
 
+Actualización posterior, 2026-11-16: [0.1.3 instalada y verificada](actualizacion-aikit-0.1.3.md).
+Este documento conserva el historial de la entrega 0.1.2.
+
 Fecha: 2026-11-16.
 Estado: actualización aplicada al perfil habitual; instalación y descubrimiento verificados.
 Fuente: commit `92935edb9045db7eeccb34ec4ff4fce2af035252`.

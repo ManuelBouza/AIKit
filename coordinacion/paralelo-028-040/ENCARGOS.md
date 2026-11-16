@@ -1,9 +1,13 @@
 # Preparación de dos tareas en paralelo
 
 Fecha: 2026-11-16.
-Estado del encargo: ejecutable; corrección enviada y reconocida por ambas
-sesiones. El estado de cada chat se
-registra por separado, sin inferirlo de este documento.
+Estado actual: ambos encargos pausados por indicación expresa de Manuel el
+2026-11-16 para continuar la corrección en el chat Coordinador. Se conservan
+ramas, worktrees, cambios y evidencias. No ejecutar nuevas operaciones ni
+reanudar por las condiciones ejecutables históricas que figuran debajo.
+
+La pausa se trasladó a ambos chats con herramientas nativas. La confirmación
+de cada sesión se referencia en ACUSES.md. No se archivan ni retiran recursos.
 
 ## Condiciones vigentes — sustituyen las esperas de preparación anteriores
 

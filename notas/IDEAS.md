@@ -53,8 +53,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [041 — Autonomía tras asignar una tarea](041-autonomia-chat-tarea-tras-asignacion.md) | Fuentes verificadas y reconocida en ambos chats; distribución pendiente | Conversación directa con el usuario y ejecución autónoma del encargo, con reportes relevantes y coordinación de dependencias e integración. |
-| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Bloqueada por entorno BMAD y dependencias del worktree | Contrastar la idea madurada con documentación oficial y fuentes especializadas antes de proponer su implementación con herramientas actuales y adecuadas al proyecto. |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Pausada por el usuario; entorno pendiente | Contrastar la idea madurada con documentación oficial y fuentes especializadas antes de proponer su implementación con herramientas actuales y adecuadas al proyecto. |
 | [039 — Setup como centro de activación](039-setup-centro-activacion-capacidades.md) | Pendiente de debatir | Incorporar todas las preferencias y skills propias a aikit-setup y detectar automáticamente las omisiones de integración. |
 | [038 — Autonomía para Git y GitHub](038-autonomia-git-github-setup.md) | Pendiente de debatir | Configurar en aikit-setup autonomía global o local para operaciones técnicas de Git y GitHub, preservando información y consultando solo cuando sea estrictamente necesario. |
 | [037 — Captura de prácticas efectivas para AIKit](037-captura-practicas-efectivas-aikit.md) | Pendiente de debatir | Detectar configuraciones, preferencias y procedimientos que funcionan y registrarlos como candidatos para futuras preferencias o skills. |
@@ -64,7 +63,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [032 — Coordinador escritor mediante mensajes](032-coordinador-escritor-mensajes-tareas.md) | Integración guiada verificada; instrucciones en fuentes; activación pendiente | Las tareas comunican sus datos y el coordinador es el único escritor canónico, con acuse y recuperación. |
 | [031 — Aislamiento de trabajos sin Git](031-aislamiento-sin-git.md) | Decisión de secuenciación o Git por proyecto; detalles pendientes | El usuario elige secuenciar escrituras o habilitar Git y worktrees para paralelismo. |
 | [030 — Evaluar Impeccable y find-skills](030-evaluar-impeccable-find-skills.md) | Pendiente de debatir | Evaluar recursos de diseño de interfaces y descubrimiento de skills, su utilidad y su encaje con las herramientas existentes. |
-| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | Esperando al usuario por decisión visual; BMAD pendiente antes de implementar | Mejorar la experiencia del tablero y su detalle centrado; tarea autónoma, Sites fuera del encargo. |
+| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | Pausada por el usuario; decisión visual y entorno pendientes | Mejorar la experiencia del tablero y su detalle centrado; tarea autónoma, Sites fuera del encargo. |
 | [029 — Estado visible en el nombre del chat](029-estado-visible-nombre-chat.md) | En debate; responsabilidad del chat acordada | Mostrar el estado en el nombre y mantenerlo actualizado desde el chat de tarea. |
 | [027 — Automatización de la coordinación](027-automatizacion-coordinacion.md) | En debate; intención de automatización registrada | Revisar estados y ejecutar acciones de coordinación con una tarea programada. |
 | [026 — Archivado de chats coordinados](026-archivado-chats-coordinacion.md) | En debate; responsabilidad del coordinador acordada | Archivar chats de tareas terminadas y recuperarlos para continuar su trabajo. |
@@ -83,6 +82,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [041 — Autonomía tras asignar una tarea](041-autonomia-chat-tarea-tras-asignacion.md) | Verificada; versión privada 0.1.3 instalada y descubierta | Conversación directa con el usuario y ejecución autónoma del encargo, con reportes relevantes y coordinación de dependencias e integración. |
 | [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm resueltos | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |
 | [012 — Referencia a BMAD en AGENTS.md](012-referencia-bmad-en-agents.md) | Implementada | Referencia breve de uso aprobada con go e incorporada a AGENTS.md, complementaria al descubrimiento de skills. |
 | [015 — Backlog de ideas compatible con BMAD](015-backlog-ideas-bmad.md) | Implementada | Organizar las notas y registrar ideas nuevas en un backlog trazable. |

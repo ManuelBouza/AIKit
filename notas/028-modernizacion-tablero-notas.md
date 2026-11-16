@@ -3,7 +3,14 @@
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Esperando al usuario por decisión visual; implementación no iniciada.
+Estado actual: Pausada por indicación expresa del usuario; implementación no iniciada.
+
+## Pausa — 2026-11-16
+
+Manuel pide mantener en espera los chats 028 y 040 y continuar la corrección
+en el Coordinador. No reanudar investigación, implementación ni preparación
+del entorno hasta nueva indicación. Se conservan rama, worktree y evidencias.
+La decisión visual previa sigue pendiente, sin solicitarla durante la pausa.
 
 ## Continuidad autónoma — 2026-11-16
 

@@ -1,5 +1,22 @@
 # Recepción manual de avisos
 
+## Pausa expresa posterior — 2026-11-16
+
+Manuel solicita mantener ambos chats en espera para corregir el mecanismo en
+el Coordinador. Pausa trasladada una vez a cada chat y confirmada en estado
+nativo `idle`, sin operaciones en curso que detener:
+
+- 028: turno `01a1e590-eaeb-7f61-84f7-94bfbecda218`, respuesta
+  `msg_0db3b5842777b04c016afb47ee095487d1b8f19c232964cd0a`;
+  confirma estado y título Pausada, conservación de rama, worktree y evidencias.
+- 040: turno `01a1e591-1b65-7fb0-8165-53f490b4f25b`, respuesta
+  `msg_04fda8e4ecae1c40016afb47fb26d087d1b728fb08e34c5b92`;
+  confirma estado y título Pausada, conservación de rama, worktree, `.venv`
+  y evidencias.
+
+Los reportes anteriores se conservan como historial. No reanudar trabajo ni
+preparación del entorno hasta nueva indicación humana; sin archivado ni limpieza.
+
 Fecha: 2026-11-16. Solo el Coordinador administra este registro manual.
 Los originales se copian íntegros desde las rutas informadas por sus chats;
 el origen se contrasta con los metadatos nativos de los mensajes recibidos.

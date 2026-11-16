@@ -8,10 +8,11 @@ enlazará a su estado, entrega y pendientes; no se incorpora la tarea ficticia.
 
 - 2026-11-16: [028 y 040 en paralelo](paralelo-028-040/ENCARGOS.md).
   Autonomía aclarada y reconocida por ambas sesiones, ramas y worktrees propios.
-  028: Esperando al usuario por decisión visual; 040: Bloqueada por entorno BMAD.
+  028 y 040: Pausadas por orden expresa de Manuel para continuar la corrección
+  en el Coordinador. Se conservan recursos y evidencias.
   Sin implementación iniciada. [Avisos y acuses](paralelo-028-040/ACUSES.md).
   El Coordinador tiene pendiente coordinar una preparación aislada de BMAD y
-  dependencias; no implica otra orden general de arranque.
+  dependencias; queda también en espera mientras dure esta pausa.
 
 ## Encargos finalizados
 

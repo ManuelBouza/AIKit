@@ -3,7 +3,20 @@
 Fecha: 2026-11-16.
 Estado inicial: Pendiente de debatir.
 Estado actual: Fuentes ajustadas y comunicación reconocida por ambos chats;
-validación y revisión completadas. Caché instalada sin actualizar.
+validación y revisión completadas; versión privada 0.1.3 instalada y descubierta.
+
+## Entrega 0.1.3 — 2026-11-16
+
+Manuel solicita corregir el comportamiento en AIKit y lanzar nueva versión.
+Se exportan 28 archivos y se verifican instalación nueva, migración y recuperación
+en perfiles ficticios; aplicación y descubrimiento completados en el perfil habitual.
+Configuración ajena y AGENTS.md conservados, sin setup ni inferencia.
+Véase [resultado y recuperación](../docs/actualizacion-aikit-0.1.3.md).
+
+Los chats 028/040 permanecen pausados por orden del usuario. La actualización no
+reanuda sus trabajos ni resuelve sus pendientes de entorno. La prueba de
+comportamiento previa y el descubrimiento de esta versión son evidencias distintas;
+no se afirma que todas las sesiones abiertas hayan recargado las nuevas instrucciones.
 
 ## Corrección del usuario
 
@@ -96,7 +109,8 @@ reportado por el cauce autorizado. Validación estructural de ambas skills y
 evaluación independiente de seis casos completadas. La evaluación comprueba
 decisiones descritas, no garantiza ejecución nativa permanente. Se observan
 además reconocimiento, continuidad y reportes reales de ambos chats. No se
-modifica la caché instalada ni las ramas de 028/040.
+modificaron las ramas de 028/040. La posterior actualización de la caché a 0.1.3
+se registra en el apartado de entrega anterior.
 
 Especificación y triage: [spec 041](../_bmad-output/implementation-artifacts/spec-041-autonomia-chat-tarea.md).
 La especificación se produjo con bmad-build, que no generó `.memlog.md`;

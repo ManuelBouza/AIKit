@@ -3,7 +3,14 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Bloqueada por disponibilidad de BMAD y dependencias en su worktree.
+Estado actual: Pausada por indicación expresa del usuario; entorno BMAD pendiente.
+
+## Pausa — 2026-11-16
+
+Manuel pide mantener en espera los chats 028 y 040 y continuar la corrección
+en el Coordinador. No reanudar investigación, implementación ni preparación
+del entorno hasta nueva indicación. Se conservan rama, worktree y evidencias;
+la incidencia de entorno permanece registrada como pendiente.
 
 ## Continuidad autónoma — 2026-11-16
 

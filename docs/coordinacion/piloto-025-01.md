@@ -1,7 +1,12 @@
 # Encargo piloto: guía breve de coordinación en AIKit
 
 Fecha: 2026-11-16.
-Estado: preparación terminada; ejecución y asignación operativa pendientes.
+Estado: ejecución autorizada el 2026-11-16; asignación registrada, arranque pendiente.
+Seguimiento operativo: [encargo](../../coordinacion/piloto-025-01/ENCARGO.md),
+[estado](../../coordinacion/piloto-025-01/ESTADO.md) y
+[acuses](../../coordinacion/piloto-025-01/ACUSES.md).
+Los apartados siguientes conservan el plan aprobado; sus pendientes de preparación
+se resuelven en el seguimiento operativo, sin reinterpretarlos como una segunda tarea.
 Referencia de preparación: PILOTO-025-01, propia del registro manual; no es un
 ID del auxiliar v1 ni acredita una tarea ejecutada.
 

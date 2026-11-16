@@ -4,13 +4,15 @@ Registro manual administrado por el coordinador identificado en `PROYECTO.md`.
 No hay encargos reales registrados al dar de alta. Cada asignación autorizada
 enlazará a su estado, entrega y pendientes; no se incorpora la tarea ficticia.
 
-## Preparaciones sin ejecución
+## Encargos activos
 
 - 2026-11-16: [PILOTO-025-01](../docs/coordinacion/piloto-025-01.md), encargo
-  documental preparado para probar asignación, avisos, revisión e integración.
-  Chat candidato contrastado: AIKit · Comprobación de coordinación
-  (`01a1dff8-061d-7170-b111-2f5577f1f570`). Aún no hay asignación operativa,
-  mensajes, entrega ni prueba ejecutada. No reutiliza el registro ficticio v1.
+  documental autorizado para probar asignación, avisos, revisión e integración.
+  [Encargo](piloto-025-01/ENCARGO.md) y [estado](piloto-025-01/ESTADO.md): En curso,
+  guía revisada e integrada; confirmación de cierre pendiente. Chat asignado:
+  `01a1dff8-061d-7170-b111-2f5577f1f570`,
+  anteriormente AIKit · Comprobación de coordinación. No reutiliza el registro
+  ficticio v1.
 
 ## Pendientes de mantenimiento
 

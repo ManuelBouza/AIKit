@@ -30,3 +30,21 @@ Registro manual escrito exclusivamente por el coordinador.
   reescribe el aviso original para ocultar esa secuencia.
 - Revisión independiente encargada; integración y cierre pendientes. El acuse
   no los acredita ni aprueba el contenido de la guía.
+
+## PILOTO-025-01/AV-003 — incorporado
+
+- Fecha: 2026-11-16. Versión del aviso: 3.
+- Original íntegro: [avisos/AV-003.md](avisos/AV-003.md).
+- SHA256: `4223264e07107af89f741e8fcd5107a759fed28f74e064e1b9d1b24a069f1fde`.
+- Emisor: chat asignado; mensaje nativo y herramienta de envío completada
+  `exec-4c966d1d-1b82-43ea-ad4f-1628c6cbb540`, turno
+  `01a1e2fb-20e0-74e2-9f03-453c82c08cf3` consultado por wait_threads.
+- Decisión: incorporado. Estado declarado Finalizada, integración contrastada por
+  la tarea, AV-001/AV-002 reconciliados y evidencias conservadas.
+- Persistencia Git de la guía contrastada por la tarea mediante el registro y
+  salida del coordinador, no lectura propia del blob. El coordinador sí comprobó
+  el blob y su equivalencia tras normalización CRLF/LF, descrita en INTEGRACION.md.
+- Limpieza: la tarea no creó recursos que necesiten retirada; conservó avisos,
+  entrega y verificaciones bajo su raíz permitida. No se borraron evidencias.
+- Pendientes del coordinador: persistir este cierre, recibir contraste del acuse
+  final y archivar el chat inactivo. Este acuse aún no acredita archivado.

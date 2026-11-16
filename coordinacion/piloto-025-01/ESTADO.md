@@ -1,6 +1,6 @@
 # Estado de PILOTO-025-01
 
-Versión de registro: 5. Estado: En curso.
+Versión de registro: 6. Estado: Finalizada.
 Fecha: 2026-11-16. Escritor: coordinador vigente identificado en PROYECTO.md.
 Encargo: [versión 1](ENCARGO.md).
 
@@ -21,6 +21,12 @@ Encargo: [versión 1](ENCARGO.md).
 - La tarea dejó comprobación del acuse AV-001 por contenido y hashes coincidentes.
 - Dictamen independiente accepted en [REVISION.md](REVISION.md), sobre el hash exacto.
 - Guía integrada mecánicamente: [INTEGRACION.md](INTEGRACION.md), bytes iguales y enlace válido.
-- Pendientes conservación Git, contraste de la tarea, cierre, limpieza y archivado.
+- Guía persistida en `f94fa03639026ca693e693ed3a9145829306774d`.
+- AV-003 versión 3 incorporado. La tarea contrastó integración, dictamen y acuses
+  anteriores; conservó originales y verificaciones, sin limpieza propia necesaria.
+- Persistencia Git contrastada por la tarea a través de evidencia del coordinador;
+  no se atribuye a la tarea una comprobación directa del blob que no realizó.
+- Pendientes del coordinador: persistir cierre, confirmar contraste de AV-003 y
+  verificar archivado tras inactividad. No hay pendientes de contenido de la guía.
 
 Este registro manual no acredita garantías transaccionales del auxiliar.

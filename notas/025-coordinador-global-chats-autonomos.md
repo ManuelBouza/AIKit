@@ -1,5 +1,15 @@
 # Coordinador global y chats de tarea autónomos
 
+Actualización habitual aplicada, 2026-11-16:
+[resultado de 0.1.2](../docs/actualizacion-aikit-0.1.2.md). Versión instalada,
+archivos coincidentes y descubrimiento de las tres skills habilitadas comprobados
+desde la caché nueva. Solo cambió el origen del catálogo previsto; instrucciones
+y configuración ajena conservadas. Configuración y caché 0.1.1 respaldadas de
+forma privada; el gestor retiró la caché antigua y se conserva su fuente.
+No se ejecutó setup, inferencia ni activación de otros proyectos. Pendientes
+preparar y realizar piloto en AIKit y después otro proyecto; el descubrimiento
+no acredita comportamiento real ni recarga automática de esta conversación.
+
 Paquete actualizado preparado, 2026-11-16:
 [0.1.2, ensayos y procedimiento de aplicación/recuperación](../docs/actualizacion-aikit-0.1.2.md).
 Generado desde 92935edb9045db7eeccb34ec4ff4fce2af035252; instalación nueva,

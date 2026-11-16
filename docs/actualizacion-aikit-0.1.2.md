@@ -1,10 +1,39 @@
 # Paquete AIKit 0.1.2 preparado para el perfil habitual
 
 Fecha: 2026-11-16.
-Estado: paquete y procedimiento preparados; instalación habitual no modificada.
+Estado: actualización aplicada al perfil habitual; instalación y descubrimiento verificados.
 Fuente: commit `92935edb9045db7eeccb34ec4ff4fce2af035252`.
 
-## Identidad y contenido
+## Resultado de aplicación — 2026-11-16
+
+Aplicación autorizada por Manuel mediante go tras la preparación. Preflight
+confirmó CLI y versión de Desktop, selector habilitado, origen 0.1.1 y hashes de
+los 28 archivos de la candidata. Se respaldaron config.toml y la caché anterior
+en una carpeta privada con ACL limitada al usuario, SYSTEM y Administradores;
+el ZIP de caché se verificó contra sus hashes antes de cambiar el registro.
+
+Marketplace remove/add y plugin add terminaron con código 0. El resultado
+identifica la versión 0.1.2 y su ruta esperada. Todos los archivos instalados
+coinciden con la candidata. La comparación TOML solo permite el cambio de origen
+del catálogo identificado; el resto de la configuración y los hashes de AGENTS.md
+global y del proyecto permanecen iguales.
+
+App-server con el perfil habitual y skills/list forceReload confirma habilitadas
+aikit-setup, coordinacion-chats y director-de-ideas desde la caché 0.1.2.
+Sin inferencia, onboarding ni activación de otros proyectos. Este descubrimiento
+no demuestra aún el comportamiento en una tarea real ni que el inventario de
+esta conversación se haya recargado automáticamente.
+
+El gestor retiró la caché 0.1.1; se conservan su fuente completa y el ZIP privado
+verificado para recuperación. La fuente de 0.1.2 debe conservarse como origen
+del catálogo activo, no limpiarse como temporal prescindible.
+
+Evidencias privadas ignoradas:
+`C:/Manuel/Projects/AIKit/.aikit/025-aplicacion-0.1.2/`. Contienen respaldo de
+configuración, ZIP de caché, hashes, resultados y transcript del descubrimiento.
+No publicar ni incluir en Git. Piloto en AIKit y prueba en otro proyecto pendientes.
+
+## Identidad y contenido preparados — inventario anterior a la aplicación
 
 - Instalado y habilitado según configuración y manifiesto de caché: 0.1.1.
 - Selector conservado: `aikit-preferencias@aikit-setup-prueba-20261108`.
@@ -61,10 +90,11 @@ resultados, salidas de comandos y transcripts del descubrimiento. No publicarlas
 No acreditan que un modelo haya leído o aplicado las instrucciones ni sustituyen
 la prueba real de coordinación, archivado o integración.
 
-## Procedimiento de aplicación pendiente
+## Procedimiento de aplicación utilizado
 
-La siguiente ejecución aplicaría únicamente la actualización del complemento.
-No ejecutaría setup, activaría otros proyectos ni modificaría AGENTS.md.
+La ejecución aplicó únicamente la actualización del complemento siguiendo el
+procedimiento preparado a continuación. No ejecutó setup ni activó otros proyectos;
+tampoco modificó AGENTS.md. Se conserva el procedimiento como referencia de esa aplicación.
 
 ### Preparar y comprobar
 

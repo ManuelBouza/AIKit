@@ -1,8 +1,8 @@
 # Actualización preparada de AIKit — 2026-11-15
 
-Preparación posterior, 2026-11-16: [candidata 0.1.2 y procedimiento](actualizacion-aikit-0.1.2.md).
-La actualización descrita abajo corresponde a 0.1.1, que sigue instalada; la
-candidata 0.1.2 solo se ha ensayado en perfiles ficticios.
+Actualización posterior, 2026-11-16: [0.1.2 aplicada y verificada](actualizacion-aikit-0.1.2.md).
+La actualización descrita abajo corresponde al historial de 0.1.1; el perfil
+habitual ya está en 0.1.2, con las tres skills habilitadas y caché contrastada.
 
 Estado: actualización aplicada y descubrimiento verificado en el perfil habitual.
 

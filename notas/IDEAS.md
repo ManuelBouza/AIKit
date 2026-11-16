@@ -82,6 +82,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [042 — Notificaciones proactivas del Coordinador](042-notificaciones-proactivas-coordinador.md) | Verificada; versión privada 0.1.4 instalada y descubierta | Notificar cambios relevantes a los chats afectados sin aprobación por cada aviso, conservando autorizaciones y pausas. |
 | [041 — Autonomía tras asignar una tarea](041-autonomia-chat-tarea-tras-asignacion.md) | Verificada; versión privada 0.1.3 instalada y descubierta | Conversación directa con el usuario y ejecución autónoma del encargo, con reportes relevantes y coordinación de dependencias e integración. |
 | [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm resueltos | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |
 | [012 — Referencia a BMAD en AGENTS.md](012-referencia-bmad-en-agents.md) | Implementada | Referencia breve de uso aprobada con go e incorporada a AGENTS.md, complementaria al descubrimiento de skills. |

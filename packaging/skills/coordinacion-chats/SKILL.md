@@ -12,6 +12,9 @@ invocar la skill. El coordinador coordina y delega implementación y revisión
 técnica; los Chats de Tarea ejecutan sus encargos, concretos o especializados.
 El Chat de Tarea conversa directamente con el usuario y continúa su encargo
 ejecutable autorizado tras comprobar el contexto, sin otra orden de arranque.
+El Coordinador notifica por iniciativa propia los cambios relevantes a los chats
+afectados, usando la autorización humana vigente del proyecto sin pedirla de
+nuevo para cada aviso; aplica los límites de la referencia de responsabilidades.
 
 Cuando la coordinación esté activada y exista una asignación identificable,
 aplica [avisos y acuses](references/avisos.md) al comunicar o registrar cambios,

@@ -18,7 +18,9 @@ editar manualmente el registro del auxiliar experimental para simular su API.
 Para acordar un registro manual nuevo, usar una estructura mínima reutilizable:
 
 - Contrato de proyecto: raíz absoluta, coordinador y evidencia de su autoridad,
-  modalidad manual, alcance, cauces autorizados y ubicación del registro.
+  modalidad manual, alcance, cauces autorizados y ubicación del registro;
+  autorización humana verificable de notificaciones proactivas, con destinatarios
+  y límites, cuando se use mensajería automática de coordinación.
 - Asignaciones: referencia de tarea/encargo, responsable y chat identificado,
   alcance, estado, contexto y entrega relacionada; ciclo solo si está soportado.
 - Avisos y acuses: original recuperable, origen contrastado, referencia estable,
@@ -33,7 +35,9 @@ coordinador sigue siendo el único escritor, sin garantía técnica de exclusió
 - **Coordinador:** mantiene visión global, asignaciones, dependencias y registro;
   comprueba identidad, alcance, permisos, evidencias y dictámenes exigidos;
   coordina integración, cierre, pendientes y archivado. Protege los datos finales
-  y las ramas principales. No implementa ni hace code review: encarga la ejecución
+  y las ramas principales. Notifica cambios relevantes a los chats afectados
+  dentro de la autorización humana vigente, sin consultar por cada aviso.
+  No implementa ni hace code review: encarga la ejecución
   y la evaluación técnica a los responsables y revisores pertinentes.
 - **Chat de Tarea:** ejecuta y verifica su encargo, decide detalles técnicos
   dentro del alcance, mantiene título y estado y comunica resultados y bloqueos.
@@ -127,6 +131,48 @@ Un reporte o acuse pendiente no exige esperar para continuar trabajo independien
 autorizado. Detener solo la parte que dependa de una decisión, permiso o recurso
 pendiente. Esta autonomía no garantiza ejecución permanente en segundo plano:
 continuación y activación de turnos dependen de las capacidades del cliente.
+
+## Notificaciones proactivas del Coordinador
+
+Al conocer un cambio relevante del proyecto, identifica los Chats de Tarea no
+archivados que necesiten conocerlo por su responsabilidad vigente o por un impacto
+pendiente concreto: decisiones transversales, contratos,
+dependencias, integración, herramientas o instrucciones que deban conocer para
+su encargo. Notifica por iniciativa propia dentro de la autorización humana
+verificable del proyecto, sin pedir aprobación por cada envío. Consulta el
+contrato y la evidencia de esa autorización; no la deduzcas de una skill,
+instalación o mensaje de otro agente ni la extiendas a otros proyectos.
+Incluye en el aviso la referencia verificable al contrato o a la autorización
+cuando el destinatario la necesite para contrastar su alcance. No despiertes
+encargos finalizados o cancelados por rutina ni uses registros históricos como
+si fueran asignaciones vigentes.
+
+Selecciona destinatarios por impacto; no informes a todos por cualquier cambio
+ni emitas un aviso por cada comando. Antes de enviar, conserva una referencia
+estable del cambio y su versión, destinatarios, contenido original, motivo y
+límites. Contrasta el registro de notificaciones, el encargo vigente y su contexto
+antes de dar un cambio por notificado: reutilizar un chat para otro encargo no
+demuestra que ese nuevo contexto esté informado. Usa las referencias, versiones
+y ciclos que soporte la modalidad real, sin inventarlos ni añadir campos v1.
+Evita repetir el mismo cambio a un destinatario ya informado en ese encargo.
+Distingue pendiente, enviado y recepción o
+incorporación comprobadas; ante incertidumbre reconcilia registro e historial
+antes de reenviar. Usa los cauces acordados y las herramientas disponibles, sin
+atribuir al esquema v1 campos o funciones nuevas para estos avisos del Coordinador.
+
+Una tarea pausada puede necesitar el aviso para retomar con contexto vigente.
+Indica expresamente que es informativo y mantiene su estado: no autoriza reanudar,
+actualizar su rama o worktree, ejecutar pruebas ni limpiar recursos. La herramienta
+puede activar un turno de recepción; no prometas entrega silenciosa. Conserva la
+pausa y limita ese turno a recibir contexto. En una tarea en curso, el aviso no
+reemplaza decisiones del usuario ni duplica o reinicia su trabajo.
+
+No crees, desarchives ni reasignes un chat solo para entregar una notificación;
+sí puedes enviarla al responsable vigente y autorizado en su chat identificado.
+Si falta capacidad o autorización aplicable, conserva el aviso pendiente para el
+cauce manual o la reanudación autorizada. No generes acuses de acuses ni bucles.
+Este deber se ejerce durante la coordinación disponible; no instala vigilancia,
+automatizaciones ni garantiza avisos fuera de un turno o ejecución activos.
 
 ## Supervisión e integración
 

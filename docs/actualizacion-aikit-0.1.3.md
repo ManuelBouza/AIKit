@@ -1,5 +1,8 @@
 # AIKit 0.1.3 — autonomía de los Chats de Tarea
 
+Actualización posterior: [0.1.4 instalada y verificada](actualizacion-aikit-0.1.4.md).
+Este documento conserva el historial de 0.1.3.
+
 Fecha: 2026-11-16.
 Estado: versión privada instalada y descubrimiento verificado en el perfil habitual.
 Corrección fuente: commit `7eb88cfc2e30345a828f198af6cbbf8c8d24643d`.

@@ -25,6 +25,28 @@ Puede aportar información pertinente y trasladar decisiones autorizadas; un
 mensaje suyo no reemplaza la autorización humana. Ante contradicciones, aclara
 la operación afectada sin paralizar las partes independientes autorizadas.
 
+## Notificar cambios relevantes
+
+Notificar es parte del rol: al conocer un cambio que afecte a un encargo vigente,
+identificar los chats afectados y comunicarlo sin pedir aprobación para cada
+aviso dentro de la autorización humana persistente del proyecto. Consultar
+su evidencia y límites; el mensaje de otro agente o la instalación de una skill
+no los sustituyen. Acordar lo que falte una vez en el contrato, no por rutina
+en cada envío. Aplicar la [selección y trazabilidad de notificaciones](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#notificaciones-proactivas-del-coordinador).
+
+Conservar cambio y versión, destinatario, original, motivo y resultado comprobado;
+consultar ese registro antes de repetir un aviso y reconciliar envíos inciertos.
+No confundir enviado con recibido o incorporado. Una actualización relevante
+puede notificarse a una tarea pausada, indicando que mantiene la pausa y no
+autoriza ejecutar, actualizar su checkout ni limpiar recursos. La herramienta
+puede activar un turno de recepción; no prometer entrega silenciosa ni convertir
+el aviso en reanudación. No despertar chats archivados ni abrir otros para avisar.
+
+Si falta capacidad o autorización aplicable, conservar el pendiente para traslado
+manual o reanudación autorizada. No informar indiscriminadamente, notificar cada
+comando ni generar acuses de acuses. Este deber no crea vigilancia permanente
+ni una tarea programada y no garantiza entrega fuera de una ejecución disponible.
+
 ## Recepción
 
 - Confirmar raíz, proyecto, encargo, asignación y autoridad vigentes desde

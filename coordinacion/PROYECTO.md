@@ -10,6 +10,14 @@
   turno 01a1e006-0481-7f93-9ee9-35937478f1bd.
 - Alta: 2026-11-15.
 - Escritor: solo el coordinador vigente; no hay bloqueo técnico automático.
+- Avisos proactivos: Manuel autoriza expresamente al Coordinador a notificar
+  cambios relevantes a los Chats de Tarea afectados sin consultar cada envío.
+  Evidencia humana: turno `01a1e5a2-043b-7221-a262-ecff24f20feb`, mensaje
+  `01a1e5a2-04bf-76d3-a0e9-2e3ca1da789f` del chat Coordinador.
+  Se incluyen avisos informativos a tareas pausadas cuando sean pertinentes;
+  no reanudan trabajo ni amplían alcance o permisos. Usar solo herramientas
+  disponibles y autorizadas, conservar resultados y evitar duplicados. Esta
+  autorización no se extiende a chats ajenos, publicaciones o nuevos encargos.
 - Comunicación inicial: mediante el coordinador, por decisión de Manuel del
   2026-11-15. Las tareas le trasladan resultados, bloqueos y necesidades.
   La comunicación directa entre tareas se conserva para una evolución futura;

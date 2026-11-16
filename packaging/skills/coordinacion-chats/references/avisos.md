@@ -54,6 +54,13 @@ La respuesta de transporte no acredita registro. Antes de reenviar ante una
 interrupción se consulta el registro y el historial; no reenviar a ciegas.
 
 Sin mensajería, el usuario puede trasladar el aviso exacto y devolver el acuse.
+Para los avisos proactivos del Coordinador a las tareas afectadas, aplica también
+[responsabilidades y notificaciones](responsabilidades.md#notificaciones-proactivas-del-coordinador).
+La autorización humana persistente y verificable del proyecto permite los envíos
+informativos de su alcance sin una aprobación por aviso; no sustituye permisos
+de ejecución ni convierte recepción en incorporación. Conserva el cambio y su
+versión, destinatario y original para reconciliar antes de reenviar ante dudas.
+Un aviso informativo a una tarea pausada mantiene la pausa y no habilita trabajo.
 Sin mecanismo de registro verificable, conservar evidencia e informar de lo
 pendiente; no simular garantías transaccionales. No eliminar bloqueos por edad
 ni reducir permisos para forzar escrituras.

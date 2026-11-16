@@ -30,6 +30,12 @@ Al explicar esta capacidad, aclara que el usuario continúa directamente con cad
 Chat de Tarea. Con un encargo ejecutable autorizado y contexto comprobado, este
 trabaja sin otra orden de arranque; reporta hitos relevantes al coordinador,
 que gestiona dependencias e integración, sin intermediar cada paso.
+Incluye su deber de notificar cambios relevantes a los chats afectados sin pedir
+aprobación por cada aviso dentro de la autorización humana acordada. Al preparar
+el contrato local, registra esa autorización y su evidencia, alcance y límites
+de destinatarios y cauces; conserva una decisión ya vigente y pregunta solo si
+falta una decisión material. Leer o activar la skill no inventa consentimiento
+de mensajería. Los avisos informativos no reanudan tareas pausadas.
 
 Presenta la coordinación como capacidad local para que un coordinador reparta
 encargos, documente y reutilice Chats de Tarea y gestione avisos, integración y
@@ -66,8 +72,9 @@ Si exige una sesión nueva, informar de esa comprobación pendiente sin crearla
 automáticamente. Si no puedes escribir, facilita el contenido para aplicación
 manual; si puedes escribir pero no acreditar reconocimiento, conserva los cambios
 autorizados e informa de la validación pendiente. No afirmes activación verificada
-solo porque se guardaron archivos. No inicies
-chats, envíos, archivados o automatizaciones por activar esta capacidad.
+solo porque se guardaron archivos. La activación por sí sola no inicia chats,
+envíos, archivados ni automatizaciones. Una notificación requiere además un
+cambio relevante, destinatario contrastado y autorización humana aplicable.
 
 Si se solicita desactivar, concreta antes cómo detener nuevas asignaciones y
 conservar tareas, entregas y registro; no borres historial ni retires reglas por

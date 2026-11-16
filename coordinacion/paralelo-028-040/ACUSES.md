@@ -1,5 +1,52 @@
 # Recepción manual de avisos
 
+## Actualización 0.1.4 notificada sin nueva consulta — 2026-11-16
+
+Autorización persistente del proyecto vigente; cambio diferente del aviso 0.1.3.
+Se conserva cada original antes del envío y se consulta reconocimiento sin
+enviar acuses de acuse. No se cambia el alcance ni se reanuda ninguna tarea.
+
+- [COORD-0.1.4-028-01](avisos/COORD-0.1.4-028-01.md), revisión 1, encargo 028.
+  Envío nativo `exec-a7f3c346-94b0-4040-a516-6cc966a7263e` del turno
+  `01a1e5a2-043b-7221-a262-ecff24f20feb` del Coordinador.
+  Reconocimiento en turno `01a1e5af-90cd-7531-b33f-515f076ce3ac`, mensaje
+  `msg_0db3b5842777b04c016afb4fc4c45887d1bcc8a7e77d3a404d`: recibe contexto,
+  mantiene Pausada. Turno completado, estado nativo idle.
+- [COORD-0.1.4-040-01](avisos/COORD-0.1.4-040-01.md), revisión 1, encargo 040.
+  Envío nativo `exec-7793d4ae-1bac-4d47-8c2f-94f39ebd5508` del mismo turno
+  del Coordinador. Reconocimiento en turno `01a1e5af-b82c-7a03-8b34-aa3890eb43e5`,
+  mensaje `msg_04fda8e4ecae1c40016afb4fce573c87d18081f090bb83b9d3`: recibe
+  información, mantiene Pausada y confirma no realizar operaciones sobre la tarea.
+  Turno completado, estado nativo idle.
+
+Reconocer el aviso no acredita recarga de instrucciones en todas las sesiones.
+La distribución es privada e instalada localmente; push de estas nuevas fuentes
+no realizado por esta notificación ni autorizado por la mera recepción del aviso.
+
+## Avisos proactivos del Coordinador — 2026-11-16
+
+Autorización persistente de Manuel registrada en PROYECTO.md y nota 042.
+Se identifica 0.1.3 instalada y subida como cambio relevante para ambos chats;
+se envía una notificación por destinatario sin pedir otra aprobación.
+
+- [COORD-0.1.3-028-01](avisos/COORD-0.1.3-028-01.md), revisión 1.
+  Envío nativo `exec-f94e0ec7-ce35-4e76-8fa5-7ea26f2c70d1` del turno
+  `01a1e5a2-043b-7221-a262-ecff24f20feb` del Coordinador. Reconocimiento
+  del destinatario en turno `01a1e5a2-b757-7582-bfad-356816b3fd36`, mensaje
+  `msg_0db3b5842777b04c016afb4c7ce70087d1af5cef123a882c19`: conserva
+  contexto y confirma Pausada, sin operaciones sobre sus recursos.
+- [COORD-0.1.3-040-01](avisos/COORD-0.1.3-040-01.md), revisión 1.
+  Envío nativo `exec-f188c44d-e6d5-4e28-b323-f3676d983277` del mismo turno
+  del Coordinador. Reconocimiento del destinatario en turno
+  `01a1e5a2-f98f-7b03-bf89-42b102a25e9a`, mensaje
+  `msg_04fda8e4ecae1c40016afb4c8b1b7c87d19b19e63668475b1a`: conserva
+  contexto y confirma Pausada, sin operaciones sobre worktree o entorno.
+
+Se conserva el texto exacto de cada prompt dentro del documento enlazado,
+recuperado de la llamada nativa del Coordinador. Ambos turnos completados e idle.
+Reconocimiento de recepción no implica recarga de instrucciones ni reanudación.
+No se envían acuses de estos reconocimientos ni se repite la notificación.
+
 ## Pausa expresa posterior — 2026-11-16
 
 Manuel solicita mantener ambos chats en espera para corregir el mecanismo en

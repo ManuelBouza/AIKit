@@ -27,6 +27,17 @@ instrucciones incompatibles, aclarar la parte afectada y continuar lo independie
 permitido. La autonomía no promete ejecución permanente ni activación automática
 de turnos cuando el cliente no disponga de esa capacidad.
 
+## Información recibida del Coordinador
+
+El Coordinador notifica por iniciativa propia los cambios relevantes dentro de
+la autorización humana acordada del proyecto; no necesita consultar cada aviso.
+Contrastar cambio, versión, procedencia y alcance, conservando su referencia.
+Un aviso informativo no reemplaza decisiones del usuario ni reinicia o duplica
+el trabajo. Si el chat está pausado, conservar ese estado y el contexto para
+retomar: recibir información no autoriza investigar, implementar, actualizar
+la rama o worktree, ejecutar pruebas ni limpiar recursos. Si la herramienta
+activa un turno, limitarlo a la recepción, sin acuses de acuses ni bucles.
+
 ## Preparar y enviar
 
 Al arrancar, contrastar con el encargo autorizado alcance, proyecto, identificación

@@ -1,5 +1,14 @@
 # Coordinador global y chats de tarea autónomos
 
+Encargo piloto preparado, 2026-11-16:
+[PILOTO-025-01: guía breve de uso](../docs/coordinacion/piloto-025-01.md).
+Skill 0.1.2 y referencias leídas desde caché. Se propone reutilizar un chat de
+comprobación con cwd e identidad contrastados; su reconocimiento del coordinador
+antiguo permite probar actualización de contexto. Alcance documental, escritura
+separada, avisos/acuses manuales, revisión independiente, integración y archivado
+delimitados. No se ha enviado el encargo ni creado asignación activa. Ejecución
+pendiente de aprobación; la prueba en otro proyecto sigue siendo posterior.
+
 Actualización habitual aplicada, 2026-11-16:
 [resultado de 0.1.2](../docs/actualizacion-aikit-0.1.2.md). Versión instalada,
 archivos coincidentes y descubrimiento de las tres skills habilitadas comprobados

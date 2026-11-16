@@ -3,6 +3,22 @@
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
 
+Estado actual: Esperando al usuario por decisión visual; implementación no iniciada.
+
+## Continuidad autónoma — 2026-11-16
+
+El chat reconoce la corrección de autonomía de la [nota 041](041-autonomia-chat-tarea-tras-asignacion.md)
+y presenta al usuario una propuesta visual. No espera otra orden del Coordinador.
+La preparación aislada de BMAD queda pendiente antes de implementar, sin detener
+esa conversación visual. Véanse [aviso y acuse](../coordinacion/paralelo-028-040/ACUSES.md).
+
+## Preparación — 2026-11-16
+
+Manuel aprueba preparar un Chat de Tarea y worktree propio para esta nota en
+paralelo con la 040. [Encargo y límites](../coordinacion/paralelo-028-040/ENCARGOS.md).
+Se mantiene pendiente concretar el diseño antes de implementar; la prueba con
+Sites queda fuera de este encargo.
+
 ## Idea
 
 El tablero de notas actual se siente frío. Modernizar su apariencia y su

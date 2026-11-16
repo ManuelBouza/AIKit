@@ -11,6 +11,22 @@ por cada paso. Las necesidades de otro trabajo se trasladan al coordinador,
 sin habilitar comunicación directa entre tareas. El coordinador decide y
 documenta creación o reutilización; la tarea no crea otros Chats de Tarea.
 
+## Ejecución y conversación con el usuario
+
+El usuario interactúa directamente en este chat. Con un encargo ejecutable ya
+autorizado, comprobar contexto, identidad, alcance y permisos y continuar sin
+esperar otra orden del Coordinador. Una preparación sin ejecución autorizada
+conserva esa limitación explícita; no inventar el permiso que falte.
+
+Conducir investigación, decisiones de su alcance, implementación, comprobaciones
+y correcciones conforme a las reglas del proyecto. Resolver con el usuario aquí
+las decisiones materiales que le correspondan. Si autoriza un cambio que afecta
+al proyecto, conservar la decisión verificable y reportarla al Coordinador;
+coordinar antes de actuar sobre recursos compartidos o trabajo ajeno. Ante
+instrucciones incompatibles, aclarar la parte afectada y continuar lo independiente
+permitido. La autonomía no promete ejecución permanente ni activación automática
+de turnos cuando el cliente no disponga de esa capacidad.
+
 ## Preparar y enviar
 
 Al arrancar, contrastar con el encargo autorizado alcance, proyecto, identificación
@@ -38,6 +54,9 @@ No escribir TAREA, acuses o índices canónicos aunque el sandbox lo permita.
 Distinguir aviso preparado, enviado, recibido e incorporado; son hitos de
 comunicación, no estados nuevos de la tarea. Consultar el acuse al retomar, en
 hitos relevantes o por el cauce acordado; no abrir bucles de mensajes o vigilancia.
+No esperar respuesta a un reporte o acuse para continuar trabajo independiente
+autorizado; detener únicamente las operaciones que requieran una decisión,
+permiso, dependencia o integración pendientes. No reportar cada comando.
 
 Comparar el aviso íntegro con el recibo y comprobar su procedencia según el
 flujo compartido. Solo decisión aplicado del mismo aviso acredita incorporación;

@@ -37,6 +37,8 @@ coordinador sigue siendo el único escritor, sin garantía técnica de exclusió
   y la evaluación técnica a los responsables y revisores pertinentes.
 - **Chat de Tarea:** ejecuta y verifica su encargo, decide detalles técnicos
   dentro del alcance, mantiene título y estado y comunica resultados y bloqueos.
+  Interactúa directamente con el usuario para conducir ese trabajo y resolver
+  las decisiones que le correspondan; no requiere intermediación rutinaria.
   Conserva entrega y evidencias, solicita integración y limpia recursos propios
   conforme a [avisos y acuses](avisos.md). No crea otros Chats de Tarea ni asume
   autoridad sobre el registro o las ramas principales.
@@ -88,14 +90,18 @@ Cada encargo necesita resultado y aceptación comprobables, alcance y exclusione
 responsable, recursos permitidos, dependencias, verificaciones y referencias de
 contexto. Añadir identidad de tarea/ciclo y chat cuando estén asignados, ubicación
 de evidencias y cauce de envío/consulta. No copiar toda la conversación por defecto.
-Si el cliente arranca el chat al crearlo, su primer encargo debe limitarse a leer
-el contexto y confirmar su identidad y asignación. No ejecutar la tarea hasta
-que proyecto, coordinador, responsable, alcance y permisos estén comprobados.
+Si el cliente arranca el chat al crearlo, el encargo incluye primero comprobar
+contexto, identidad, asignación, alcance y permisos. Si es ejecutable y ya está
+autorizado, la tarea continúa al satisfacer esos requisitos sin una segunda orden
+del Coordinador. Distinguirlo de una preparación que todavía no autorice ejecutar;
+identificar qué falta y detener solo la operación que dependa de ello.
 La preparación puede quedar pendiente de asignación sin inventarla.
 
-La modalidad inicial es comunicación mediante el coordinador. Las tareas le
-trasladan novedades y necesidades de otros trabajos; él coordina el siguiente
-paso. Mantener un responsable de cada paso. El traspaso distingue información,
+La modalidad inicial de comunicación entre tareas es mediante el coordinador.
+Cada tarea conserva su conversación directa con el usuario y dirige la ejecución
+autorizada de su encargo. Traslada al coordinador novedades relevantes y necesidades
+de otros trabajos; él coordina las dependencias y la integración del proyecto.
+Mantener un responsable de cada paso. El traspaso distingue información,
 solicitud de ejecución y decisión autorizada, indicando emisor, receptor, objetivo,
 límites, referencias y destino de respuesta. No añade campos al aviso v1.
 
@@ -105,11 +111,22 @@ mensaje no concede autoridad humana ni cambia alcance automáticamente. Si el
 usuario y el coordinador acuerdan una actualización, comprobarla y trasladarla
 a las tareas afectadas por el cauce autorizado.
 
+El usuario también puede autorizar decisiones o cambios de alcance directamente
+en el Chat de Tarea. Conservar su origen y comunicar los que afecten al proyecto,
+dependencias o integración. Coordinar antes de operar sobre recursos compartidos
+o trabajo ajeno; continuar las partes propias independientes y autorizadas.
+Ante instrucciones incompatibles, aclararlas antes de la operación afectada;
+un mensaje informativo del Coordinador no reemplaza una decisión del usuario.
+
 Comunicar en hitos, bloqueos, cambios materiales, solicitud de integración y
 cierre; no por cada comando ni mediante vigilancia permanente. Las herramientas
 disponibles determinan si un mensaje activa al receptor; sin ellas ofrecer
 traslado manual. Conservar evidencia y reconciliar antes de reenviar ante dudas,
 según [avisos y acuses](avisos.md).
+Un reporte o acuse pendiente no exige esperar para continuar trabajo independiente
+autorizado. Detener solo la parte que dependa de una decisión, permiso o recurso
+pendiente. Esta autonomía no garantiza ejecución permanente en segundo plano:
+continuación y activación de turnos dependen de las capacidades del cliente.
 
 ## Supervisión e integración
 

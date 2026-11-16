@@ -4,6 +4,15 @@ Registro manual administrado por el coordinador identificado en `PROYECTO.md`.
 No hay encargos reales registrados al dar de alta. Cada asignación autorizada
 enlazará a su estado, entrega y pendientes; no se incorpora la tarea ficticia.
 
+## Encargos activos
+
+- 2026-11-16: [028 y 040 en paralelo](paralelo-028-040/ENCARGOS.md).
+  Autonomía aclarada y reconocida por ambas sesiones, ramas y worktrees propios.
+  028: Esperando al usuario por decisión visual; 040: Bloqueada por entorno BMAD.
+  Sin implementación iniciada. [Avisos y acuses](paralelo-028-040/ACUSES.md).
+  El Coordinador tiene pendiente coordinar una preparación aislada de BMAD y
+  dependencias; no implica otra orden general de arranque.
+
 ## Encargos finalizados
 
 - 2026-11-16: [PILOTO-025-01](../docs/coordinacion/piloto-025-01.md), encargo

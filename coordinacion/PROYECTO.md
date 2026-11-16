@@ -18,6 +18,12 @@
   trabajo autorizado, con propósito concreto o especializado dentro del mismo
   mecanismo. Documenta identidad, alcance, estado y referencias para recuperarlos;
   no se establece una categoría separada de especialistas.
+- Autonomía aclarada por Manuel el 2026-11-16: el usuario interactúa directamente
+  con cada Chat de Tarea. Un encargo ejecutable autorizado continúa tras comprobar
+  su contexto, sin segunda orden del Coordinador. Los reportes relevantes y la
+  integración se coordinan; un acuse pendiente no detiene trabajo independiente.
+  Referencia: nota 041 y revisión de los encargos 028/040. La modalidad de mensajes
+  entre agentes mediante el Coordinador no limita la conversación directa del usuario.
 - Conservación: Git para el registro del proyecto; no incluir credenciales,
   datos privados ni salidas temporales en commits.
 - Alcance: seguimiento manual, con origen y decisión identificables para cada

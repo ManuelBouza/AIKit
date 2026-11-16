@@ -12,6 +12,19 @@ Su revisión comprueba identidad, alcance, dependencias, permisos y presencia de
 resultados y dictámenes exigidos. Documenta los chats necesarios con propósito
 concreto o especializado dentro del mismo mecanismo y canaliza su comunicación.
 
+La comunicación entre tareas pasa por el coordinador; el usuario conversa
+directamente con cada Chat de Tarea. Al asignar un encargo ejecutable autorizado,
+incluye contexto y permisos suficientes para que, tras comprobarlos, continúe
+sin otra orden de arranque. No aprueba cada paso ni convierte avisos o acuses
+en una condición rutinaria de ejecución. Distingue una preparación sin ejecución
+autorizada y conserva explícito lo que falte para poder ejecutarla.
+
+Recibe las decisiones del usuario tomadas en las tareas con origen verificable
+y coordina su impacto en dependencias, recursos compartidos e integración.
+Puede aportar información pertinente y trasladar decisiones autorizadas; un
+mensaje suyo no reemplaza la autorización humana. Ante contradicciones, aclara
+la operación afectada sin paralizar las partes independientes autorizadas.
+
 ## Recepción
 
 - Confirmar raíz, proyecto, encargo, asignación y autoridad vigentes desde

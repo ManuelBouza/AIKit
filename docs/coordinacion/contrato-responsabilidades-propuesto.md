@@ -135,9 +135,30 @@ resuelve antes de la operación que dependa de ellos; no bloquea trabajo indepen
 
 ## 5. Comunicación y autonomía
 
+Aclaración del usuario, 2026-11-16: cada Chat de Tarea conserva su conversación
+directa con el usuario y ejecuta autónomamente el encargo autorizado. Verificar
+identidad, contexto y permisos al arrancar no exige una segunda orden cuando el
+encargo ya es ejecutable. Una preparación todavía sin ejecución autorizada debe
+identificar esa diferencia, sin convertirla en regla para todos los encargos.
+La tarea conduce investigación, implementación, verificaciones y correcciones,
+y resuelve con el usuario las decisiones materiales de su trabajo. El Coordinador
+coordina el proyecto; no dirige cada paso ni intermedia esa conversación.
+
+Los cambios que el usuario autorice directamente en una tarea se conservan con
+origen verificable y se reportan si afectan al proyecto. Coordinar dependencias,
+recursos compartidos e integración antes de operar sobre ellos; continuar las
+partes propias independientes autorizadas. Ante instrucciones incompatibles,
+aclarar la operación afectada. Un mensaje informativo o un acuse no modifica
+por sí mismo el alcance ni reemplaza una decisión del usuario.
+
+Un reporte o acuse pendiente no suspende todo el trabajo: esperar únicamente
+las decisiones, permisos o dependencias de la operación afectada. Esta autonomía
+de responsabilidad no promete ejecución permanente ni activación de turnos
+fuera de las capacidades disponibles del cliente.
+
 Decisión del usuario, 2026-11-15: la modalidad inicial es comunicación mediante
-el coordinador. Las tareas le comunican resultados, bloqueos y necesidades; él
-coordina el siguiente paso y conserva el registro. Si una tarea necesita a otra,
+el coordinador entre tareas. Las tareas le comunican resultados, bloqueos y
+necesidades; él coordina las dependencias y conserva el registro. Si una tarea necesita a otra,
 lo solicita al coordinador. No se activa comunicación directa entre tareas.
 
 La comunicación directa se conserva como posibilidad futura: podría permitir

@@ -26,6 +26,11 @@ Cuando el usuario haya autorizado aplicar la selección y los permisos lo permit
 
 ## Coordinación del proyecto
 
+Al explicar esta capacidad, aclara que el usuario continúa directamente con cada
+Chat de Tarea. Con un encargo ejecutable autorizado y contexto comprobado, este
+trabaja sin otra orden de arranque; reporta hitos relevantes al coordinador,
+que gestiona dependencias e integración, sin intermediar cada paso.
+
 Presenta la coordinación como capacidad local para que un coordinador reparta
 encargos, documente y reutilice Chats de Tarea y gestione avisos, integración y
 cierre. No tiene ámbito global. Consulta

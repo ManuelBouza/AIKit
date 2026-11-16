@@ -1,0 +1,2 @@
+# Conservar bytes de originales para verificar los acuses.
+*.md -text whitespace=cr-at-eol

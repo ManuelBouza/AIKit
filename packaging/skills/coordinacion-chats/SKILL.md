@@ -10,6 +10,8 @@ Para preparar la coordinación, repartir encargos o crear/reutilizar chats, lee
 el coordinador vigente desde el contrato local; no te atribuyas ese rol por
 invocar la skill. El coordinador coordina y delega implementación y revisión
 técnica; los Chats de Tarea ejecutan sus encargos, concretos o especializados.
+El Chat de Tarea conversa directamente con el usuario y continúa su encargo
+ejecutable autorizado tras comprobar el contexto, sin otra orden de arranque.
 
 Cuando la coordinación esté activada y exista una asignación identificable,
 aplica [avisos y acuses](references/avisos.md) al comunicar o registrar cambios,

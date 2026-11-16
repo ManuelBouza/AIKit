@@ -3,6 +3,23 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
+Estado actual: Bloqueada por disponibilidad de BMAD y dependencias en su worktree.
+
+## Continuidad autónoma — 2026-11-16
+
+El chat reconoce la corrección de autonomía de la [nota 041](041-autonomia-chat-tarea-tras-asignacion.md).
+Al preparar el flujo, uv falla por DNS antes de renderizar; además falta `_bmad`
+en su checkout. Conserva el resultado y detiene el flujo conforme a su instrucción.
+No espera otra orden general de arranque ni ha iniciado implementación.
+El Coordinador coordinará la resolución aislada del entorno; véanse
+[aviso y acuse](../coordinacion/paralelo-028-040/ACUSES.md).
+
+## Preparación — 2026-11-16
+
+Manuel aprueba preparar un Chat de Tarea y worktree propio para esta nota en
+paralelo con la 028. [Encargo y límites](../coordinacion/paralelo-028-040/ENCARGOS.md).
+No se instala ni se modifica la skill del perfil durante esta preparación.
+
 ## Solicitud del usuario
 
 Incorporar al Director de Ideas un paso explícito: una vez madurada la idea con

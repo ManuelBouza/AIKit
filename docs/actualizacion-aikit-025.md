@@ -1,5 +1,9 @@
 # Actualización preparada de AIKit — 2026-11-15
 
+Preparación posterior, 2026-11-16: [candidata 0.1.2 y procedimiento](actualizacion-aikit-0.1.2.md).
+La actualización descrita abajo corresponde a 0.1.1, que sigue instalada; la
+candidata 0.1.2 solo se ha ensayado en perfiles ficticios.
+
 Estado: actualización aplicada y descubrimiento verificado en el perfil habitual.
 
 ## Resultado de aplicación — 2026-11-15

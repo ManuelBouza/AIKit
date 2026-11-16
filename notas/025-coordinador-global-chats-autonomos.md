@@ -1,5 +1,14 @@
 # Coordinador global y chats de tarea autónomos
 
+Paquete actualizado preparado, 2026-11-16:
+[0.1.2, ensayos y procedimiento de aplicación/recuperación](../docs/actualizacion-aikit-0.1.2.md).
+Generado desde 92935edb9045db7eeccb34ec4ff4fce2af035252; instalación nueva,
+migración 0.1.1 a 0.1.2 y recuperación a 0.1.1 verificadas en perfiles ficticios.
+Descubrimiento de tres skills y archivos de caché contrastados sin inferencia.
+Perfil habitual, instrucciones y fuente/caché anterior intactos según hashes.
+La versión habitual continúa en 0.1.1. Pendientes aplicar y comprobar 0.1.2 y
+preparar el piloto real; esta preparación no los ejecuta.
+
 Actualización de roles implementada y verificada en fuentes, 2026-11-15:
 [entrega y revisión](../_bmad-output/implementation-artifacts/spec-025-actualizacion-roles.md).
 La skill incorpora responsabilidades, selección y reutilización de Chats de

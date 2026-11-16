@@ -1,7 +1,8 @@
 # Encargo piloto: guía breve de coordinación en AIKit
 
 Fecha: 2026-11-16.
-Estado: ejecución autorizada el 2026-11-16; asignación registrada, arranque pendiente.
+Estado: ejecutado el 2026-11-16; entrega integrada, cierre y archivado verificados.
+Resultado y límites: [informe del piloto](resultado-piloto-025-01.md).
 Seguimiento operativo: [encargo](../../coordinacion/piloto-025-01/ENCARGO.md),
 [estado](../../coordinacion/piloto-025-01/ESTADO.md) y
 [acuses](../../coordinacion/piloto-025-01/ACUSES.md).

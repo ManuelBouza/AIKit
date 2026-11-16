@@ -48,3 +48,18 @@ Registro manual escrito exclusivamente por el coordinador.
   entrega y verificaciones bajo su raíz permitida. No se borraron evidencias.
 - Pendientes del coordinador: persistir este cierre, recibir contraste del acuse
   final y archivar el chat inactivo. Este acuse aún no acredita archivado.
+
+## Seguimiento posterior al acuse final
+
+El cierre se persistió en `a86c04411e7ece3e6f2177665758ae88ee3bc36c`.
+La tarea contrastó AV-003 en su turno `01a1e2fd-1293-7430-bceb-3143117276ee`,
+mensaje final `msg_0ebe63487f15bda7016afa9f13eab087d189bd4f0832badb42`,
+comprobado por wait_threads. Conservó evidencia en VERIFICACION-TAREA.md.
+Después de observar inactividad y título Finalizada, el coordinador archivó el
+chat; resultado archived:true confirmado por listado de archivados. No se envían
+más mensajes ni se generan nuevos avisos por el solo contraste de este acuse.
+
+Persistencia exacta: los originales de avisos tienen atributos locales -text;
+se verificó igualdad de sus bytes almacenados en Git con los hashes anteriores.
+Las copias legibles, los originales y el registro se conservan; no hay cambios
+de contenido para ocultar normalizaciones o reenvíos.

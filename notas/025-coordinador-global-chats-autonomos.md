@@ -1,5 +1,17 @@
 # Coordinador global y chats de tarea autónomos
 
+Piloto real en AIKit completado, 2026-11-16:
+[resultado y límites](../docs/coordinacion/resultado-piloto-025-01.md).
+Chat reutilizado reconoció al coordinador vigente, leyó skill 0.1.2, envió tres
+avisos y contrastó acuses. Guía de 541 palabras revisada independientemente e
+integrada sin que el coordinador la redactara; la tarea verificó el resultado y
+conservó evidencias, y el coordinador comprobó inactividad y archivado. Se corrigió
+la conservación en Git de bytes originales de avisos tras detectar normalización
+de saltos de línea. No hay pendientes de ese encargo. Siguen pendientes elegir
+otro proyecto y validar allí la portabilidad, además de las capacidades de la
+iniciativa no ejercitadas (incluido desarchivado). No hay garantías transaccionales
+ni automatización acreditadas por este piloto manual.
+
 Encargo piloto preparado, 2026-11-16:
 [PILOTO-025-01: guía breve de uso](../docs/coordinacion/piloto-025-01.md).
 Skill 0.1.2 y referencias leídas desde caché. Se propone reutilizar un chat de

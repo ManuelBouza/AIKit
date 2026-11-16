@@ -1,0 +1,2 @@
+# Originales de avisos: conservar bytes para verificar los hashes de los acuses.
+AV-*.md -text whitespace=cr-at-eol

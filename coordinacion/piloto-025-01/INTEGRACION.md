@@ -21,6 +21,8 @@ Fecha: 2026-11-16. Escritor: coordinador vigente.
 - Resultado contrastado por la tarea en AV-003: archivo de destino igual a entrega,
   dictamen aplicado al mismo hash y acuses previos coincidentes. Conservación de
   evidencias declarada, sin recursos propios que necesiten retirada.
-- Pendientes: persistencia del cierre y archivado verificado.
+- Cierre persistido en `a86c04411e7ece3e6f2177665758ae88ee3bc36c`; la tarea contrastó
+  AV-003 y el coordinador verificó posteriormente el archivado en el cliente.
+  No quedan pendientes de integración de esta entrega.
 
 La integración no implica por sí sola incorporación del siguiente aviso ni cierre.

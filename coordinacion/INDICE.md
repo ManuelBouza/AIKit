@@ -9,11 +9,12 @@ enlazará a su estado, entrega y pendientes; no se incorpora la tarea ficticia.
 - 2026-11-16: [PILOTO-025-01](../docs/coordinacion/piloto-025-01.md), encargo
   documental autorizado para probar asignación, avisos, revisión e integración.
   [Encargo](piloto-025-01/ENCARGO.md) y [estado](piloto-025-01/ESTADO.md): Finalizada,
-  guía revisada, integrada y confirmada; persistencia de cierre y archivado pendientes.
+  guía revisada, integrada, confirmada y conservada; chat archivado y verificado.
   Chat asignado:
   `01a1dff8-061d-7170-b111-2f5577f1f570`,
-  anteriormente AIKit · Comprobación de coordinación. No reutiliza el registro
-  ficticio v1.
+  título final [Finalizada] PRUEBA · AIKit · Guía de coordinación; anteriormente
+  AIKit · Comprobación de coordinación. [Resultado](../docs/coordinacion/resultado-piloto-025-01.md).
+  Sin pendientes de este encargo; desarchivado no probado. No reutiliza el registro ficticio v1.
 
 ## Pendientes de mantenimiento
 

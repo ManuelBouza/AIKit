@@ -1,6 +1,6 @@
 # Estado de PILOTO-025-01
 
-Versión de registro: 6. Estado: Finalizada.
+Versión de registro: 7. Estado: Finalizada. Chat archivado y verificado.
 Fecha: 2026-11-16. Escritor: coordinador vigente identificado en PROYECTO.md.
 Encargo: [versión 1](ENCARGO.md).
 
@@ -26,7 +26,12 @@ Encargo: [versión 1](ENCARGO.md).
   anteriores; conservó originales y verificaciones, sin limpieza propia necesaria.
 - Persistencia Git contrastada por la tarea a través de evidencia del coordinador;
   no se atribuye a la tarea una comprobación directa del blob que no realizó.
-- Pendientes del coordinador: persistir cierre, confirmar contraste de AV-003 y
-  verificar archivado tras inactividad. No hay pendientes de contenido de la guía.
+- Cierre persistido en `a86c04411e7ece3e6f2177665758ae88ee3bc36c`; contraste de AV-003
+  confirmado en el turno `01a1e2fd-1293-7430-bceb-3143117276ee`.
+- Chat `[Finalizada] PRUEBA · AIKit · Guía de coordinación`, inactivo antes del
+  archivado. Resultado archived:true y presencia en list_archived_threads comprobados.
+- Identidad recuperable: `01a1dff8-061d-7170-b111-2f5577f1f570`, host local.
+- Sin pendientes de entrega, integración, acuses o limpieza propia. Recuperación
+  del chat y portabilidad a otro proyecto no ejercitadas.
 
 Este registro manual no acredita garantías transaccionales del auxiliar.

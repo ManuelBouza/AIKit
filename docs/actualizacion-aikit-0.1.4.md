@@ -1,5 +1,7 @@
 # AIKit 0.1.4 — notificaciones proactivas del Coordinador
 
+Entrega histórica. La actualización vigente es [AIKit 0.1.5](actualizacion-aikit-0.1.5.md).
+
 Fecha: 2026-11-16.
 Estado: actualización privada instalada y descubrimiento verificado en el perfil habitual.
 Base de preparación: `a5c0e3ccf3f7dc29f918904f93f20c0bd052130a`, con las fuentes

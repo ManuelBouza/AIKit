@@ -2,7 +2,17 @@
 
 Fecha: 2026-11-17.
 Estado inicial: Pendiente de debatir.
-Estado actual: Implementada y verificada localmente; incorporación al perfil instalado pendiente.
+Estado actual: Implementada y verificada localmente; complemento 0.1.5 instalado y descubierto en el perfil habitual.
+
+## Distribución e instalación — 2026-11-17
+
+El encargo separado [IMP-0005](../coordinacion/tareas/IMP-0005/TAREA.md) prepara
+y aplica [AIKit 0.1.5](../docs/actualizacion-aikit-0.1.5.md) con autorización
+directa de Manuel. Exportación de 29 archivos, ensayos aislados de instalación,
+migración y recuperación, revisión independiente y aplicación habitual correctos.
+La referencia de seguimiento y las tres skills están instaladas y descubiertas.
+No se ejecuta setup, no se activan otros proyectos ni se instala un generador
+universal; cada proyecto utiliza sus capacidades y su fuente canónica acordada.
 
 ## Entrega local — 2026-11-17
 
@@ -12,8 +22,8 @@ canónicos, sin ejecutar BMAD ni alterar encargos. Verificación conjunta de
 988 pruebas aprobadas, Ruff/mypy correctos y revisión independiente aceptada.
 [Evidencia](../docs/validacion-seguimiento-043.md) y
 [procedimiento de migración](../coordinacion/MIGRACION-043.md).
-El complemento del perfil habitual sigue en la versión previamente instalada;
-no se ha instalado esta ampliación ni publicado. El generador es una herramienta
+Al cerrar la entrega local, la ampliación del perfil estaba pendiente; la sección
+de distribución anterior conserva su aplicación posterior. El generador es una herramienta
 local del desarrollo y no un requisito universal para otros proyectos.
 
 ## Implementación — 2026-11-17
@@ -52,8 +62,8 @@ Los estados, rutas e identificadores se concretan en la especificación posterio
 En otros proyectos se reutiliza su tracker canónico disponible sin duplicarlo.
 
 [Encargo documental y resultado](../coordinacion/diseno-seguimiento-043.md).
-La migración, el nuevo generador y la distribución mediante setup no se han
-implementado. La regla local ya registrada no equivale a esas capacidades.
+Al cerrar el borrador todavía no estaban implementados la migración, el generador
+ni la ampliación de setup; su entrega posterior se referencia arriba.
 
 ## Solicitud del usuario
 

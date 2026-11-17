@@ -43,7 +43,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [043 — Ideas y tareas de implementación](043-separar-ideas-y-tareas-implementacion.md) | Verificada localmente; actualización del perfil pendiente | Ideas y tickets conectados, registro previo y seguimiento en vistas separadas; entrega IMP-0001. |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
@@ -83,6 +82,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [043 — Ideas y tareas de implementación](043-separar-ideas-y-tareas-implementacion.md) | Verificada localmente; complemento 0.1.5 instalado y descubierto | Ideas y tickets conectados, registro previo y vistas separadas; entregas IMP-0001 e IMP-0005. |
 | [042 — Notificaciones proactivas del Coordinador](042-notificaciones-proactivas-coordinador.md) | Verificada; versión privada 0.1.4 instalada y descubierta | Notificar cambios relevantes a los chats afectados sin aprobación por cada aviso, conservando autorizaciones y pausas. |
 | [041 — Autonomía tras asignar una tarea](041-autonomia-chat-tarea-tras-asignacion.md) | Verificada; versión privada 0.1.3 instalada y descubierta | Conversación directa con el usuario y ejecución autónoma del encargo, con reportes relevantes y coordinación de dependencias e integración. |
 | [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm resueltos | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |

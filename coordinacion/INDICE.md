@@ -14,6 +14,7 @@ no son otra fuente editable de estado.
 - [IMP-0002 — Tablero 028](tareas/IMP-0002/TAREA.md).
 - [IMP-0003 — Director de Ideas 040](tareas/IMP-0003/TAREA.md).
 - [IMP-0004 — Preparación aislada de BMAD](tareas/IMP-0004/TAREA.md).
+- [IMP-0005 — Actualización privada 0.1.5](tareas/IMP-0005/TAREA.md).
 
 ## Contexto de asignación
 

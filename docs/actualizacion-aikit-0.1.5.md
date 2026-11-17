@@ -1,5 +1,9 @@
 # AIKit 0.1.5 — registro previo y seguimiento de tareas
 
+Registro histórico de la entrega0.1.5. La versión habitual vigente es
+[0.1.6 con avisos por impacto](actualizacion-aikit-0.1.6.md); se conservan
+esta evidencia y su fuente para recuperación.
+
 Fecha: 2026-11-17.
 Estado: actualización privada instalada y descubrimiento verificado en el perfil habitual.
 Encargo: [IMP-0005](../coordinacion/tareas/IMP-0005/TAREA.md).

@@ -2,7 +2,20 @@
 
 Fecha: 2026-11-17.
 Estado inicial: Pendiente de debatir.
-Estado actual: Implementada y verificada en fuentes; instalación pendiente.
+Estado actual: Implementada; actualización privada0.1.6 instalada y descubierta.
+
+## Actualización privada autorizada — 2026-11-17
+
+El usuario autoriza con «go» preparar e instalar el filtro en el perfil habitual.
+[IMP-0007](../coordinacion/tareas/IMP-0007/TAREA.md) registra esta entrega separada:
+candidata0.1.6, ensayos y recuperación aislados, respaldo privado y revisión previa
+a la aplicación. Esta entrada no declara todavía instalado el paquete nuevo.
+
+Resultado posterior: [AIKit0.1.6](../docs/actualizacion-aikit-0.1.6.md) instalado
+en el perfil habitual, con respaldo privado y dictámenes independientes antes y
+después. Tres skills habilitadas y contenido exacto comprobados; configuración e
+instrucciones ajenas conservadas. IMP-0007 finalizada. No equivale a verificar
+lectura de las instrucciones por todos los chats abiertos.
 
 ## Resultado — 2026-11-17
 
@@ -15,8 +28,8 @@ cuantificado ni transporte real; no hubo mensajes a los chats activos.
 
 Evidencia: [validación](../docs/validacion-avisos-044.md) y
 [Build con triage y snapshot](../_bmad-output/implementation-artifacts/spec-044-avisos-por-impacto.md).
-El perfil habitual conserva0.1.5; preparar e instalar una actualización es una
-acción separada pendiente. El Coordinador ya aplica el criterio en su contrato local.
+La instalación posterior se completó mediante IMP-0007 con versión0.1.6.
+El Coordinador aplica el criterio en su contrato local.
 
 ## Implementación autorizada — 2026-11-17
 
@@ -33,8 +46,8 @@ avances ordinarios en la siguiente revisión del Coordinador. Acepta que el
 tablero pueda reflejar temporalmente el último estado incorporado, no todo lo
 ocurrido en los chats. La autorización de avisos útiles sigue vigente.
 
-El Coordinador aplica este criterio de selección en su trabajo actual; la
-instalación de las instrucciones actualizadas de ambos roles sigue pendiente.
+El Coordinador aplica este criterio de selección en su trabajo actual; las
+instrucciones actualizadas de ambos roles están instaladas en el perfil habitual.
 
 ## Política concretada para implementar
 

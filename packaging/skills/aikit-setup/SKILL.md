@@ -90,3 +90,14 @@ Informa de las herramientas ya instaladas y habilitadas. Para cada herramienta a
 Con aprobación, usa la capacidad disponible del cliente para instalar el complemento exacto y completar su conexión. Si el cliente solo permite presentar una sugerencia o requiere interacción del usuario, hazlo e informa de lo que falta; no simules instalación. Vuelve a consultar el estado y confirma instalación y ámbito solo con evidencia. Indica si es necesario iniciar otro chat para disponer de las herramientas. Una herramienta que ya esté instalada y habilitada no se reinstala.
 
 No actives Delegating to OpenCode. No exijas ni actives metodologías o herramientas de terceros como requisito general de AIKit; respeta las preferencias y el contexto de cada proyecto.
+
+## Seguimiento del proyecto
+
+Presenta separadamente el seguimiento local de ideas y tareas. Consulta
+[seguimiento](../coordinacion-chats/references/seguimiento.md) antes de proponer
+altas. Detecta primero el tracker canónico; reutilízalo sin duplicar fuentes.
+La instalación no activa ni migra. La selección es guiada, sin nuevo flag del
+instalador. Con decisión explícita, fija raíz, identidad, fuentes y generación
+y verifica lectura, escritura y salida en el alcance autorizado; conserva
+estado previo ante fallo. Explica herramientas ausentes, traslado manual y
+visibilidad pendiente sin afirmar sincronización ni imponer Python/BMAD/Git.

@@ -54,10 +54,13 @@ def test_export_and_install(tmp_path: Path) -> None:
         ROOT / "packaging" / director
     ).read_bytes()
     assert not (package / "mcp.json").exists()
+    assert not (package / "scripts/seguimiento_tareas.py").exists()
+    assert not (package / "coordinacion").exists()
     coordination = package / "skills/coordinacion-chats"
     for relative in (
         "SKILL.md",
         "references/avisos.md",
+        "references/seguimiento.md",
         "references/responsabilidades.md",
     ):
         assert (coordination / relative).read_bytes() == (

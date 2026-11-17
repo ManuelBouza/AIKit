@@ -58,6 +58,23 @@ directamente con tareas claras y autorizadas.
 
 ## Notas e ideas pendientes
 
+Cada encargo de implementación debe tener un registro de tarea identificable
+antes de comenzar su implementación. Comprobar si ya existe y actualizarlo;
+si falta, crearlo primero con alcance, responsable, estado y origen. No duplicar
+el encargo al recibir nuevas instrucciones. Registrar no autoriza ejecutar ni
+levanta pausas. El Coordinador mantiene el registro canónico; los Chats de Tarea
+comunican sus actualizaciones mediante el cauce autorizado.
+
+Separar notas e ideas de tareas de implementación y conservar enlaces entre
+ellas: una idea puede originar varias tareas y un encargo directo no exige
+inventar una idea. Ambos deben poder consultarse en sus vistas de seguimiento.
+En este proyecto, las fuentes de ideas son notas/IDEAS.md y sus notas; los
+tickets canónicos están en coordinacion/tareas/ y su formato se define en la
+especificación de seguimiento local de la nota 043. El tablero genera las vistas
+Ideas/Tareas desde esas fuentes. No mantener otro índice editable de estados.
+Después de modificar tickets, regenerar con el mismo comando de abajo y
+comprobar resultado antes de afirmar visibilidad o iniciar una entrega nueva.
+
 Registra cada idea o duda nueva del usuario en una nota numerada bajo `notas/`,
 con fecha y estado inicial «Pendiente de debatir», y añádela al backlog canónico
 [notas/IDEAS.md](notas/IDEAS.md). Conserva el contexto, las decisiones y enlaces

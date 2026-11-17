@@ -1,5 +1,45 @@
 # Recepción manual de avisos
 
+## Reparto de archivos con 043 — 2026-11-17
+
+Tras notificar la implementación autorizada de 043, el chat 028 confirma mediante
+mensajería nativa que no inició implementación ni tiene cambios en los archivos
+del tablero, pruebas o documentación. Árbol limpio según su comprobación;
+conserva la propuesta visual pendiente y no escribirá esos archivos mientras
+espera decisión y coordinación de integración. No actualiza su rama por el aviso.
+[Original íntegro](avisos/028-respuesta-reparto-043-01.md), SHA-256
+`db565c2b8322e65d8cf7e8c99acc4547e44b1fc1294e32ad1608b48197201b0d`.
+Se reserva a 043 el cambio funcional de registro y vistas; 028 conserva su
+alcance visual sin ampliación ni autorización de implementación por este reparto.
+
+## Conciliación de estado 028 — 2026-11-17
+
+Consulta directa del historial nativo del chat asignado; no es un aviso nuevo
+ni un acuse del auxiliar. En turno `01a1e822-ed79-7e02-94fd-dd2505eedaba`, mensaje
+humano `01a1e822-ee3a-7091-b6d8-89e892af1841`, Manuel solicita proponer la mejor
+opción de diseño y revisar otros tableros modernos. Esta instrucción retoma la
+definición visual tras la pausa histórica. El chat investiga y presenta propuesta;
+título actual `[Esperando al usuario] 028 · AIKit · Tablero de notas`.
+El mensaje `msg_09111976b0e7a75a016afbf4bb8e4087d1a30fd987693971a2` confirma que
+la propuesta espera decisión. Aplicado al registro: Esperando al usuario para
+aprobar el diseño, con BMAD pendiente antes de implementar. No se infiere
+aprobación de implementación ni se amplía el encargo por esta conciliación.
+
+## 040-reanudacion-bmad-02 — revisión 2 — 2026-11-17
+
+- Origen contrastado: chat 040 `01a1e56b-ec96-7960-b2ee-7f1d3f7366fb`,
+  turno `01a1e823-0b36-76c1-aa94-f43d57a2e516`, envío nativo
+  `exec-ab2f0617-40d2-44fb-b265-118f7f04eda9` al Coordinador vigente.
+- Autorización humana contrastada en ese turno: mensaje
+  `01a1e823-200e-7341-82f4-b129d503643a`, «continuemos».
+- Decisión: aplicado al seguimiento manual; 040 pasa de Pausada a Bloqueada
+  por entorno BMAD. No se reanuda 028 ni se autorizan instalaciones o reintentos.
+- [Original íntegro](avisos/040-reanudacion-bmad-02.md), SHA-256
+  `27a4b223cac558795618e362994b7893014cbab9e910a91515996836c2cf1d89`.
+- Registro y backlog actualizados. Dependencia asignada al Coordinador para
+  concretar una preparación aislada con recursos existentes, sin escrituras
+  desde tareas en la raíz principal. Acuse no equivale a resolución del bloqueo.
+
 ## Actualización 0.1.4 notificada sin nueva consulta — 2026-11-16
 
 Autorización persistente del proyecto vigente; cambio diferente del aviso 0.1.3.

@@ -1,12 +1,22 @@
 # Preparación de dos tareas en paralelo
 
-Fecha: 2026-11-16.
-Estado actual: ambos encargos pausados por indicación expresa de Manuel el
-2026-11-16 para continuar la corrección en el chat Coordinador. Se conservan
-ramas, worktrees, cambios y evidencias. No ejecutar nuevas operaciones ni
-reanudar por las condiciones ejecutables históricas que figuran debajo.
+## Fuente operativa vigente desde la migración 043 — 2026-11-17
 
-La pausa se trasladó a ambos chats con herramientas nativas. La confirmación
+Las entregas se siguen en [IMP-0002](../tareas/IMP-0002/TAREA.md) y
+[IMP-0003](../tareas/IMP-0003/TAREA.md); su dependencia de entorno está en
+[IMP-0004](../tareas/IMP-0004/TAREA.md). Los estados fechados que siguen son
+historial y contexto del encargo original, no otra fuente editable vigente.
+Se conservan identidades, autorizaciones, restricciones y originales.
+
+Fecha: 2026-11-16.
+Estado actual — 2026-11-17: 040 reanudada directamente por Manuel en su chat,
+pero Bloqueada por disponibilidad aislada de BMAD y dependencias. 028 retomó
+la propuesta visual por petición directa de Manuel; está Esperando al usuario
+para aprobarla. Origen contrastado en ACUSES.md. Se conservan ramas, worktrees,
+cambios y evidencias. La reanudación de 040 no autoriza nuevas instalaciones
+ni reintentos del flujo fallido sin resolver su condición de parada.
+
+La pausa histórica se trasladó a ambos chats con herramientas nativas. La confirmación
 de cada sesión se referencia en ACUSES.md. No se archivan ni retiran recursos.
 
 ## Condiciones vigentes — sustituyen las esperas de preparación anteriores

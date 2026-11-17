@@ -10,6 +10,16 @@
   turno 01a1e006-0481-7f93-9ee9-35937478f1bd.
 - Alta: 2026-11-15.
 - Escritor: solo el coordinador vigente; no hay bloqueo técnico automático.
+- Seguimiento local de ideas/tareas: activación autorizada el 2026-11-17 con
+  «go» de implementación043, turno `01a1e85d-1934-7672-9cc3-6a4d7b0314e1`,
+  mensaje humano `01a1e85d-1aaa-7183-a8df-7baafeaeefe8` del Coordinador.
+  Ideas: `notas/IDEAS.md` y sus notas. Tickets canónicos: `coordinacion/tareas/`.
+  Identidad de proyecto para tickets: la identidad del registro indicada arriba.
+  Vista derivada: `.aikit/tablero-notas/index.html`; generar desde esta raíz con
+  `uv run --locked python scripts/tablero_notas.py --sin-abrir`.
+  La implementación y verificación se siguen en `tareas/IMP-0001/TAREA.md`.
+  El comando necesita el entorno de desarrollo existente; no es requisito
+  universal para otros proyectos ni declara instalado el cambio en el perfil.
 - Avisos proactivos: Manuel autoriza expresamente al Coordinador a notificar
   cambios relevantes a los Chats de Tarea afectados sin consultar cada envío.
   Evidencia humana: turno `01a1e5a2-043b-7221-a262-ecff24f20feb`, mensaje

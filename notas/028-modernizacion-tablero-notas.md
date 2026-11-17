@@ -3,7 +3,17 @@
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Pausada por indicación expresa del usuario; implementación no iniciada.
+Estado actual: Esperando al usuario para aprobar la propuesta visual; implementación no iniciada.
+
+## Reanudación de propuesta visual — 2026-11-17
+
+Manuel retoma directamente el diseño en el chat 028 y pide proponer la mejor
+opción tras revisar tableros modernos. Origen humano contrastado: turno
+`01a1e822-ed79-7e02-94fd-dd2505eedaba`, mensaje
+`01a1e822-ee3a-7091-b6d8-89e892af1841`. La propuesta se presenta y queda pendiente
+de aprobación; no se interpreta como permiso de implementación ni instalación.
+El estado sustituye la pausa histórica de abajo. BMAD sigue pendiente antes de
+implementar; véase la conciliación en el registro canónico de ACUSES.md.
 
 ## Pausa — 2026-11-16
 

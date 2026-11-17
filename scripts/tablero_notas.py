@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 import mistune
+from seguimiento_tareas import read_tasks
 
 ROOT = Path(__file__).resolve().parents[1]
 ROW = re.compile(
@@ -95,6 +96,12 @@ def read_notes(directory: Path) -> list[Note]:
 
 def generate(directory: Path, output: Path) -> int:
     notes = read_notes(directory)
+    tasks = read_tasks(directory.resolve().parent, {int(n.number) for n in notes})
+    render = mistune.create_markdown(
+        renderer=SafeRenderer(escape=True), plugins=["table"]
+    )
+    for task in tasks:
+        task["content"] = render(task.pop("body"))
     template = (ROOT / "scripts/tablero_notas.html").read_text(encoding="utf-8")
     payload = (
         json.dumps([asdict(n) for n in notes], ensure_ascii=True)
@@ -103,8 +110,21 @@ def generate(directory: Path, output: Path) -> int:
         .replace("&", r"\u0026")
     )
     stamp = datetime.now().astimezone().isoformat(timespec="seconds")
-    document = template.replace("__GENERATED__", html.escape(stamp)).replace(
-        "__NOTES_JSON__", payload
+    task_payload = (
+        json.dumps(tasks, ensure_ascii=True)
+        .replace("<", r"\u003c")
+        .replace(">", r"\u003e")
+        .replace("&", r"\u0026")
+    )
+    replacements = {
+        "__GENERATED__": html.escape(stamp),
+        "__TASKS_JSON__": task_payload,
+        "__NOTES_JSON__": payload,
+    }
+    document = re.sub(
+        r"__GENERATED__|__TASKS_JSON__|__NOTES_JSON__",
+        lambda match: replacements[match[0]],
+        template,
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     temp_name = ""

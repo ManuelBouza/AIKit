@@ -3,7 +3,17 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Pausada por indicación expresa del usuario; entorno BMAD pendiente.
+Estado actual: Bloqueada por entorno BMAD pendiente; reanudada por el usuario.
+
+## Reanudación — 2026-11-17
+
+Manuel indica «continuemos» directamente en el chat 040, turno
+`01a1e823-0b36-76c1-aa94-f43d57a2e516`, mensaje humano
+`01a1e823-200e-7341-82f4-b129d503643a`, contrastado por el Coordinador.
+La pausa queda levantada solo para 040. Sigue pendiente preparar BMAD y las
+dependencias de forma aislada; no se ha repetido el flujo fallido ni instalado
+herramientas. Aviso `040-reanudacion-bmad-02`, revisión 2, conservado en el
+[registro canónico](../coordinacion/paralelo-028-040/ACUSES.md).
 
 ## Pausa — 2026-11-16
 

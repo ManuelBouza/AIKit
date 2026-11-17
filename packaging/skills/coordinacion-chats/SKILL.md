@@ -31,3 +31,7 @@ El auxiliar de registro existente es un prototipo limitado y no se distribuye
 con esta skill. No supongas que está instalado ni que autentica mensajes o
 permite relevo, reasignación o nuevos ciclos. No declares registro verificado
 sin un mecanismo disponible que lo acredite.
+
+Para registrar, consultar, integrar o cerrar entregas, aplica
+[seguimiento de ideas y tareas](references/seguimiento.md). Conserva una fuente
+canónica por entrega y genera su vista antes de iniciar implementación nueva.

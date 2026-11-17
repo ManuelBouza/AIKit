@@ -1,20 +1,39 @@
 # Índice de coordinación de AIKit
 
 Registro manual administrado por el coordinador identificado en `PROYECTO.md`.
-No hay encargos reales registrados al dar de alta. Cada asignación autorizada
-enlazará a su estado, entrega y pendientes; no se incorpora la tarea ficticia.
+Cada asignación autorizada enlaza a su estado, entrega y pendientes;
+no se incorpora la tarea ficticia del auxiliar experimental.
 
-## Encargos activos
+## Encargos migrados
 
+El estado operativo vigente de las entregas migradas reside exclusivamente en
+sus tickets. Las entradas fechadas de abajo conservan el contexto histórico y
+no son otra fuente editable de estado.
+
+- [IMP-0001 — Seguimiento local](tareas/IMP-0001/TAREA.md).
+- [IMP-0002 — Tablero 028](tareas/IMP-0002/TAREA.md).
+- [IMP-0003 — Director de Ideas 040](tareas/IMP-0003/TAREA.md).
+- [IMP-0004 — Preparación aislada de BMAD](tareas/IMP-0004/TAREA.md).
+
+## Contexto de asignación
+
+- 2026-11-17: [Encargo original de seguimiento local](implementacion-seguimiento-043.md).
+  Autorización, reparto de archivos y arranque histórico; estado en IMP-0001.
 - 2026-11-16: [028 y 040 en paralelo](paralelo-028-040/ENCARGOS.md).
   Autonomía aclarada y reconocida por ambas sesiones, ramas y worktrees propios.
-  028 y 040: Pausadas por orden expresa de Manuel para continuar la corrección
-  en el Coordinador. Se conservan recursos y evidencias.
-  Sin implementación iniciada. [Avisos y acuses](paralelo-028-040/ACUSES.md).
-  El Coordinador tiene pendiente coordinar una preparación aislada de BMAD y
-  dependencias; queda también en espera mientras dure esta pausa.
+  Se conservan recursos y evidencias. [Avisos y acuses](paralelo-028-040/ACUSES.md).
+  Estados y decisiones vigentes en IMP-0002/IMP-0003; dependencia de entorno en
+  IMP-0004. Este índice no mantiene otra copia editable de esos estados.
 
 ## Encargos finalizados
+
+- 2026-11-17: [Especificación del seguimiento local](especificacion-seguimiento-043.md).
+  Contrato formalizado: seis capacidades, datos/flujo y migración/aceptación.
+  Opción Markdown adoptada; la implementación posterior se sigue en IMP-0001.
+
+- 2026-11-17: [Diseño del seguimiento de ideas y tareas](diseno-seguimiento-043.md).
+  Borrador documental entregado; modelo propuesto pendiente de adopción.
+  No se ha implementado el nuevo sistema de tickets ni migrado encargos.
 
 - 2026-11-16: [PILOTO-025-01](../docs/coordinacion/piloto-025-01.md), encargo
   documental autorizado para probar asignación, avisos, revisión e integración.

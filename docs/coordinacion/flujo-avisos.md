@@ -45,6 +45,13 @@ independiente: conservar el pendiente y esperar solo en la operación que depend
 de una decisión, recurso compartido o integración. Reportar decisiones relevantes
 del usuario con origen verificable y aclarar contradicciones antes de aplicarlas.
 
+## Selección antes del envío
+
+Ambos roles aplican el [filtro de impacto](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades). Un hito, transición de estado o
+acuse no obliga a enviar. Conservar avances ordinarios en el entorno propio; el
+Coordinador los recoge en revisión pertinente. Enviar solo solicitudes operativas
+actuales o riesgos que empeoren al esperar. Registrar no equivale a despertar.
+
 ## Aviso completo
 
 Conservar antes del envío una copia recuperable en el entorno de la tarea.

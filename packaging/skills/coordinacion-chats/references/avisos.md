@@ -1,5 +1,11 @@
 # Avisos y acuses
 
+Antes de preparar un envío de cualquiera de los roles, aplicar el
+[filtro de impacto](responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades).
+Conservar una novedad, registrar un cambio o producir un acuse consultable no
+implica enviarlo a otro chat. Un acuse se comunica solo si habilita una operación
+pendiente o exige intervención ahora; no confirmar su recepción con otro mensaje.
+
 Antes de ejecutar una tarea asignada o procesar sus avisos confirma proyecto,
 raíz canónica, coordinador vigente, encargo, chat asignado y medios autorizados
 de envío y consulta. En modalidad manual usa la identificación y el versionado
@@ -17,7 +23,8 @@ estable, revisión creciente, estado, resumen y referencias; conserva una copia
 recuperable antes de enviarlo. Una corrección usa nuevo ID y revisión y referencia
 el original; un reenvío autorizado conserva todo el contenido. Los estados son
 Preparada, Esperando al usuario, En curso, Bloqueada, Pausada, Finalizada y
-Cancelada. Mantiene su título según el estado declarado y comunica discrepancias.
+Cancelada. Mantiene su título según el estado declarado y conserva discrepancias;
+las comunica ahora solo cuando el filtro exige intervención.
 En v1 la revisión crece dentro de cada tarea y ciclo; las fechas no ordenan avisos.
 En modalidad manual conserva los mismos estados y trazabilidad de correcciones
 y reenvíos mediante las referencias y versiones acordadas, sin exigir el esquema v1.
@@ -56,8 +63,8 @@ interrupción se consulta el registro y el historial; no reenviar a ciegas.
 Sin mensajería, el usuario puede trasladar el aviso exacto y devolver el acuse.
 Para los avisos proactivos del Coordinador a las tareas afectadas, aplica también
 [responsabilidades y notificaciones](responsabilidades.md#notificaciones-proactivas-del-coordinador).
-La autorización humana persistente y verificable del proyecto permite los envíos
-informativos de su alcance sin una aprobación por aviso; no sustituye permisos
+La autorización humana persistente y verificable permite los envíos de su alcance
+que superen el filtro sin una aprobación por aviso; no sustituye permisos
 de ejecución ni convierte recepción en incorporación. Conserva el cambio y su
 versión, destinatario y original para reconciliar antes de reenviar ante dudas.
 Un aviso informativo a una tarea pausada mantiene la pausa y no habilita trabajo.
@@ -84,7 +91,10 @@ verificarlo antes de retirar ramas, worktrees u otros recursos que aún necesite
 
 Al finalizar o cancelar con autorización aplicable, la tarea persiste el trabajo
 y limpia recursos propios sin perder cambios ni evidencias. Conserva avisos y
-pruebas de envío hasta reconciliar el acuse, incluso si se retira un worktree;
+pruebas de envío hasta reconciliar el acuse, incluso si se retira un worktree.
+También conserva novedades y evidencias pendientes de recogida: antes de retirar
+el recurso que las contiene, verifica su persistencia en un medio autorizado que
+sobreviva a la retirada y conserva su referencia recuperable;
 si no puede conservarlos, mantiene el recurso como pendiente. El coordinador
 mantiene visibles esos pendientes. Archivado y automatización requieren sus
 capacidades y autorizaciones, y no se ejecutan por la mera recepción de un aviso.

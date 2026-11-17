@@ -45,6 +45,9 @@ ideas inexistentes, dependencias ausentes o ciclos abortan antes de publicar.
 La publicación usa reemplazo atómico del único HTML; un error devuelve código
 no cero, conserva sus bytes anteriores y no abre esa salida como nueva.
 No se garantiza transacción entre los archivos fuente ni frescura continua.
+La fecha acredita generación desde el estado incorporado, no consulta reciente
+de cada chat. Puede haber novedades ordinarias pendientes: el Coordinador las
+recoge en revisión pertinente sin activar tareas solo para refrescar el tablero.
 
 Setup reutiliza un tracker canónico existente y requiere acuerdo local y pruebas
 para activar esta modalidad. El complemento distribuye la referencia de flujo,

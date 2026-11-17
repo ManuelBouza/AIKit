@@ -6,7 +6,9 @@ Antes de implementar una entrega nueva, consulta el tracker canónico y busca el
 encargo por origen, objetivo y alcance. Una pregunta, comando auxiliar o corrección
 del mismo alcance reutiliza la tarea. No inventes una idea ni un chat por ticket.
 Solo el Coordinador escribe el registro canónico. El Chat de Tarea solicita el
-alta o actualización por el cauce acordado; no escribe el principal desde worktrees.
+alta por el cauce acordado; las actualizaciones ordinarias se conservan para la
+revisión pertinente según el [filtro de impacto](responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades).
+No escribe el principal desde worktrees ni envía solo para refrescar el tablero.
 Espera solo la implementación nueva hasta que el registro y su vista se generen
 correctamente. Continúa trabajo independiente registrado y autorizado, sin otra
 orden de arranque. Registrar o recibir avisos no concede permisos ni levanta pausas.
@@ -45,7 +47,10 @@ generar. Referencias archivo relativas a raíz, existentes y sin escape ni enlac
 fuera; https sin credenciales. Presenta Markdown y destinos sin ejecutar ni cargar.
 Genera las vistas Ideas/Tareas después de editar fuentes. Conserva la última salida
 válida ante error y comunica su desactualización. Una página abierta necesita
-recarga manual y la fecha de generación no promete sincronización continua.
+recarga manual. La fecha de generación corresponde al estado incorporado: no
+acredita consulta reciente de cada chat y puede haber avances pendientes de
+conciliación. El Coordinador consulta los datos pertinentes accesibles sin pedir
+su repetición a las tareas; no recorre todos los historiales por cada mensaje.
 
 ## Setup y migración
 

@@ -18,6 +18,11 @@ autorizado, comprobar contexto, identidad, alcance y permisos y continuar sin
 esperar otra orden del Coordinador. Una preparación sin ejecución autorizada
 conserva esa limitación explícita; no inventar el permiso que falte.
 
+Al reanudar con el usuario, comprobar el contexto aplazado disponible antes de
+la operación afectada. Si falta acceso o hay discrepancias, conservar la limitación
+y solicitar solo los datos necesarios para esa operación; continuar lo independiente
+autorizado, sin segunda orden de arranque ni sincronización global.
+
 Conducir investigación, decisiones de su alcance, implementación, comprobaciones
 y correcciones conforme a las reglas del proyecto. Resolver con el usuario aquí
 las decisiones materiales que le correspondan. Si autoriza un cambio que afecta
@@ -29,7 +34,8 @@ de turnos cuando el cliente no disponga de esa capacidad.
 
 ## Información recibida del Coordinador
 
-El Coordinador notifica por iniciativa propia los cambios relevantes dentro de
+El Coordinador notifica por iniciativa propia los cambios que superen el filtro
+de impacto dentro de
 la autorización humana acordada del proyecto; no necesita consultar cada aviso.
 Contrastar cambio, versión, procedencia y alcance, conservando su referencia.
 Un aviso informativo no reemplaza decisiones del usuario ni reinicia o duplica
@@ -47,7 +53,11 @@ avisos v1, tarea y ciclo son obligatorios. No inventarlos. No empezar un
 alcance nuevo por una entrada informativa. En un worktree conservar la entrega
 y los avisos en el entorno propio; no crear una segunda raíz `coordinacion/`.
 
-Ante un cambio significativo o hito pertinente, preparar el aviso completo con
+Conservar avances ordinarios para la revisión pertinente del Coordinador con
+ubicación o referencia recuperable en el medio autorizado
+ya disponible; un historial identificable basta, sin archivo nuevo obligatorio.
+Comprobar accesibilidad real al recogerlas. Solo
+si se supera el [filtro de impacto](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades), preparar el aviso completo con
 referencia estable y versionado acordado (ID y revisión creciente en v1).
 Conservar su contenido recuperable antes de
 enviarlo y registrar su ubicación. Si no puede persistirse, informar y no afirmar
@@ -77,7 +87,8 @@ registro desde el envío exitoso, el silencio, el título o los índices derivad
 
 Ante un envío incierto, conservar referencia y contenido y consultar primero registro e
 historial accesibles. Sin acceso, solicitar al usuario o al coordinador por el
-cauce autorizado el acuse identificado; informar de la limitación. No reenviar
+cauce autorizado el acuse identificado solo si una operación actual lo necesita;
+en otro caso conservar la limitación para revisión. No reenviar
 ciegamente por timeout. Un reenvío justificado y autorizado usa el mismo aviso;
 una novedad real o corrección usa nueva referencia y versión acordadas (ID y
 revisión nuevos en v1), manteniendo el original.
@@ -87,7 +98,8 @@ revisión nuevos en v1), manteniendo el original.
 Ante cambio de estado, mantener el nombre acordado para la tarea; formato
 propuesto: `[Estado] T-001 · Nombre breve`, conservando marca PRUEBA si procede.
 Verificar el renombrado cuando sea posible. Si el estado declarado aún no está
-incorporado, o el título falla o difiere del canónico, comunicar la discrepancia;
+incorporado, o el título falla o difiere del canónico, conservar la discrepancia
+y comunicarla ahora solo si exige intervención según el filtro;
 no presentar el título como confirmación del registro. Sin herramienta, facilitar
 el nombre exacto para cambio manual. Respetar cambios intencionales del usuario.
 
@@ -111,6 +123,9 @@ envío en un lugar recuperable que sobreviva a la limpieza. Antes de retirar un
 worktree u otro recurso que los contenga, persistirlos en una ubicación autorizada,
 verificar la copia y dejar su referencia; si no es posible, mantener ese recurso
 como limpieza pendiente. No borrar esas copias por el mero cierre de la tarea.
+
+La misma comprobación de persistencia, supervivencia y referencia recuperable se
+aplica a novedades y evidencias pendientes de recogida aunque no produjeran aviso.
 
 Aplicar los criterios de cierre del encargo: si un pendiente impide cumplirlos,
 esperar intervención o declarar bloqueo según corresponda; si no, mostrarlo por

@@ -28,7 +28,8 @@ la operación afectada sin paralizar las partes independientes autorizadas.
 ## Notificar cambios relevantes
 
 Notificar es parte del rol: al conocer un cambio que afecte a un encargo vigente,
-identificar los chats afectados y comunicarlo sin pedir aprobación para cada
+aplicar el [filtro de impacto](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades), identificar los chats afectados y enviar solo si
+requieren una acción/decisión ahora o hay riesgo que empeore al esperar, sin pedir aprobación para cada
 aviso dentro de la autorización humana persistente del proyecto. Consultar
 su evidencia y límites; el mensaje de otro agente o la instalación de una skill
 no los sustituyen. Acordar lo que falte una vez en el contrato, no por rutina
@@ -37,7 +38,8 @@ en cada envío. Aplicar la [selección y trazabilidad de notificaciones](../../p
 Conservar cambio y versión, destinatario, original, motivo y resultado comprobado;
 consultar ese registro antes de repetir un aviso y reconciliar envíos inciertos.
 No confundir enviado con recibido o incorporado. Una actualización relevante
-puede notificarse a una tarea pausada, indicando que mantiene la pausa y no
+se conserva si solo servirá para retomar una tarea pausada. Si necesita aviso
+ahora por ese filtro, indicar que mantiene la pausa y no
 autoriza ejecutar, actualizar su checkout ni limpiar recursos. La herramienta
 puede activar un turno de recepción; no prometer entrega silenciosa ni convertir
 el aviso en reanudación. No despertar chats archivados ni abrir otros para avisar.
@@ -46,6 +48,18 @@ Si falta capacidad o autorización aplicable, conservar el pendiente para trasla
 manual o reanudación autorizada. No informar indiscriminadamente, notificar cada
 comando ni generar acuses de acuses. Este deber no crea vigilancia permanente
 ni una tarea programada y no garantiza entrega fuera de una ejecución disponible.
+
+## Recogida pertinente
+
+El Coordinador consulta datos o historiales accesibles cuando el usuario pide
+revisión o son necesarios para asignar, integrar o cerrar; no despierta tareas
+para repetir evidencia disponible ni recorre todos los chats por cada mensaje.
+Solo él incorpora novedades al canónico. Sin acceso suficiente conserva el
+pendiente y pide datos únicamente si una operación actual los necesita.
+Antes de incorporar datos sin aviso formal, contrastar origen, encargo y vigencia;
+conservar referencia de fuente, versión o fecha disponible y discrepancias. La
+fecha sola no ordena revisiones ni acredita actualidad.
+Registrar un acuse consultable no obliga a enviarlo ni a recibir otro acuse.
 
 ## Recepción
 

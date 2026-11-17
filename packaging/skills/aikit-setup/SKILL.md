@@ -28,10 +28,13 @@ Cuando el usuario haya autorizado aplicar la selección y los permisos lo permit
 
 Al explicar esta capacidad, aclara que el usuario continúa directamente con cada
 Chat de Tarea. Con un encargo ejecutable autorizado y contexto comprobado, este
-trabaja sin otra orden de arranque; reporta hitos relevantes al coordinador,
-que gestiona dependencias e integración, sin intermediar cada paso.
+trabaja sin otra orden de arranque; aplica el filtro de impacto de coordinación
+para reportar solicitudes accionables y conserva avances ordinarios para revisión.
+El Coordinador gestiona dependencias e integración, sin intermediar cada paso.
 Incluye su deber de notificar cambios relevantes a los chats afectados sin pedir
-aprobación por cada aviso dentro de la autorización humana acordada. Al preparar
+aprobación por cada aviso dentro de la autorización humana acordada. Ambos roles
+envían solo ante acción o decisión operativa ahora, o riesgo que empeore al esperar;
+actualizar el registro no justifica por sí solo activar otro chat. Al preparar
 el contrato local, registra esa autorización y su evidencia, alcance y límites
 de destinatarios y cauces; conserva una decisión ya vigente y pregunta solo si
 falta una decisión material. Leer o activar la skill no inventa consentimiento
@@ -74,7 +77,7 @@ manual; si puedes escribir pero no acreditar reconocimiento, conserva los cambio
 autorizados e informa de la validación pendiente. No afirmes activación verificada
 solo porque se guardaron archivos. La activación por sí sola no inicia chats,
 envíos, archivados ni automatizaciones. Una notificación requiere además un
-cambio relevante, destinatario contrastado y autorización humana aplicable.
+cambio que supere ese filtro, destinatario contrastado y autorización humana aplicable.
 
 Si se solicita desactivar, concreta antes cómo detener nuevas asignaciones y
 conservar tareas, entregas y registro; no borres historial ni retires reglas por

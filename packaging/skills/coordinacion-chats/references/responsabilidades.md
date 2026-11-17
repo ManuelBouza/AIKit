@@ -40,7 +40,8 @@ coordinador sigue siendo el único escritor, sin garantía técnica de exclusió
   No implementa ni hace code review: encarga la ejecución
   y la evaluación técnica a los responsables y revisores pertinentes.
 - **Chat de Tarea:** ejecuta y verifica su encargo, decide detalles técnicos
-  dentro del alcance, mantiene título y estado y comunica resultados y bloqueos.
+  dentro del alcance, mantiene título y estado y conserva resultados y bloqueos;
+  comunica los que superen el filtro de impacto siguiente.
   Interactúa directamente con el usuario para conducir ese trabajo y resolver
   las decisiones que le correspondan; no requiere intermediación rutinaria.
   Conserva entrega y evidencias, solicita integración y limpia recursos propios
@@ -122,8 +123,8 @@ o trabajo ajeno; continuar las partes propias independientes y autorizadas.
 Ante instrucciones incompatibles, aclararlas antes de la operación afectada;
 un mensaje informativo del Coordinador no reemplaza una decisión del usuario.
 
-Comunicar en hitos, bloqueos, cambios materiales, solicitud de integración y
-cierre; no por cada comando ni mediante vigilancia permanente. Las herramientas
+Aplicar el filtro siguiente también a hitos, bloqueos, cambios materiales,
+integración y cierre; no enviar por el mero cambio de estado. Las herramientas
 disponibles determinan si un mensaje activa al receptor; sin ellas ofrecer
 traslado manual. Conservar evidencia y reconciliar antes de reenviar ante dudas,
 según [avisos y acuses](avisos.md).
@@ -132,9 +133,50 @@ autorizado. Detener solo la parte que dependa de una decisión, permiso o recurs
 pendiente. Esta autonomía no garantiza ejecución permanente en segundo plano:
 continuación y activación de turnos dependen de las capacidades del cliente.
 
+## Filtro de impacto y recogida de novedades
+
+Antes de enviar, identificar qué acción o decisión operativa necesita atender
+ahora el destinatario, o qué riesgo empeora al esperar. Si no existe, conservar
+la novedad sin activar otro chat. Ser breve o decir «no respondas» no evita el
+coste de activación. Agrupar novedades que puedan esperar.
+
+| Caso | Decisión |
+| --- | --- |
+| Push, commit, pruebas o actualización sin efecto operativo para el receptor | Conservar, no enviar. |
+| Progreso o espera de decisión del usuario dentro de la tarea | Mantener evidencia, estado y título propios; recoger después. |
+| Bloqueo resoluble dentro del alcance de la tarea | Resolver con herramientas o su usuario; no escalar por rutina. |
+| Bloqueo que requiere recurso, permiso o decisión del Coordinador | Solicitud concreta con impacto y operación afectada. |
+| Dependencia resuelta que habilita trabajo | Coordinador avisa a la tarea afectada. |
+| Nueva entrega sin registro previo | Solicitar alta antes de implementarla; continuar trabajo independiente registrado. |
+| Cambio humano transversal, conflicto compartido o riesgo de pérdida | Avisar al responsable antes de la operación afectada. |
+| Entrega lista para revisión/integración | Solicitar acción con versión exacta, evidencias y pendientes. |
+| Resultado de integración que habilita corrección, verificación o limpieza | Comunicar el resultado operativo a la tarea. |
+| Cierre con persistencia y limpieza verificadas que permite archivar/liberar | Un aviso accionable de cierre; no cadena de confirmaciones. |
+| Pausa/cancelación humana | Detener lo afectado y conservar origen; avisar ahora si hay operación compartida, reserva o integración que detener/corregir; en otro caso recoger después. |
+| Acuse o recepción sin operación pendiente | Conservar resultado consultable; no enviar confirmación. |
+
+La tarea conserva novedades ordinarias con ubicación o referencia recuperable en
+su entorno autorizado; basta un historial identificable u otro medio ya acordado,
+sin archivo nuevo obligatorio. Al recogerlas, comprobar accesibilidad real.
+No escribe el canónico desde un worktree. El Coordinador las incorpora cuando el
+usuario pide revisión o necesita datos para asignar, integrar o cerrar. Consulta
+solo las evidencias o historiales pertinentes accesibles, sin mensajes para pedir
+que otro agente repita datos disponibles ni leer todos los chats por cada comando.
+Antes de incorporar, contrasta origen, encargo y vigencia; conserva referencia de
+fuente y versión o fecha disponible, además de discrepancias. Una fecha por sí
+sola no ordena revisiones ni acredita estado vigente.
+Si no puede consultarlos, conserva la limitación y lo pendiente; solicita datos
+solo si son necesarios para una decisión u operación actual, por cauce autorizado.
+La fecha del tablero acredita generación desde lo incorporado, no revisión de
+cada chat. Puede haber novedades pendientes de conciliación.
+
+No crear buzones, vigilancia, automatizaciones ni garantías de entrega silenciosa.
+Una programación solo participa si existe y está autorizada. El filtro no revoca
+la autorización persistente para avisos útiles ni amplía alcance o permisos.
+
 ## Notificaciones proactivas del Coordinador
 
-Al conocer un cambio relevante del proyecto, identifica los Chats de Tarea no
+Tras superar el filtro de impacto, identifica los Chats de Tarea no
 archivados que necesiten conocerlo por su responsabilidad vigente o por un impacto
 pendiente concreto: decisiones transversales, contratos,
 dependencias, integración, herramientas o instrucciones que deban conocer para
@@ -160,7 +202,12 @@ incorporación comprobadas; ante incertidumbre reconcilia registro e historial
 antes de reenviar. Usa los cauces acordados y las herramientas disponibles, sin
 atribuir al esquema v1 campos o funciones nuevas para estos avisos del Coordinador.
 
-Una tarea pausada puede necesitar el aviso para retomar con contexto vigente.
+En una tarea pausada, aplaza el contexto que solo servirá al retomarla; envía
+ahora únicamente si supera el filtro, por ejemplo un riesgo compartido creciente.
+Al reanudar directamente con el usuario, la tarea comprueba el contexto aplazado
+disponible antes de la operación afectada. Sin acceso o con discrepancias, conserva
+la limitación y solicita solo lo necesario para esa operación; continúa lo
+independiente autorizado. No exige otra orden de arranque ni sincronización global.
 Indica expresamente que es informativo y mantiene su estado: no autoriza reanudar,
 actualizar su rama o worktree, ejecutar pruebas ni limpiar recursos. La herramienta
 puede activar un turno de recepción; no prometas entrega silenciosa. Conserva la

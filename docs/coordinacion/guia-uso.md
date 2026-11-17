@@ -12,11 +12,11 @@ Trabaja directamente con cada Chat de Tarea: allí se aclaran decisiones, se inv
 
 ## Avisos, revisión e integración
 
-El Chat de Tarea comunica hitos, bloqueos y entregas al coordinador. Por ejemplo, ante un enlace roto, informa qué comprobó y qué necesita; no amplía el encargo por su cuenta. Mantiene un título acorde con su estado, pero el título solo lo señala: no demuestra que un aviso se haya enviado o registrado.
+El Chat de Tarea conserva avances ordinarios y resuelve bloqueos propios con herramientas o contigo. Aplica el [filtro de impacto](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades) para solicitar al Coordinador intervención, registro previo o integración cuando los necesita; no reporta cada hito por rutina ni amplía su encargo. Mantiene un título acorde con su estado, pero el título solo lo señala: no demuestra que un aviso se haya enviado o registrado.
 
 Esperar un acuse no frena el trabajo independiente autorizado. Si falta una decisión, permiso, recurso compartido o integración, la tarea detiene solo la parte que depende de ello y te plantea las decisiones que te correspondan en su propio chat. La autonomía no supone ejecución permanente en segundo plano: los turnos dependen del cliente.
 
-El coordinador también te evita repartir los avisos: notifica por iniciativa propia los cambios relevantes a los chats afectados, con la autorización humana del proyecto y sin pedir aprobación para cada envío. Conserva qué cambio y versión comunicó a quién, evitando duplicados. Informa también a una tarea pausada si necesita ese contexto para retomar; el aviso mantiene su pausa y no autoriza trabajar ni actualizar recursos. No abre ni desarchiva chats solo para avisar. Si faltan herramientas o permisos, conserva el aviso pendiente para el cauce manual o la reanudación autorizada; no promete entrega silenciosa ni vigilancia permanente.
+El coordinador también te evita repartir los avisos: notifica por iniciativa propia los cambios relevantes a los chats afectados, con la autorización humana del proyecto y sin pedir aprobación para cada envío. Conserva qué cambio y versión comunicó a quién, evitando duplicados. Aplaza contexto que solo sirva para retomar una tarea pausada; envía ahora solo si requiere acción o decisión actual, o existe riesgo creciente; el aviso mantiene su pausa y no autoriza trabajar ni actualizar recursos. No abre ni desarchiva chats solo para avisar. Si faltan herramientas o permisos, conserva el aviso pendiente para el cauce manual o la reanudación autorizada; no promete entrega silenciosa ni vigilancia permanente.
 
 En el registro manual se conserva el aviso original con la referencia y versión acordadas antes de enviarlo. El coordinador contrasta origen y asignación, decide su incorporación y registra un acuse. La tarea compara el acuse con el original y su procedencia. Un envío no prueba incorporación; un acuse tampoco acepta la entrega ni autoriza su integración. Ante un resultado incierto se consulta el historial y el registro antes de reenviar.
 
@@ -27,3 +27,8 @@ Al solicitar integración, la tarea identifica la entrega y su versión exacta, 
 Finalizar exige conservar entrega, avisos, acuses y evidencias necesarias; mantener visibles los pendientes; y limpiar solo los recursos propios que ya no se necesitan, sin perder información. Si falta integración o su comprobación, no se presenta el cierre como completo. El archivado requiere capacidad, procedimiento y autorización efectivos: recibir un aviso no lo ejecuta ni demuestra que se pueda recuperar el chat.
 
 El registro manual aporta trazabilidad, no exclusión automática ni garantías transaccionales. Las capacidades de mensajería y consulta dependen del cliente; si no están disponibles, puede acordarse el traslado manual y conservarse la evidencia. No se deben simular acuses ni atribuir al registro manual funciones del auxiliar experimental.
+
+Los avances ordinarios se recogen cuando pides revisión o hacen falta para asignar,
+integrar o cerrar, consultando evidencia accesible sin mensajes para repetirla.
+El tablero refleja lo incorporado; su generación no acredita revisión reciente
+de cada chat. Conservar un acuse consultable no obliga a enviarlo ni confirmarlo.

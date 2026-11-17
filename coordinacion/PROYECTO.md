@@ -28,6 +28,18 @@
   no reanudan trabajo ni amplían alcance o permisos. Usar solo herramientas
   disponibles y autorizadas, conservar resultados y evitar duplicados. Esta
   autorización no se extiende a chats ajenos, publicaciones o nuevos encargos.
+- Filtro de impacto (nota044, opción1 elegida por Manuel el 2026-11-17): la
+  implementación fue autorizada con «go», turno
+  `01a1eae0-937b-7213-861d-7404d1bf4a34`, mensaje humano
+  `01a1eae0-9480-7e52-9284-59ef998f6cdb` de este Coordinador. La
+  autorización anterior permite avisos útiles sin aprobación por envío; no exige
+  informar cada cambio. Enviar ahora solo ante acción o decisión operativa del
+  receptor, o riesgo que empeore al esperar. Avances ordinarios se conservan en
+  el entorno autorizado de la tarea y se incorporan en una revisión pertinente
+  del Coordinador consultando datos disponibles, sin pedir que otro agente los
+  repita ni recorrer todos los historiales por cada mensaje. El tablero refleja
+  el estado incorporado y puede tener novedades pendientes. Sin automatización
+  ni entrega silenciosa creadas por esta decisión.
 - Comunicación inicial: mediante el coordinador, por decisión de Manuel del
   2026-11-15. Las tareas le trasladan resultados, bloqueos y necesidades.
   La comunicación directa entre tareas se conserva para una evolución futura;

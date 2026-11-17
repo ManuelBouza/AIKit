@@ -14,7 +14,10 @@ El Chat de Tarea conversa directamente con el usuario y continúa su encargo
 ejecutable autorizado tras comprobar el contexto, sin otra orden de arranque.
 El Coordinador notifica por iniciativa propia los cambios relevantes a los chats
 afectados, usando la autorización humana vigente del proyecto sin pedirla de
-nuevo para cada aviso; aplica los límites de la referencia de responsabilidades.
+nuevo para cada aviso. Ambos roles aplican el filtro de impacto de
+[responsabilidades](references/responsabilidades.md): registrar una novedad no obliga a
+activar otro chat; enviar exige acción o decisión operativa ahora, o riesgo que
+empeore al esperar. Conservar avances ordinarios para la revisión pertinente.
 
 Cuando la coordinación esté activada y exista una asignación identificable,
 aplica [avisos y acuses](references/avisos.md) al comunicar o registrar cambios,

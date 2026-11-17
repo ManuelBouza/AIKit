@@ -175,9 +175,12 @@ autorizada, sin añadir campos al aviso v1 ni ampliar permisos por un mensaje.
 El transporte disponible determina si puede activarse el receptor; en su ausencia
 se utiliza traslado manual sin prometer ejecución asíncrona.
 
-Avisar en hitos acordados, bloqueos reales, cambios de supuestos o dependencias,
-necesidades de decisión, solicitud de integración y cierre. No emitir un aviso
-por cada comando ni iniciar bucles de vigilancia o mensajes sin necesidad.
+Aplicar el [filtro de impacto](../../packaging/skills/coordinacion-chats/references/responsabilidades.md#filtro-de-impacto-y-recogida-de-novedades) también a hitos, bloqueos y cierre: enviar solo
+ante acción/decisión operativa actual del destinatario o riesgo que empeore al
+esperar. Conservar avances ordinarios en el entorno propio para revisión
+pertinente del Coordinador, que consulta datos accesibles sin pedir repetición.
+Registrar o refrescar el tablero no justifica activar otro chat ni emitir acuses
+sin acción pendiente. No iniciar vigilancia ni revisar todo por cada mensaje.
 
 El Coordinador notifica por iniciativa propia los cambios relevantes a los Chats
 de Tarea asignados y no archivados a los que afecten, sin pedir aprobación por
@@ -187,7 +190,8 @@ o recibir un mensaje de otro agente no la concede. Registrar cambio y versión,
 destinatarios, original, motivo y resultado; distinguir envío, recepción e
 incorporación, evitar duplicados y reconciliar antes de reenviar ante dudas.
 
-Una tarea pausada puede recibir contexto relevante para retomar, conservando
+Aplazar contexto que solo servirá para retomar una tarea pausada; enviar ahora
+solo si supera el filtro, conservando
 expresamente la pausa: el aviso no autoriza ejecución, actualización de rama o
 worktree, pruebas ni limpieza. La herramienta puede activar un turno de recepción;
 no se promete entrega silenciosa. No abrir o desarchivar chats para notificar,

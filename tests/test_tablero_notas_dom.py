@@ -105,7 +105,7 @@ def test_task_filters_selection_and_relations(tmp_path: Path, width: int) -> Non
                 "el => el.scrollWidth > el.clientWidth"
             )
             page.keyboard.press("Escape")
-            assert origin.evaluate("el => el === document.activeElement")
+            playwright.expect(origin).to_be_focused()
             origin.click()
             page.locator("#detail-content button").filter(has_text="IMP-0002").click()
             assert "IMP-0002" in page.locator("#detail-title").inner_text()
@@ -114,9 +114,7 @@ def test_task_filters_selection_and_relations(tmp_path: Path, width: int) -> Non
             page.locator("#detail-content button").filter(has_text="IMP-0002").click()
             assert "IMP-0002" in page.locator("#detail-title").inner_text()
             page.locator("#close-detail").click()
-            assert page.locator("#tasks-view").evaluate(
-                "el => el === document.activeElement"
-            )
+            playwright.expect(page.locator("#tasks-view")).to_be_focused()
             page.locator("#owner").select_option("Ana")
             page.locator("#ideas-view").click()
             page.locator("#search").fill("sin coincidencias ficticias")

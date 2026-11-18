@@ -63,6 +63,8 @@ context: []
 
 Implementado diálogo nativo, tarjetas, contadores, filtros y navegación entre relaciones. Se preservan filtros de la vista opuesta y se distingue una colección vacía de una búsqueda sin coincidencias. Validación con Edge y datos ficticios en 1280 y 320 px; Python 3.14.9 y Playwright existentes. Controles focales: 54 aprobadas, sin omisiones; Ruff correcto en el test modificado. Las tres revisiones detectaron las mejoras registradas abajo y se aplicaron las correcciones.
 
+Corrección postintegración: la aserción inmediata de foco falló en 1280 y 320 px. El estándar HTML encola el evento `close`, y Playwright ofrece `expect(...).to_be_focused()` con reintento; la prueba espera ahora el foco exigido sin cambiar el comportamiento del diálogo. Cinco ejecuciones DOM dieron 10 casos aprobados; las otras 52 pruebas focales pasaron. En un HTML temporal ficticio se eliminó el manejador de restitución y la misma expectativa falló, como control negativo. Fuentes: https://html.spec.whatwg.org/multipage/interactive-elements.html#close-the-dialog y https://playwright.dev/python/docs/actionability#assertions. Edge y Playwright existentes; Python 3.14.9; sin instalaciones.
+
 ## Spec Change Log
 
 ## Review Triage Log

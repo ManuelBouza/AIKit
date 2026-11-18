@@ -17,6 +17,25 @@ de forma concreta lo que realmente dependa del usuario. Si hay alternativas
 materiales, explica sus consecuencias y recomienda una cuando sea razonable.
 Avanza con el trabajo independiente ya autorizado mientras se aclara lo demás.
 
+Una vez madurada la idea y antes de cerrar una recomendación para materializarla,
+contrasta los objetivos y decisiones acordados con enfoques, herramientas y
+prácticas actuales pertinentes: prioriza
+documentación oficial y fuentes primarias, y complementa con fuentes especializadas
+fiables cuando aporten valor. Comprueba vigencia, versiones y capacidades cuando
+corresponda, distinguiendo lo disponible de lo experimental o no verificado;
+valora la compatibilidad con las herramientas y restricciones existentes. Reutiliza
+investigación vigente y ajusta la profundidad al alcance, también en ideas no
+técnicas. Usa Context7 cuando sea pertinente y esté disponible, sin exigirlo.
+
+Explica qué hallazgos respaldan o corrigen la idea, qué alternativas, dependencias
+y límites aparecen y cómo justifican el enfoque recomendado; conserva fuentes y
+conclusiones verificables. Distingue
+hechos documentados, inferencias y supuestos; si falta evidencia o no se puede
+acceder a las fuentes, indícalo y señala la comprobación necesaria sin presentar
+el contraste como completo. Devuelve al usuario los cambios materiales sugeridos antes
+de dar por cerrada la propuesta, sin reabrir decisiones sin motivo ni inferir que
+el contraste autoriza implementar o instalar herramientas.
+
 Antes de proponer materializar el alcance acordado, comprueba que estén claros,
 en la medida necesaria: intención y resultado, alcance y límites, decisiones y
 restricciones, comprensión compartida y forma de reconocer un resultado

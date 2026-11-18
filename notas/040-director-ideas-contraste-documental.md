@@ -3,7 +3,17 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Bloqueada por entorno BMAD pendiente; reanudada por el usuario.
+Estado actual: En implementación; entorno040 preparado y verificado.
+
+## Dependencia resuelta — 2026-11-17
+
+El Coordinador prepara el entorno040 mediante la porción autorizada de
+[IMP-0004](../coordinacion/tareas/IMP-0004/TAREA.md): BMAD6.12.4 local,
+dependencias del propio lockfile y render con salidas aisladas. La revisión
+posterior acepta la conservación del trabajo y de las evidencias anteriores.
+[IMP-0003](../coordinacion/tareas/IMP-0003/TAREA.md) puede continuar bajo su
+autorización humana previa. Esto no declara implementada la mejora ni preparada028.
+Véase [preparación y evidencia](../docs/preparacion-bmad-worktree-040.md).
 
 ## Reanudación — 2026-11-17
 

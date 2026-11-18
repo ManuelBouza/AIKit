@@ -31,6 +31,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [001 — Disponibilidad de cuentas](001-disponibilidad-cuentas.md) | En implementación | Revisar cuentas y modelos antes de inferir y mantener actualizadas sus fechas de recuperación. |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | En implementación; entorno040 verificado | Dependencia040 resuelta; continuidad autónoma de IMP-0003 con BMAD local. |
 
 ## En planificación
 
@@ -53,7 +54,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Bloqueada por entorno BMAD; reanudada por el usuario | Contrastar la idea madurada con documentación oficial y fuentes especializadas antes de proponer su implementación con herramientas actuales y adecuadas al proyecto. |
 | [039 — Setup como centro de activación](039-setup-centro-activacion-capacidades.md) | Pendiente de debatir | Incorporar todas las preferencias y skills propias a aikit-setup y detectar automáticamente las omisiones de integración. |
 | [038 — Autonomía para Git y GitHub](038-autonomia-git-github-setup.md) | Pendiente de debatir | Configurar en aikit-setup autonomía global o local para operaciones técnicas de Git y GitHub, preservando información y consultando solo cuando sea estrictamente necesario. |
 | [037 — Captura de prácticas efectivas para AIKit](037-captura-practicas-efectivas-aikit.md) | Pendiente de debatir | Detectar configuraciones, preferencias y procedimientos que funcionan y registrarlos como candidatos para futuras preferencias o skills. |

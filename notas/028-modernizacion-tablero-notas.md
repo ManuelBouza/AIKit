@@ -3,7 +3,22 @@
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Esperando al usuario para aprobar la propuesta visual; implementación no iniciada.
+Estado actual: Implementación autorizada; base043 y entorno028 verificados.
+
+## Aprobación visual — 2026-11-18
+
+Manuel aprueba directamente la propuesta en chat028, turno
+`01a1ed3a-39d9-7ac2-b5f6-cf3eca31a2b0`, mensaje
+`01a1ed3a-3bf8-79e1-81cb-2036f9801ce4`. El Coordinador contrasta esa aprobación
+y registra la implementación en IMP-0002. La preparación local y la coordinación
+de base con las vistas Ideas/Tareas043 se resuelven antes de modificar el tablero.
+La aprobación no incluye Sites, herramientas globales ni publicación.
+
+El chat028 incorpora la base36cbde57eff20dde73a968e44665957178e4aaa0 por avance
+directo comprobado, conservando el árbol limpio. Se mantienen las vistas y el
+contrato de Ideas/Tareas043. La preparaciónBMAD de IMP-0004 está finalizada y
+verificada; puede continuar su implementación aprobada con autonomía.
+Véase [entorno y evidencia](../docs/preparacion-bmad-worktree-028.md).
 
 ## Reanudación de propuesta visual — 2026-11-17
 

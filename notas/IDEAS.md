@@ -31,7 +31,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [001 — Disponibilidad de cuentas](001-disponibilidad-cuentas.md) | En implementación | Revisar cuentas y modelos antes de inferir y mantener actualizadas sus fechas de recuperación. |
-| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | En implementación; entorno040 verificado | Dependencia040 resuelta; continuidad autónoma de IMP-0003 con BMAD local. |
+| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | En implementación; base y entorno verificados | IMP-0002 puede continuar; preparación IMP-0004 finalizada. |
 
 ## En planificación
 
@@ -45,6 +45,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Integrada en fuentes; cierre pendiente | Integración46b9c6e verificada; limpieza de IMP-0003 e instalación pendientes. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
 | [020 — Próxima Tarea y pendientes del contexto](020-proxima-tarea-pendientes-contexto.md) | Regla global y complemento actualizados; vista previa sin cambios | Evitar confundir el cierre de una tarea acotada con la ausencia de pendientes de la iniciativa relacionada. |
@@ -63,7 +64,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | [032 — Coordinador escritor mediante mensajes](032-coordinador-escritor-mensajes-tareas.md) | Integración guiada verificada; instrucciones en fuentes; activación pendiente | Las tareas comunican sus datos y el coordinador es el único escritor canónico, con acuse y recuperación. |
 | [031 — Aislamiento de trabajos sin Git](031-aislamiento-sin-git.md) | Decisión de secuenciación o Git por proyecto; detalles pendientes | El usuario elige secuenciar escrituras o habilitar Git y worktrees para paralelismo. |
 | [030 — Evaluar Impeccable y find-skills](030-evaluar-impeccable-find-skills.md) | Pendiente de debatir | Evaluar recursos de diseño de interfaces y descubrimiento de skills, su utilidad y su encaje con las herramientas existentes. |
-| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | Esperando al usuario; propuesta visual presentada y entorno pendiente | Mejorar la experiencia del tablero y su detalle centrado; tarea autónoma, Sites fuera del encargo. |
 | [029 — Estado visible en el nombre del chat](029-estado-visible-nombre-chat.md) | En debate; responsabilidad del chat acordada | Mostrar el estado en el nombre y mantenerlo actualizado desde el chat de tarea. |
 | [027 — Automatización de la coordinación](027-automatizacion-coordinacion.md) | En debate; intención de automatización registrada | Revisar estados y ejecutar acciones de coordinación con una tarea programada. |
 | [026 — Archivado de chats coordinados](026-archivado-chats-coordinacion.md) | En debate; responsabilidad del coordinador acordada | Archivar chats de tareas terminadas y recuperarlos para continuar su trabajo. |

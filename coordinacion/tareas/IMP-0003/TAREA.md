@@ -12,7 +12,7 @@
   "fase": "en_curso",
   "atencion": "normal",
   "motivo": "",
-  "siguienteAccion": "El chat040 ha retomado implementación y validación de su encargo; revisión técnica e integración siguen su cauce.",
+  "siguienteAccion": "Preservar los ignorados inventariados fuera del worktree y completar su limpieza; integración ya verificada.",
   "origen": "Encargo040 y aviso040-reanudacion-bmad-02. Reanudación humana chat040 turno01a1e823-0b36-76c1-aa94-f43d57a2e516, mensaje01a1e823-200e-7341-82f4-b129d503643a.",
   "responsable": "Chat de Tarea040",
   "autorizacion": {
@@ -46,11 +46,26 @@
       "tipo": "archivo",
       "destino": "coordinacion/paralelo-028-040/avisos/040-entorno-resuelto-01.md",
       "etiqueta": "Aviso accionable enviado para continuar"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "coordinacion/paralelo-028-040/avisos/040-entrega-03.md",
+      "etiqueta": "Entrega exacta solicitando revisión e integración"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "docs/integracion-director-040.md",
+      "etiqueta": "Integración verificada y cierre pendiente"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "coordinacion/paralelo-028-040/avisos/040-integracion-01.md",
+      "etiqueta": "Resultado operativo para verificar y limpiar"
     }
   ],
   "projectId": "684a47fa-cf69-47a2-9625-5e7a8db806af",
   "creada": "2026-11-17T07:21:21Z",
-  "actualizada": "2026-11-17T20:08:31Z"
+  "actualizada": "2026-11-18T06:24:32Z"
 }
 ```
 
@@ -87,3 +102,24 @@ de040: entorno y autorización comprobados; implementación retomada y validaci�
 en curso. Referencias de mensajes: msg_04fda8e4ecae1c40016afcb416a55487d1a079fb92203d7a4b
 y msg_04fda8e4ecae1c40016afcb43a9e3887d1ab4d334023043710. No se afirma
 aceptación de su entrega por comprobar la recepción ni se envía acuse del acuse.
+
+2026-11-18: recibida entrega040-entrega-03 con commit completo
+b9cb2247b11216717ae1983be456f7a1c3ac16f2. Se conserva el original y se contrasta
+su origen y autorización de envío en chat040, turno01a1ed3c-2a6b-7ba3-91e4-8ce80ad92b82,
+mensaje humano01a1ed3c-2b46-7d72-ab99-b9a32d872a7b. La revisión previa acepta
+el contenido de la skill; la verificación independiente actual cubre el commit
+completo y su integración, sin repetir innecesariamente esa revisión de contenido.
+No se declara instalado el cambio ni integrada todavía la entrega.
+
+2026-11-18: verificación independiente aceptó el commit completo; se integró
+mediante46b9c6ed34e163016989226df11ac6d4590c8a1f en main conservando procedencia
+y ambos blobs. Exportación/instalación aislada:1passed. Se conserva bundle completo
+de la rama original y tres avisos fuera del worktree. La fase vuelve a en_curso
+solo por persistencia/limpieza y cierre de recursos, no por implementación pendiente.
+No se marca finalizada hasta acreditar esas obligaciones ni se declara instalado.
+
+2026-11-18: Chat040 verifica integración por igualdad de ambos blobs, bundle y
+tres avisos. Su inventario identifica snapshot, nuevos datos de cierre y
+ignorados cuya procedencia no se acredita como descartable. El Coordinador
+prepara preservación integral antes de retirar recursos, sin forzar su eliminación.
+La entrega de código está aceptada; este pendiente pertenece al cierre.

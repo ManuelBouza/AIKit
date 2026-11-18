@@ -3,7 +3,22 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: En implementación; entorno040 preparado y verificado.
+Estado actual: Integrada y verificada en fuentes; cierre de recursos e instalación pendientes.
+
+## Entrega — 2026-11-18
+
+Integración posterior: `46b9c6ed34e163016989226df11ac6d4590c8a1f` en main,
+con ambos blobs de la entrega idénticos y exportación aislada correcta.
+[Evidencia de integración y cierre](../docs/integracion-director-040.md).
+La persistencia/limpieza del chat sigue en IMP-0003; instalación en perfil separada.
+
+Chat040 solicita revisión e integración de
+`b9cb2247b11216717ae1983be456f7a1c3ac16f2`, con skill y artefacto Build.
+El aviso original se conserva en
+[040-entrega-03](../coordinacion/paralelo-028-040/avisos/040-entrega-03.md).
+La revisión previa aceptó el contenido final de la skill; la verificación
+independiente del commit completo se aceptó antes de integrar. La entrega
+se sigue en IMP-0003, sin declarar instalación ni publicación.
 
 ## Dependencia resuelta — 2026-11-17
 

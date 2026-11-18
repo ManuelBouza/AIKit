@@ -7,16 +7,16 @@
   "titulo": "Preparar BMAD aislado en los worktrees de tareas",
   "ideas": [],
   "chat": "01a1da03-23f1-7eb0-b0a0-5cb5184e6941",
-  "fase": "en_curso",
-  "atencion": "esperando_usuario",
-  "motivo": "Entorno040 preparado y verificado. Queda la preparación028, fuera de la autorización actual.",
-  "siguienteAccion": "Cuando proceda, decidir la preparación del entorno028; la dependencia040 ya está resuelta.",
+  "fase": "finalizada",
+  "atencion": "normal",
+  "motivo": "",
+  "siguienteAccion": "Entornos040 y028 verificados; mantener recursos activos mientras sus tareas los necesiten.",
   "origen": "Dependencia reportada por040-bloqueo-bmad-01 y040-reanudacion-bmad-02; investigación de preparación nativa de worktrees pendiente en el Coordinador.",
   "responsable": "Coordinador; preparación técnica por delegar",
   "autorizacion": {
     "estado": "autorizada",
-    "alcance": "Resolver y verificar el entorno BMAD del chat040, con recursos existentes, salidas aisladas y conservación de su trabajo; no preparar028 ni cambiar configuración global, ACL o trabajos de implementación.",
-    "referencia": "ChatCoordinador01a1da03-23f1-7eb0-b0a0-5cb5184e6941, turno01a1eb0f-e6ea-72c3-bbf5-721ad56afa12, mensajehumano01a1eb0f-e7e4-7843-a9bc-872c89a2ce81: go tras recomendar preparar y verificar el entornoBMAD040 medianteIMP0004."
+    "alcance": "Preparar y verificar los entornos locales040 y028 con BMAD existente y dependencias de sus lockfiles, salidas aisladas y conservación del trabajo.028 se prepara como requisito técnico de la implementación visual aprobada; sin configuración global, ACL ni herramientas nuevas ajenas al proyecto.",
+    "referencia": "040: go humano en Coordinador, turno01a1eb0f-e6ea-72c3-bbf5-721ad56afa12 / mensaje01a1eb0f-e7e4-7843-a9bc-872c89a2ce81.028: aprobación directa de implementación en chat028, turno01a1ed3a-39d9-7ac2-b5f6-cf3eca31a2b0 / mensaje01a1ed3a-3bf8-79e1-81cb-2036f9801ce4, contrastada por el Coordinador; preparación local necesaria dentro de ese alcance."
   },
   "dependencias": [],
   "referencias": [
@@ -29,11 +29,16 @@
       "tipo": "archivo",
       "destino": "docs/preparacion-bmad-worktree-040.md",
       "etiqueta": "Porción040 resuelta y verificada"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "docs/preparacion-bmad-worktree-028.md",
+      "etiqueta": "Porción028 resuelta y verificada"
     }
   ],
   "projectId": "684a47fa-cf69-47a2-9625-5e7a8db806af",
   "creada": "2026-11-17T07:21:21Z",
-  "actualizada": "2026-11-17T20:05:46Z"
+  "actualizada": "2026-11-18T06:19:06Z"
 }
 ```
 
@@ -70,3 +75,17 @@ origen intactos. Snapshot generado dentro de040; no se siguió su implementació
 La preparación028 sigue pendiente. Este ticket permanece abierto por esa porción;
 IMP-0003 deja de depender operativamente de su finalización global y conserva
 el enlace como evidencia de la dependencia040 resuelta.
+
+2026-11-18: tras aprobación directa de la implementación visual028, el Coordinador
+reanuda la porción pendiente como preparación técnica necesaria de esa entrega.
+Se reutilizan recursos ya instalados; no se autoriza instalación global o nueva
+infraestructura. Primero se coordina su base con043 sin perder trabajo; después
+se adaptará el procedimiento040 a su raíz y lockfile efectivo.
+
+2026-11-18: porción028 completada y revisión posterior aceptada. El primer
+preflight detectó un alias uv antes de escribir; v2 usa su destino físico y
+preserva guardias. Código0 en sync/pip/config/render, 234recursos, 377tracked,
+tres avisos, rama/HEAD/índice y fuentes conservados. Nueva .venv local con
+Python3.13.14 y43dependencias compatibles. El alias minor que uv escribe no
+garantiza fijación permanente al patch. Ambas porciones terminadas; no se
+implementó producto ni se deben retirar recursos que las tareas aún necesitan.

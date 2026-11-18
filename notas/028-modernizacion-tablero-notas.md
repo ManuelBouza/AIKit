@@ -3,7 +3,35 @@
 Fecha: 2026-11-14.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Implementación autorizada; base043 y entorno028 verificados.
+Estado actual: Implementada y verificada localmente; cierre completado y chat archivado.
+
+## Entrega — 2026-11-18
+
+Resultado final de integración: corrección `5d712f73` incorporada mediante
+`4daca7849743cf2481107790e7af2967718f31b6`, sin cambio al HTML. El control
+DOM obligatorio posterior pasa en escritorio y móvil. Era una carrera de la
+aserción con el evento close; un control negativo confirma que la espera
+mantiene la exigencia de foco. [Evidencia final](../docs/integracion-tablero-028.md).
+La implementación está terminada en fuentes; IMP-0002 conserva pendiente el
+cierre de recursos del chat.
+
+Cierre posterior completado: todo el contenido local se conserva en ZIP privado
+verificado y la historia en bundle. La tarea retiró33enlaces sin borrar sus
+destinos; después de comprobar9571archivos intactos se archivó el chat. El
+cliente retiró el checkout y el Coordinador retiró la rama con respaldos intactos.
+IMP-0002 finalizada. El tablero generado refleja la implementación al recargarlo.
+
+Aplicación posterior: `26847986aac76fce7ee9971d0e1938f57f58fa98` conserva
+la entrega en main. El control DOM posterior falla en escritorio y móvil al
+comprobar retorno de foco tras relaciones/cierre; se ha pedido corrección dentro
+del mismo IMP-0002. La mejora no se considera finalizada hasta aclarar y verificar
+ese resultado. Aviso [028-correccion-foco-01](../coordinacion/paralelo-028-040/avisos/028-correccion-foco-01.md).
+
+El Chat028 presenta `21f1a6977183db8c2af8f1220186ba7b0a5fe47e`, base36cb,
+con HTML, documentación, prueba DOM y especificación. La verificación independiente
+acepta el commit completo y acredita54pruebas sin omisiones y correcciones
+revisadas. Integración y cierre se siguen en IMP-0002. Original en
+[028-entrega-revision-01](../coordinacion/paralelo-028-040/avisos/028-entrega-revision-01.md).
 
 ## Aprobación visual — 2026-11-18
 

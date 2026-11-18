@@ -1,7 +1,7 @@
 # Integración del contraste documental040
 
 Fecha: 2026-11-18. Encargo: IMP-0003.
-Estado: integrada y verificada en fuentes; cierre de recursos pendiente del Chat040.
+Estado: integrada y verificada en fuentes; cierre completado y chat archivado.
 La instalación en el perfil es una entrega separada no ejecutada.
 
 ## Versión y aceptación
@@ -41,10 +41,30 @@ Antes de solicitar limpieza se creó y verificó un bundle con la historia compl
 de la rama original y se copiaron sus tres avisos con comprobación de hashes:
 `.aikit/040-cierre/respaldo-20261118/`. Ese respaldo y los informes del Coordinador
 se conservan fuera del worktree; no se añaden a Git como salidas temporales.
-El Chat040 debe comprobar el resultado, conservar cualquier evidencia adicional
-y limpiar sus recursos propios con las herramientas y permisos disponibles.
-El cierre de recursos no está acreditado por este documento hasta recibir su
-resultado. El archivado del chat corresponde al Coordinador tras verificar cierre.
+El Chat040 comprobó resultado y respaldo y realizó inventario de ignorados.
+Se preservó después todo el checkout salvo `.git` raíz en un ZIP privado:
+`.aikit/040-cierre/respaldo-completo-20261118-v2/`. Sus8172archivos y1174dirs
+incluyen snapshot, inventario, caché y pruebas de procedencia incierta. Los bytes
+se verificaron contra origen y ZIP y la revisión posterior aceptó inventario,
+permisos y estabilidad. No se clasificaron esos datos como residuos descartables.
+
+SHA256 ZIP: `edf9d70e68bbc45e4c88967dd28786e4ac18421877e552d8ef2a475c8635e8ac`.
+SHA256 manifiesto: `50f9c283fb54dd61d962506ece8773cdccf0b42be01d3df1b1b810d6e350ec10`.
+La comparación de metadatos del helper normaliza dos diferencias documentadas
+entre lstat/fstat de CPython3.14.9 en Windows; preserva la metadata original,
+doble hash de contenido, rutas, DACL y comprobación final. Evidencia y revisión:
+`.aikit/040-cierre/diagnostico-respaldo-v2.md` y `revision-respaldo-posterior.md`.
+
+La herramienta nativa no retira el checkout principal de su propio chat. Una vez
+respaldado, el Coordinador archivó el chat; en esta ejecución el cliente retiró
+después el checkout de disco y de Git. La comprobación de lectura se interrumpió
+durante esa retirada asíncrona y no se usó como prueba de conservación; el ZIP
+previo permaneció íntegro. Se verificó la ausencia final y se retiró la ref de la
+rama original con su bundle completo preservado. No se ejecutó Git worktree remove.
+El título quedó `[Finalizada] 040 · AIKit · Contraste documental` y el chat archivado.
+El marcador administrativo del cliente en el contenedor se conserva para su gestión.
+El cierre está acreditado. Este comportamiento observado no promete que archivar
+siempre retire recursos; exige comprobarlo y preservar ignorados antes del archivado.
 
 La integración no instala la mejora, no publica ni hace push. No implica terminar
 el trabajo visual028 ni modificar su base acordada, que sigue fijada en36cbde5.

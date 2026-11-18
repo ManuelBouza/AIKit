@@ -3,7 +3,7 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Integrada y verificada en fuentes; cierre de recursos e instalación pendientes.
+Estado actual: Integrada y verificada en fuentes; chat cerrado y archivado; instalación pendiente.
 
 ## Entrega — 2026-11-18
 
@@ -11,6 +11,11 @@ Integración posterior: `46b9c6ed34e163016989226df11ac6d4590c8a1f` en main,
 con ambos blobs de la entrega idénticos y exportación aislada correcta.
 [Evidencia de integración y cierre](../docs/integracion-director-040.md).
 La persistencia/limpieza del chat sigue en IMP-0003; instalación en perfil separada.
+
+Cierre posterior: se conservaron íntegramente los datos locales en ZIP privado y
+la historia en bundle, ambos verificados. Chat040 archivado con título final,
+checkout retirado por el cliente y rama retirada después de comprobar los
+respaldos. IMP-0003 finalizada; la instalación permanece como entrega separada.
 
 Chat040 solicita revisión e integración de
 `b9cb2247b11216717ae1983be456f7a1c3ac16f2`, con skill y artefacto Build.

@@ -1,0 +1,7 @@
+COORD-INTEGRACION-028-01. La entrega21f1a6977183db8c2af8f1220186ba7b0a5fe47e está integrada en26847986aac76fce7ee9971d0e1938f57f58fa98 y la corrección5d712f73f9ee118c17f762071c7d22f31ae47294 en4daca7849743cf2481107790e7af2967718f31b6. Ambos commits tuvieron revisión independiente; los cuatro blobs finales coinciden. El DOM postintegración obligatorio pasó2casos en4.92s, escritorio y móvil. El tablero puede regenerarse desde main con el diseño nuevo.
+
+Verifica el resultado y continúa el cierre del encargo: inventaría archivos locales/ignorados y evidencias a preservar antes de retirar recursos. Guarda el resultado en tu chat y evidencia local; consultaré esos datos para respaldarlos fuera del worktree. Aún no retires el checkout hasta confirmar esa preservación. Estos pasos pertenecen al cierre ya encargado, sin otra aprobación para comprobaciones de lectura.
+
+También puedes identificar la capacidad nativa: list_artifacts y, si falta tu adjunto, attach_worktree con path=C:/Users/Manuel/.codex/worktrees/f8ad/AIKit asocia el checkout existente a tu propio chat. No crees otro worktree ni modifiques main. Conserva el resultado de esa identificación para coordinar su retirada después del respaldo.
+
+Referencia: C:/Manuel/Projects/AIKit/docs/integracion-tablero-028.md y el registro canónico IMP-0002. Mantén estado/título actuales; el archivado del chat lo hará el Coordinador al acreditar cierre.

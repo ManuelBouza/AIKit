@@ -9,10 +9,10 @@
     40
   ],
   "chat": "01a1e56b-ec96-7960-b2ee-7f1d3f7366fb",
-  "fase": "en_curso",
+  "fase": "finalizada",
   "atencion": "normal",
   "motivo": "",
-  "siguienteAccion": "Preservar los ignorados inventariados fuera del worktree y completar su limpieza; integración ya verificada.",
+  "siguienteAccion": "Entrega y cierre completados en fuentes; instalación del complemento y push se autorizan por separado.",
   "origen": "Encargo040 y aviso040-reanudacion-bmad-02. Reanudación humana chat040 turno01a1e823-0b36-76c1-aa94-f43d57a2e516, mensaje01a1e823-200e-7341-82f4-b129d503643a.",
   "responsable": "Chat de Tarea040",
   "autorizacion": {
@@ -65,7 +65,7 @@
   ],
   "projectId": "684a47fa-cf69-47a2-9625-5e7a8db806af",
   "creada": "2026-11-17T07:21:21Z",
-  "actualizada": "2026-11-18T06:24:32Z"
+  "actualizada": "2026-11-18T18:02:25Z"
 }
 ```
 
@@ -123,3 +123,19 @@ tres avisos. Su inventario identifica snapshot, nuevos datos de cierre y
 ignorados cuya procedencia no se acredita como descartable. El Coordinador
 prepara preservación integral antes de retirar recursos, sin forzar su eliminación.
 La entrega de código está aceptada; este pendiente pertenece al cierre.
+
+2026-11-18: preservación completa verificada y aceptada:8172archivos y1174dirs
+en ZIP privado,231105386bytes de origen,86.7MB de archivo, sin reparse; bundle
+completo de la rama conservado. Antes de ese resultado se detuvo un intento por
+diferencias documentadas de lstat/fstat en CPythonWindows; se corrigió únicamente
+su comparación y se preservaron evidencias del intento, sin alterar el origen.
+
+2026-11-18: la herramienta de worktree rechazó retirar el checkout principal del
+chat incluso tras adjuntarlo. El Coordinador archivó el chat ya respaldado;
+después el cliente retiró su checkout enlazado de disco y de Git. Se comprobó
+esa ausencia y se retiró la rama original tras verificar bundle e integridad
+del ZIP. No se ejecutó Git worktree remove. Se conserva el marcador de gestión
+del cliente fuera del checkout. Título final y archivado confirmados por API;
+la corrección del título requirió reabrir/cerrar solo el chat, sin recrear trabajo.
+Código aceptado, datos persistidos y recursos de trabajo cerrados. La instalación
+en perfil continúa separada; no hubo push por esta operación.

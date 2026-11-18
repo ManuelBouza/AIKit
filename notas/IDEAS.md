@@ -31,7 +31,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [001 — Disponibilidad de cuentas](001-disponibilidad-cuentas.md) | En implementación | Revisar cuentas y modelos antes de inferir y mantener actualizadas sus fechas de recuperación. |
-| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | En implementación; base y entorno verificados | IMP-0002 puede continuar; preparación IMP-0004 finalizada. |
 
 ## En planificación
 
@@ -45,7 +44,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
-| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Integrada en fuentes; cierre pendiente | Integración46b9c6e verificada; limpieza de IMP-0003 e instalación pendientes. |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Verificada en fuentes; cierre completado | IMP-0003 finalizada, chat archivado y datos preservados; instalación pendiente. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
 | [020 — Próxima Tarea y pendientes del contexto](020-proxima-tarea-pendientes-contexto.md) | Regla global y complemento actualizados; vista previa sin cambios | Evitar confundir el cierre de una tarea acotada con la ausencia de pendientes de la iniciativa relacionada. |
@@ -82,6 +81,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | Verificada localmente; cierre completado | Diseño nuevo, diálogo y filtros; IMP-0002 finalizada, datos preservados y chat archivado. |
 | [043 — Ideas y tareas de implementación](043-separar-ideas-y-tareas-implementacion.md) | Verificada localmente; complemento 0.1.5 instalado y descubierto | Ideas y tickets conectados, registro previo y vistas separadas; entregas IMP-0001 e IMP-0005. |
 | [044 — Notificaciones por impacto y coste](044-notificaciones-por-impacto-y-coste.md) | Verificada; versión privada0.1.6 instalada y descubierta | Filtro por acción, decisión o riesgo; IMP-0006 e IMP-0007 finalizadas. |
 | [042 — Notificaciones proactivas del Coordinador](042-notificaciones-proactivas-coordinador.md) | Verificada; versión privada 0.1.4 instalada y descubierta | Notificar cambios relevantes a los chats afectados sin aprobación por cada aviso, conservando autorizaciones y pausas. |

@@ -9,10 +9,10 @@
     28
   ],
   "chat": "01a1e56b-ca0d-7370-b82d-7ca39b03e5ba",
-  "fase": "en_curso",
+  "fase": "finalizada",
   "atencion": "normal",
   "motivo": "",
-  "siguienteAccion": "Continuar la implementación visual aprobada desde la base043 y el workflow local verificados.",
+  "siguienteAccion": "Entrega y cierre completados; el tablero generado se consulta recargando su página local. Push se autoriza por separado.",
   "origen": "Encargo028 en coordinacion/paralelo-028-040/ENCARGOS.md. Reanudación visual humana: 01a1e822-ed79-7e02-94fd-dd2505eedaba / 01a1e822-ee3a-7091-b6d8-89e892af1841.",
   "responsable": "Chat de Tarea028",
   "autorizacion": {
@@ -46,11 +46,26 @@
       "tipo": "archivo",
       "destino": "coordinacion/paralelo-028-040/avisos/028-entorno-resuelto-01.md",
       "etiqueta": "Aviso operativo para continuar"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "coordinacion/paralelo-028-040/avisos/028-entrega-revision-01.md",
+      "etiqueta": "Entrega exacta solicitando revisión e integración"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "docs/integracion-tablero-028.md",
+      "etiqueta": "Integración final y DOM postintegración correctos"
+    },
+    {
+      "tipo": "archivo",
+      "destino": "coordinacion/paralelo-028-040/avisos/028-entrega-correccion-01.md",
+      "etiqueta": "Corrección exacta de la prueba asíncrona"
     }
   ],
   "projectId": "684a47fa-cf69-47a2-9625-5e7a8db806af",
   "creada": "2026-11-17T07:21:21Z",
-  "actualizada": "2026-11-18T06:24:32Z"
+  "actualizada": "2026-11-18T18:19:13Z"
 }
 ```
 
@@ -98,3 +113,37 @@ del turno01a1ed50-aebf-7451-8ebc-b39282893442 confirma implementación en marcha
 con especificación que conserva el contrato043. Se prevén comprobaciones de
 relaciones, cierre/foco del diálogo y móvil. No se declara entrega terminada
 ni se solicita otro mensaje para repetir esos datos.
+
+2026-11-18: entrega21f1a6977183db8c2af8f1220186ba7b0a5fe47e presentada desde
+base36cb con árbol limpio. Cuatro archivos de UI/docs/test/spec,54pruebas sin
+omisiones y revisiones previas acreditadas. La verificación independiente del
+commit completo aceptó su aplicación sobre mainb6d7479 conservando el contrato043.
+Sin integración, instalación o publicación declaradas por la mera recepción.
+
+2026-11-18: entrega integrada mediante26847986aac76fce7ee9971d0e1938f57f58fa98,
+sin conflictos. El control DOM postintegración falla en1280/320px al comprobar
+foco en#tasks-view después de navegación entre relaciones y cierre de diálogo
+(tests/test_tablero_notas_dom.py:117;2failed en5.22s). El resultado se devuelve
+a028 para reproducción dirigida, contraste documental y corrección de causa,
+sin ocultar el fallo ni repetir otra aprobación del mismo alcance. La entrega
+no se cierra pese a la evidencia previa54passed y su aceptación estática.
+
+2026-11-18: corrección5d712f73f9ee118c17f762071c7d22f31ae47294 aceptada e
+integrada como4daca7849743cf2481107790e7af2967718f31b6. El fallo era una
+aserción inmediata anterior al evento close encolado; se espera el mismo foco
+requerido. Control negativo y10DOM/52pruebas acreditados; Root verificó2DOM
+obligatorios postintegración correctos. Los cuatro blobs finales coinciden.
+Queda solo inventario/persistencia/limpieza del chat para cerrar el ticket.
+
+2026-11-18: cierre completado. El Chat028 verificó integración e inventarió
+evidencias. Se preservaron9571archivos/2422directorios y33metadatos de enlaces en
+ZIP privado verificado, además de bundle completo de la rama. Revisión posterior
+aceptada. La tarea retiró solo los33enlaces internos con comprobaciones de padre,
+tipo/identidad/destino y operaciones no recursivas. Se cotejaron después los9571
+archivos con el respaldo y Git limpio antes del archivado.
+
+2026-11-18: título final y chat archivado confirmados. El cliente retiró después
+su checkout enlazado; un preflight para la alternativaGit detectó que ya no
+existía y no llegó a ejecutar Git worktree remove. Se confirmó ausencia de disco
+y listaGit y se retiró la rama tras verificar bundle y ZIP. Respaldos conservados
+fuera del checkout; no se han mezclado cambios paralelos de038/045 ni hecho push.

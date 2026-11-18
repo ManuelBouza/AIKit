@@ -32,7 +32,9 @@ no el cwd. El lector no escribe registros. El Coordinador mantiene los tickets;
 las tareas solicitan cambios por el cauce acordado. No hay un segundo índice
 editable: las relaciones inversas entre ideas y tickets se calculan al generar.
 
-Tareas filtra fase, atención, responsable e idea. El detalle muestra alcance,
+Las tarjetas abren un diálogo centrado: el foco pasa al título, Tab recorre sus controles y Escape o Cerrar lo cierran. Al cerrar, el foco vuelve a la tarjeta de origen o, si ya no está visible, al selector de vista. Los botones de relaciones cambian el detalle sin borrar los filtros. En pantallas estrechas las tarjetas forman una columna y el contenido ancho se desplaza dentro del diálogo.
+
+La búsqueda de Ideas abarca número, título, estado y resumen; la de Tareas abarca identificador, título, responsable, fase, atención y origen. Si no hay coincidencias, «Limpiar filtros» permite recuperarlas. Tareas filtra fase, atención, responsable e idea. El detalle muestra alcance,
 aceptación, chat, autorización, dependencias y evidencias. Sus botones enlazan
 ideas y dependencias dentro de la página; las referencias no abren rutas ni red.
 Completar una entrega no completa su idea ni otros tickets del mismo chat.
@@ -57,8 +59,7 @@ no este runtime ni datos de proyecto. Instalar no activa ni migra el seguimiento
 
 La prueba compartida `tests/test_tablero_notas_dom.py` genera dos ideas y tres
 entregas ficticias en un directorio temporal, sin leer los tickets reales.
-Comprueba teclado, filtros de fase/atención/responsable/idea, limpieza de detalle
-al excluir la selección y navegación explícita entre ideas y dependencias aunque
+Comprueba teclado, filtros de fase/atención/responsable/idea, ciclo de foco del diálogo en escritorio y móvil y navegación explícita entre ideas y dependencias aunque
 los filtros actuales excluyan el destino. Comprueba ausencia de errores JS y de
 peticiones externas. Usa Playwright y un navegador ya instalados: no descarga
 componentes ni añade requisitos al runtime del tablero. Si Playwright no está
@@ -69,9 +70,12 @@ En este checkout con las herramientas aisladas existentes:
 
 ```powershell
 $env:AIKIT_PLAYWRIGHT_PATH = (Resolve-Path .aikit/browser-test-deps).Path
+$env:AIKIT_REQUIRE_DOM = '1'
 $env:AIKIT_BROWSER_EXECUTABLE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 uv run --locked pytest tests/test_tablero_notas_dom.py
 ```
+
+Con `AIKIT_REQUIRE_DOM=1`, la prueba falla si Playwright no está disponible en vez de omitirse; comprueba también que pytest no indique omisiones. No se modifica la verificación global.
 
 En otro entorno, omite AIKIT_PLAYWRIGHT_PATH si Playwright ya es importable, y
 ajusta AIKIT_BROWSER_EXECUTABLE al navegador instalado. Sin esa variable se usa

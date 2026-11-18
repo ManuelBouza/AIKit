@@ -3,7 +3,14 @@
 Fecha: 2026-11-15.
 Estado inicial: Pendiente de debatir.
 
-Estado actual: Integrada y verificada en fuentes; chat cerrado y archivado; instalación pendiente.
+Estado actual: Implementada, instalada y descubierta en AIKit0.1.7; chat archivado.
+
+## Actualización privada — 2026-11-18
+
+IMP-0008 instaló AIKit0.1.7 en el perfil habitual tras ensayos de recuperación
+y revisión independiente. Las tres skills se descubrieron habilitadas y se
+conservaron instrucciones, configuración y respaldos. Véase
+[actualización 0.1.7](../docs/actualizacion-aikit-0.1.7.md).
 
 ## Entrega — 2026-11-18
 

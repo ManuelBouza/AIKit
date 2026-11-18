@@ -44,7 +44,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | Nota | Estado | Idea |
 | --- | --- | --- |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
-| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Verificada en fuentes; cierre completado | IMP-0003 finalizada, chat archivado y datos preservados; instalación pendiente. |
+| [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Instalada y descubierta en AIKit0.1.7 | IMP-0003 e IMP-0008 finalizadas; chat archivado y datos preservados. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |
 | [009 — Método del Director de Ideas](009-metodo-director-de-ideas.md) | Instalada en perfil de prueba; activación y convivencia simulada observadas | Madurar ideas y aclarar decisiones antes de materializarlas; límites de validación registrados en la nota. |
 | [020 — Próxima Tarea y pendientes del contexto](020-proxima-tarea-pendientes-contexto.md) | Regla global y complemento actualizados; vista previa sin cambios | Evitar confundir el cierre de una tarea acotada con la ausencia de pendientes de la iniciativa relacionada. |

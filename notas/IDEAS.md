@@ -43,6 +43,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
+| [047 — Responsabilidad única de los chats](047-responsabilidad-unica-chats.md) | Integrada en main; paquete verificado; prueba nativa pendiente | Inventariar chats por ID, reflejar su estado en el nombre y recomendar el destino de nuevas solicitudes. |
 | [008 — Espera pasiva de OpenCode](008-espera-pasiva-opencode.md) | Implementada en fuentes; instalación pendiente | Reducir la vigilancia de Codex mediante esperas pasivas y avisos relevantes, conservando la multitarea. |
 | [040 — Contraste documental del Director de Ideas](040-director-ideas-contraste-documental.md) | Instalada y descubierta en AIKit0.1.7 | IMP-0003 e IMP-0008 finalizadas; chat archivado y datos preservados. |
 | [018 — Herramientas recomendadas en setup](018-herramientas-recomendadas-setup.md) | Implementada e instalada; prueba de comportamiento pendiente | Comprobar y proponer herramientas, e instalarlas con aprobación si el cliente lo permite. |

@@ -24,6 +24,7 @@ FILES = {
     "packaging/skills/director-de-ideas/SKILL.md": "aikit-preferencias/skills/director-de-ideas/SKILL.md",
     "packaging/skills/aikit-setup/references/herramientas.md": "aikit-preferencias/skills/aikit-setup/references/herramientas.md",
     f"packaging/{INVENTORY}": f"{PACKAGE}/{INVENTORY}",
+    f"packaging/{FLOWS}/responsabilidad-chats.md": f"{PACKAGE}/{FLOWS}/responsabilidad-chats.md",
     "packaging/aikit-plugin.json": "aikit-preferencias/plugin.json",
     "packaging/aikit-marketplace.json": ".agents/plugins/marketplace.json",
     "docs/complemento-aikit-independiente.md": "aikit-preferencias/README.md",
@@ -43,6 +44,9 @@ FILES = {
     "packages/aikit-installer/templates/visualizacion.md": "aikit-preferencias/installer/templates/visualizacion.md",
     "packages/aikit-installer/templates/investigacion.md": "aikit-preferencias/installer/templates/investigacion.md",
     "packages/aikit-installer/dist/cli.js": "aikit-preferencias/installer/dist/cli.js",
+    "packages/aikit-installer/dist/project-chats.js": "aikit-preferencias/installer/dist/project-chats.js",
+    "packages/aikit-installer/dist/chat-inventory.js": "aikit-preferencias/installer/dist/chat-inventory.js",
+    "packages/aikit-installer/dist/project-files.js": "aikit-preferencias/installer/dist/project-files.js",
     "packages/aikit-installer/dist/windows-replace.js": "aikit-preferencias/installer/dist/windows-replace.js",
     "packages/aikit-installer/dist/replace-recovery.js": "aikit-preferencias/installer/dist/replace-recovery.js",
 }

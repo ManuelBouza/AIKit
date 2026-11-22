@@ -2,11 +2,10 @@
 import * as fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { TextDecoder } from 'node:util';
 import { spawnSync } from 'node:child_process';
-import { replaceWindows } from './windows-replace.js';
+import { checkedPath, decoder, readOptional, writeInstructions } from './project-files.js';
+import { CHAT_BLOCK, runProjectChats } from './project-chats.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const metadata: unknown = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -34,32 +33,6 @@ for (const [id, enabled] of Object.entries(metadata.aikitPreferences)) {
   }
   preferences.set(id, enabled);
 }
-const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
-
-function checkedPath(target: string): void {
-  let current = path.resolve(target);
-  for (;;) {
-    try {
-      const info = fs.lstatSync(current);
-      if (info.isSymbolicLink()) throw new Error(`Enlace o junction no permitido: ${current}`);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    }
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-}
-
-function readOptional(file: string): Buffer | null {
-  try {
-    return fs.readFileSync(file);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw error;
-  }
-}
-
 function count(text: string, marker: string): number {
   return text.split(marker).length - 1;
 }
@@ -69,7 +42,7 @@ function validateCrossed(text: string): void {
   let open = null;
   const seen = new Set<string>();
   for (const marker of markers) {
-    if (!preferences.has(marker[1].toLowerCase())) continue;
+    if (marker[1] !== CHAT_BLOCK && !preferences.has(marker[1].toLowerCase())) continue;
     if (marker[2] === 'BEGIN') {
       if (seen.has(marker[1])) throw new Error('Bloque AIKit duplicado');
       seen.add(marker[1]);
@@ -112,8 +85,12 @@ function merge(text: string, name: string, template: string): string {
 
 function main(args: string[]): void {
   const command = args.shift();
+  if (command === 'project-chats') {
+    runProjectChats(args, validateCrossed);
+    return;
+  }
   if (command !== 'install' && command !== 'status')
-    throw new Error('Uso: aikit <install|status> [--codex-home RUTA] [--dry-run]');
+    throw new Error('Uso: aikit <install|status|project-chats>');
   let targetDirectory = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
   let scope: 'global' | 'project' | undefined;
   let explicitCodexHome = false;
@@ -224,83 +201,13 @@ function main(args: string[]): void {
   let windowsBackup: string | null = null;
   if (!dry && changed) {
     process.stderr.write(`Destino ${scope}: ${target}\n`);
-    fs.mkdirSync(targetDirectory, { recursive: true });
-    checkedPath(target);
-    checkedPath(override);
-    const temporary = path.join(targetDirectory, `.agents.md.tmp-${randomUUID()}`);
-    const backupDir = path.join(backupBase, randomUUID());
-    const lockPath = path.join(targetDirectory, '.aikit-instructions.lock');
-    const nativeBackup = path.join(backupDir, 'original-replacefile.md');
-    let preserveTemporary = false;
-    checkedPath(lockPath);
-    let lock: number;
-    try {
-      lock = fs.openSync(lockPath, 'wx', 0o600);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'EEXIST')
-        throw new Error('Otra instalación de AIKit está activa o dejó un bloqueo pendiente', {
-          cause: error,
-        });
-      throw error;
-    }
-    try {
-      fs.writeFileSync(temporary, replacement, { flag: 'wx', mode: 0o600 });
-      // Windows chmod no preserva ACL; conservar únicamente bits POSIX donde sí aplican.
-      if (originalStat && process.platform !== 'win32')
-        fs.chmodSync(temporary, originalStat.mode & 0o777);
-      checkedPath(backupDir);
-      fs.mkdirSync(backupDir, { recursive: true });
-      backup = path.join(backupDir, original ? 'AGENTS.md' : 'STATE.txt');
-      fs.writeFileSync(backup, original || 'AGENTS.md no existía originalmente.\n', {
-        flag: 'wx',
-        mode: 0o600,
-      });
-      checkedPath(target);
-      checkedPath(override);
-      const current = readOptional(target);
-      const currentOverride = readOptional(override);
-      if (
-        (currentOverride?.length || 0) !== 0 ||
-        !!current !== !!original ||
-        (current && original && !current.equals(original))
-      )
-        throw new Error('Modificación concurrente detectada');
-      if (originalStat) {
-        const currentStat = fs.statSync(target);
-        if (
-          currentStat.dev !== originalStat.dev ||
-          currentStat.ino !== originalStat.ino ||
-          currentStat.mode !== originalStat.mode
-        )
-          throw new Error('Metadatos o identidad modificados durante la instalación');
-      }
-      if (original && process.platform === 'win32') {
-        checkedPath(nativeBackup);
-        // Al iniciar File.Replace, cualquier fallo puede dejar un estado parcial.
-        preserveTemporary = true;
-        const report = replaceWindows({
-          destination: target,
-          replacement: temporary,
-          backup: nativeBackup,
-        });
-        if (report)
-          throw new Error(
-            `Falló la sustitución de Windows; conserve los archivos y examine el diagnóstico: ${JSON.stringify({ ...report, priorBackup: backup })}`,
-          );
-        windowsBackup = nativeBackup;
-        preserveTemporary = false;
-      } else {
-        fs.renameSync(temporary, target);
-      }
-    } finally {
-      try {
-        if (!preserveTemporary) fs.rmSync(temporary, { force: true });
-      } finally {
-        fs.closeSync(lock);
-        // Un resultado incierto exige inspección antes de cualquier reintento.
-        if (!preserveTemporary) fs.unlinkSync(lockPath);
-      }
-    }
+    ({ backup, windowsBackup } = writeInstructions(
+      targetDirectory,
+      backupBase,
+      original,
+      originalStat,
+      replacement,
+    ));
   }
   console.log(
     JSON.stringify({

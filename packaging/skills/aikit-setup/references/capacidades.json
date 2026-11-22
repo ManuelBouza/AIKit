@@ -36,6 +36,12 @@
     "ruta": "installer/templates/visualizacion.md"
   },
   {
+    "id": "responsabilidad-chats",
+    "tipo": "guiada",
+    "proposito": "Registrar la responsabilidad de cada chat y recomendar el destino de las solicitudes del proyecto.",
+    "ruta": "skills/aikit-setup/references/flujos/responsabilidad-chats.md"
+  },
+  {
     "id": "director-de-ideas",
     "tipo": "skill",
     "proposito": "Madurar una idea o aclarar decisiones relevantes antes de materializarla, cuando el usuario lo necesite.",

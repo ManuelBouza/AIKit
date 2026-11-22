@@ -324,7 +324,7 @@ def test_export_rejects_divergent_optional_template(
     assert not output.exists()
 
 
-@pytest.mark.parametrize("name", ["director-de-ideas", "go"])
+@pytest.mark.parametrize("name", ["director-de-ideas", "go", "responsabilidad-chats"])
 def test_export_rejects_missing_inventory_entry(
     tmp_path: Path, export_source: Path, name: str
 ) -> None:
@@ -338,6 +338,76 @@ def test_export_rejects_missing_inventory_entry(
     with pytest.raises(ValueError, match=f"Cobertura del inventario.*{name}"):
         export_aikit(export_source, output)
     assert not output.exists()
+
+
+def test_exported_setup_chat_flow_without_git(tmp_path: Path) -> None:
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node no está disponible")
+    package = export_aikit(ROOT, tmp_path / "output")
+    capabilities = json.loads((package / INVENTORY).read_text(encoding="utf-8"))
+    entry = next(item for item in capabilities if item["id"] == "responsabilidad-chats")
+    assert entry["tipo"] == "guiada"
+    guide = (package / entry["ruta"]).read_text(encoding="utf-8")
+    assert "project-chats enable" in guide
+    assert "project-chats disable" in guide
+    project = tmp_path / "proyecto sin Git"
+    project.mkdir()
+    profile = tmp_path / "perfil ficticio"
+    profile.mkdir()
+    global_instructions = profile / "AGENTS.md"
+    global_instructions.write_bytes(b"# Perfil ajeno\n")
+    instructions = project / "AGENTS.md"
+    original = b"# Proyecto ajeno\r\n"
+    instructions.write_bytes(original)
+
+    def chats(*args: str, data: str | None = None) -> dict[str, object]:
+        result = subprocess.run(
+            [
+                node,
+                str(package / "installer/dist/cli.js"),
+                "project-chats",
+                *args,
+                "--root",
+                str(project),
+            ],
+            input=data,
+            cwd=tmp_path,
+            env={**os.environ, "CODEX_HOME": str(profile)},
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stderr
+        response = json.loads(result.stdout)
+        assert isinstance(response, dict)
+        return response
+
+    assert chats("status")["status"] == "disabled"
+    assert chats("enable", "--dry-run")["status"] == "preview"
+    assert list(project.iterdir()) == [instructions]
+    assert instructions.read_bytes() == original
+    assert chats("enable")["status"] == "changed"
+    assert chats("status")["status"] == "enabled"
+    data = json.dumps(
+        {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "project": "Ejemplo",
+            "responsibility": "Preparar pruebas",
+            "state": "En curso",
+        }
+    )
+    assert chats("upsert", "--expected-revision", "0", data=data)["status"] == "changed"
+    records = chats("list")["records"]
+    assert isinstance(records, list)
+    assert len(records) == 1
+    assert records[0]["title"] == "[En curso] Ejemplo · Preparar pruebas"
+    assert chats("disable", "--dry-run")["status"] == "preview"
+    assert chats("disable")["status"] == "changed"
+    assert instructions.read_bytes() == original
+    assert chats("list")["records"] == records
+    assert global_instructions.read_bytes() == b"# Perfil ajeno\n"
 
 
 def test_export_rejects_invalid_inventory_reference(

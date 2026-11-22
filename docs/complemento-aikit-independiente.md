@@ -61,6 +61,32 @@ la desinstalación completa y la migración permanecen pendientes; desinstalar e
 La evidencia de CLI previa está en el repositorio fuente, en
 `_bmad-output/specs/spec-complementos-independientes/instalacion-y-migracion.md`.
 
+## Responsabilidad única de los chats
+
+Pide a `aikit-setup` consultar, activar o desactivar la responsabilidad única
+de los chats de un proyecto. La configuración usa su raíz local absoluta y
+también funciona en proyectos sin Git. La vista previa muestra la regla y el
+destino local antes de aplicar el cambio autorizado. Desactivar retira el
+bloque de `AGENTS.md` y conserva las fichas y las instrucciones ajenas.
+
+El inventario vive en `.aikit/chats/` bajo la raíz compartida del proyecto.
+En un worktree, configura o reutiliza la referencia a esa misma raíz. Una
+sesión necesita permiso para consultarla y para efectuar las actualizaciones
+autorizadas. Si el acceso impide una acción, informa del estado y usa el
+traslado manual cuando proceda. Usa los mecanismos de exclusión de tu
+proyecto para mantener el inventario local fuera de Git.
+
+Cada ficha conserva el ID completo, la responsabilidad, el estado, el título,
+la fecha, la revisión y el ID de origen si procede. En espera o pausa incluye
+el motivo y la condición de continuación. La escritura de una ficha comprueba
+su revisión y rechaza ediciones obsoletas. El título visible depende de la
+acción nativa de renombrado. La ficha sigue siendo la referencia del estado.
+Esta capacidad recomienda destinos. Crear o bifurcar exige autorización
+específica y un fork no aísla el checkout compartido.
+
+La referencia `responsabilidad-chats.md` de `aikit-setup` detalla los comandos
+y el procedimiento para consultas y cambios.
+
 ## Añadir una capacidad
 
 Al añadir una skill, una preferencia gestionada o un flujo guiado, incorpora

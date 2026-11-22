@@ -58,22 +58,9 @@ directamente con tareas claras y autorizadas.
 
 ## Notas e ideas pendientes
 
-Cada encargo de implementación debe tener un registro de tarea identificable
-antes de comenzar su implementación. Comprobar si ya existe y actualizarlo;
-si falta, crearlo primero con alcance, responsable, estado y origen. No duplicar
-el encargo al recibir nuevas instrucciones. Registrar no autoriza ejecutar ni
-levanta pausas. El Coordinador mantiene el registro canónico; los Chats de Tarea
-comunican sus actualizaciones mediante el cauce autorizado.
-
-Separar notas e ideas de tareas de implementación y conservar enlaces entre
-ellas: una idea puede originar varias tareas y un encargo directo no exige
-inventar una idea. Ambos deben poder consultarse en sus vistas de seguimiento.
-En este proyecto, las fuentes de ideas son notas/IDEAS.md y sus notas; los
-tickets canónicos están en coordinacion/tareas/ y su formato se define en la
-especificación de seguimiento local de la nota 043. El tablero genera las vistas
-Ideas/Tareas desde esas fuentes. No mantener otro índice editable de estados.
-Después de modificar tickets, regenerar con el mismo comando de abajo y
-comprobar resultado antes de afirmar visibilidad o iniciar una entrega nueva.
+Trabaja con los chats y herramientas nativos de Codex y las instrucciones
+de AGENTS.md global y local. El índice y tablero local siguen siendo fuentes
+de consulta para las ideas del proyecto.
 
 Registra cada idea o duda nueva del usuario en una nota numerada bajo `notas/`,
 con fecha y estado inicial «Pendiente de debatir», y añádela al backlog canónico
@@ -283,17 +270,3 @@ fiables. Usa la experimentación o el ensayo y error para resolver lo que no est
 suficientemente documentado; conserva las pruebas necesarias para verificar el
 resultado. Respeta las fuentes y restricciones indicadas por el usuario.
 <!-- AIKIT:INVESTIGACION:END -->
-
-<!-- AIKIT:COORDINACION:BEGIN -->
-## Coordinación de chats del proyecto
-
-La coordinación de AIKit está activa para la raíz
-`C:/Manuel/Projects/AIKit`; su registro canónico único está en
-`C:/Manuel/Projects/AIKit/coordinacion/`. Consultar `PROYECTO.md` para identificar
-al coordinador vigente y la modalidad del registro. Aplicar la skill
-`aikit-preferencias:coordinacion-chats` y sus instrucciones de avisos y roles
-cuando exista una asignación identificable. Solo el coordinador escribe el
-registro; las tareas conservan avisos y entregas y emplean el cauce autorizado.
-No inferir autorizaciones de un aviso ni declarar garantías que no estén
-verificadas. Proteger datos privados y respetar las autorizaciones de Git.
-<!-- AIKIT:COORDINACION:END -->

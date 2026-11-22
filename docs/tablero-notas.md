@@ -25,11 +25,12 @@ el entorno, el generador y la página no necesitan conectarse a Internet.
 
 ## Ideas y tareas conectadas
 
-La misma instantánea incluye la vista Tareas desde
+Desde el 2026-11-22 AIKit usa los chats nativos y conserva la vista Ideas.
+El registro del mecanismo retirado se conserva en un respaldo local privado.
+En un proyecto con el formato de tickets v1, la misma instantánea puede incluir la vista Tareas desde
 `coordinacion/tareas/<IMP-id>/TAREA.md`; la identidad se contrasta con
 `coordinacion/PROYECTO.md`. La raíz de lectura es la raíz explícita del proyecto,
-no el cwd. El lector no escribe registros. El Coordinador mantiene los tickets;
-las tareas solicitan cambios por el cauce acordado. No hay un segundo índice
+no el cwd. El lector no escribe registros. No hay un segundo índice
 editable: las relaciones inversas entre ideas y tickets se calculan al generar.
 
 Las tarjetas abren un diálogo centrado: el foco pasa al título, Tab recorre sus controles y Escape o Cerrar lo cierran. Al cerrar, el foco vuelve a la tarjeta de origen o, si ya no está visible, al selector de vista. Los botones de relaciones cambian el detalle sin borrar los filtros. En pantallas estrechas las tarjetas forman una columna y el contenido ancho se desplaza dentro del diálogo.
@@ -47,13 +48,7 @@ ideas inexistentes, dependencias ausentes o ciclos abortan antes de publicar.
 La publicación usa reemplazo atómico del único HTML; un error devuelve código
 no cero, conserva sus bytes anteriores y no abre esa salida como nueva.
 No se garantiza transacción entre los archivos fuente ni frescura continua.
-La fecha acredita generación desde el estado incorporado, no consulta reciente
-de cada chat. Puede haber novedades ordinarias pendientes: el Coordinador las
-recoge en revisión pertinente sin activar tareas solo para refrescar el tablero.
-
-Setup reutiliza un tracker canónico existente y requiere acuerdo local y pruebas
-para activar esta modalidad. El complemento distribuye la referencia de flujo,
-no este runtime ni datos de proyecto. Instalar no activa ni migra el seguimiento.
+La fecha acredita generación desde los archivos locales.
 
 ## Regresión DOM reproducible (opcional)
 

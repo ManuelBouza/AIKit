@@ -10,6 +10,13 @@
   },
   "private": true,
   "type": "module",
+  "aikitPreferences": {
+    "go": true,
+    "context7": true,
+    "investigacion": true,
+    "escritura": false,
+    "visualizacion": false
+  },
   "bin": {
     "aikit": "./dist/cli.js"
   },

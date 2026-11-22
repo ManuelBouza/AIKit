@@ -1,5 +1,0 @@
-COORD-INTEGRACION-040-01. Tu entrega b9cb2247b11216717ae1983be456f7a1c3ac16f2 está integrada en main mediante46b9c6ed34e163016989226df11ac6d4590c8a1f. La verificación independiente aceptó el commit completo; los dos blobs se conservan idénticos y la exportación aislada pasó. La mejora está en fuentes, pendiente de una actualización del complemento.
-
-Verifica el resultado y completa la persistencia y limpieza de tus recursos propios conforme al encargo y las autorizaciones existentes. Conserva evidencias antes de retirar recursos. La historia completa de tu rama y los tres avisos ya tienen respaldo verificado fuera del worktree en C:/Manuel/Projects/AIKit/.aikit/040-cierre/respaldo-20261118/. No elimines elementos de procedencia incierta; si necesitas una acción del Coordinador, concreta qué preservar o retirar. El archivado del chat lo coordinaré después de verificar el cierre.
-
-Referencia: C:/Manuel/Projects/AIKit/docs/integracion-director-040.md. El registro canónico IMP-0003 mantiene el cierre de recursos pendiente. Esta comunicación habilita la comprobación y limpieza correspondientes; no amplía tu encargo a instalación, publicación o push.

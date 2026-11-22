@@ -1,22 +1,7 @@
 # Complemento AIKit independiente
 
-Incluye `coordinacion-chats` y su referencia de avisos y acuses. La skill requiere
-coordinación autorizada y una asignación identificable para operar. Instalar el
-complemento la hace disponible; la configuración del coordinador y la activación
-por proyecto son pasos separados. El auxiliar de registro es un prototipo y no
-se distribuye con esta skill. No requiere Git, BMAD u OpenCode para aplicar sus
-instrucciones; ofrece traslado manual cuando el cliente carece de mensajería.
-
-Validación de distribución (15-11-2026): 15 pruebas del exportador, Ruff y mypy
-correctos. En un perfil ficticio, CLI 0.169.0-alpha.11.1 instala el complemento y
-skills/list descubre `aikit-preferencias:coordinacion-chats` habilitada desde su
-caché, con SKILL.md y referencia idénticos a las fuentes. No se actualizó el perfil
-habitual ni se activó coordinación. La versión 0.1.0 se conserva para esta prueba;
-la versión de entrega debe decidirse antes de una actualización real.
-
-Este paquete contiene las preferencias `go`, Context7 e investigación previa,
-sin MCP ni skill de
-delegación. Su identidad `aikit-preferencias` es distinta de la histórica
+Este paquete contiene las preferencias y skills propias reunidas en el
+inventario de `aikit-setup`. Su identidad `aikit-preferencias` es distinta de la histórica
 `aikit`. La coexistencia, actualización y migración entre ambas no se han
 validado. Conserve el complemento y configuración históricos hasta decidir y
 probar la migración.
@@ -48,20 +33,22 @@ Use una sesión de proceso aislada para evitar cambiar el perfil habitual. El
 paquete exportado está en `$catalogo/aikit-preferencias`.
 Instalar el complemento no instala por sí mismo instrucciones en `AGENTS.md`.
 El manifiesto declara la skill `aikit-setup` como `onboardingSkill`: el usuario
-puede iniciar la configuración después de instalar. La skill selecciona ámbito
-global o proyecto y ejecuta el instalador Node incluido en una sola operación.
+puede iniciar la configuración después de instalar. La skill presenta el
+inventario y comprueba qué capacidades están disponibles en la sesión. La
+aplicación de preferencias usa el instalador Node incluido una vez por ámbito
+seleccionado. El Director de Ideas se usa en un chat que exponga la skill.
 La ejecución gráfica de este recorrido no está verificada; descubrir los
 metadatos y ejecutar los instaladores por CLI no demuestra que la interfaz lo
-inicie correctamente. El setup agrega la preferencia de Context7 y consulta las
-herramientas recomendadas. Si Context7 falta, propone instalarlo y requiere
-aprobación; según el cliente, completar la instalación puede requerir interacción
-del usuario. No ejecuta OpenCode.
+inicie correctamente. Setup aplica la preferencia de Context7 cuando el usuario
+la elige. Al configurar AIKit en general o por petición expresa, comprueba las
+herramientas recomendadas pertinentes. Si Context7 falta y se elige instalarlo,
+el cliente puede requerir interacción del usuario.
 
 Para un perfil ficticio aislado, pruebe el instalador incluido con Node:
 
 ```powershell
-node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --global --dry-run
-node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --global
+node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --global --dry-run --go
+node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --global --go
 ```
 
 Para el proyecto actual use `install --project` desde el repositorio Git; primero
@@ -73,6 +60,23 @@ La retirada selectiva de bloques gestionados se prueba en perfiles ficticios;
 la desinstalación completa y la migración permanecen pendientes; desinstalar el complemento no garantiza retirar bloques.
 La evidencia de CLI previa está en el repositorio fuente, en
 `_bmad-output/specs/spec-complementos-independientes/instalacion-y-migracion.md`.
+
+## Añadir una capacidad
+
+Al añadir una skill, una preferencia gestionada o un flujo guiado, incorpora
+sus recursos al exportador y una entrada con propósito y ruta en
+`packaging/skills/aikit-setup/references/capacidades.json`. El tipo de entrada indica
+cómo presenta y tramita la capacidad el setup. Un flujo guiado puede enlazar
+también a su skill de apoyo. Para una preferencia, registra además su id y su
+activación predeterminada en `aikitPreferences` del manifiesto del instalador.
+
+El exportador contrasta el inventario con las skills, plantillas y flujos
+incluidos, y comprueba los destinos de sus referencias locales antes de escribir
+el paquete. La comprobación funciona en el entorno de construcción. El cliente
+lee el inventario directamente al usar setup. Para comprobar el recorrido de una
+capacidad nueva, añade un caso aislado al conjunto de pruebas del exportador y
+ejecuta `uv run --locked pytest tests/test_build_aikit.py`.
+
 # Preferencia de investigación
 
 El instalador incluye un bloque gestionado que prioriza documentación oficial y

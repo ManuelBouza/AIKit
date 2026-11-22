@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build_aikit import FILES, export_aikit
+from build_aikit import FILES, INVENTORY, export_aikit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,24 +56,8 @@ def test_export_and_install(tmp_path: Path) -> None:
     assert not (package / "mcp.json").exists()
     assert not (package / "scripts/seguimiento_tareas.py").exists()
     assert not (package / "coordinacion").exists()
-    coordination = package / "skills/coordinacion-chats"
-    for relative in (
-        "SKILL.md",
-        "references/avisos.md",
-        "references/seguimiento.md",
-        "references/responsabilidades.md",
-    ):
-        assert (coordination / relative).read_bytes() == (
-            ROOT / "packaging/skills/coordinacion-chats" / relative
-        ).read_bytes()
-    assert "(references/avisos.md)" in (coordination / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
-    for document in (
-        coordination / "SKILL.md",
-        coordination / "references/responsabilidades.md",
-        package / "skills/aikit-setup/SKILL.md",
-    ):
+    assert not (package / "skills/coordinacion-chats").exists()
+    for document in (package / "skills/aikit-setup/SKILL.md",):
         for target in re.findall(
             r"\]\(([^)]+)\)", document.read_text(encoding="utf-8")
         ):
@@ -170,45 +154,87 @@ def test_packaged_node_installer_runs_without_source_checkout(tmp_path: Path) ->
     profile.mkdir()
     agents = profile / "AGENTS.md"
     agents.write_text("Instrucción ajena\n", encoding="utf-8")
+    inventory = json.loads((package / INVENTORY).read_text(encoding="utf-8"))
+    names = [entry["id"] for entry in inventory if entry["tipo"] == "preferencia"]
+    options = [f"--{name}" for name in names]
+    original = agents.read_bytes()
+    assert {path.name for path in profile.iterdir()} == {"AGENTS.md"}
     cli = package / "installer/dist/cli.js"
-    for template in (
-        "go.md",
-        "context7.md",
-        "investigacion.md",
-        "escritura.md",
-        "visualizacion.md",
-    ):
-        assert (package / "installer/templates" / template).read_bytes() == (
-            ROOT / "config/codex" / template
-        ).read_bytes()
-    result = subprocess.run(
-        [
-            node,
-            str(cli),
-            "install",
-            "--codex-home",
-            str(profile),
-            "--go",
-            "--context7",
-            "--investigacion",
-            "--escritura",
-            "--visualizacion",
-        ],
-        cwd=tmp_path,
+    env = {**os.environ, "CODEX_HOME": str(profile)}
+
+    def run(
+        *args: str, cwd: Path = tmp_path, success: bool = True
+    ) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run(
+            [node, str(cli), *args],
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+        assert (result.returncode == 0) == success, result.stderr
+        return result
+
+    preview = json.loads(run("install", "--global", "--dry-run", *options).stdout)
+    assert preview["status"] == "preview"
+    assert preview["before"] == original.decode("utf-8")
+    assert preview["backup"] is None
+    assert agents.read_bytes() == original
+    assert not (profile / "backups").exists()
+    assert (
+        json.loads(run("install", "--global", *options).stdout)["status"] == "changed"
+    )
+    configured = agents.read_bytes()
+    assert configured.startswith(original)
+    assert preview["after"] == configured.decode("utf-8")
+    for name in names:
+        assert f"AIKIT:{name.upper()}:BEGIN".encode() in configured
+    assert (
+        json.loads(run("install", "--global", *options).stdout)["status"] == "unchanged"
+    )
+
+    remove_flag = "--quitar-visualizacion"
+    run("install", "--global", "--dry-run", remove_flag)
+    assert agents.read_bytes() == configured
+    removal = json.loads(run("install", "--global", remove_flag).stdout)
+    assert Path(removal["backup"]).read_bytes() == configured
+    remaining = agents.read_bytes()
+    assert remaining.startswith(original)
+    assert b"AIKIT:VISUALIZACION:BEGIN" not in remaining
+    assert b"AIKIT:ESCRITURA:BEGIN" in remaining
+
+    project = tmp_path / "proyecto"
+    project.mkdir()
+    repo = subprocess.run(
+        ["git", "init", "-q", str(project)],
         capture_output=True,
         text=True,
-        encoding="utf-8",
-        timeout=30,
+        timeout=10,
     )
-    assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["status"] == "changed"
-    content = agents.read_text(encoding="utf-8")
-    assert "Instrucción ajena" in content
-    assert "AIKIT:GO:BEGIN" in content
-    assert "AIKIT:CONTEXT7:BEGIN" in content
-    assert "AIKIT:INVESTIGACION:BEGIN" in content
-    assert "AIKIT:ESCRITURA:BEGIN" in content
-    assert "AIKIT:VISUALIZACION:BEGIN" in content
+    assert repo.returncode == 0, repo.stderr
+    project_agents = project / "AGENTS.md"
+    project_agents.write_bytes(original)
+    workdir = project / "subdirectorio"
+    workdir.mkdir()
+    preview = json.loads(
+        run("install", "--project", "--dry-run", "--visualizacion", cwd=workdir).stdout
+    )
+    assert Path(preview["path"]) == project_agents
+    assert project_agents.read_bytes() == original
+    applied = json.loads(
+        run("install", "--project", "--visualizacion", cwd=workdir).stdout
+    )
+    assert Path(applied["backup"]).read_bytes() == original
+    assert project_agents.read_bytes() == preview["after"].encode("utf-8")
+    assert b"AIKIT:VISUALIZACION:BEGIN" in project_agents.read_bytes()
+    assert b"AIKIT:GO:BEGIN" not in project_agents.read_bytes()
+    assert agents.read_bytes() == remaining
+
+    (profile / "AGENTS.override.md").write_bytes(b"instrucciones prioritarias\n")
+    run("install", "--global", "--dry-run", "--visualizacion", success=False)
+    assert agents.read_bytes() == remaining
 
 
 @pytest.mark.parametrize("location", ["source", "output"])
@@ -272,22 +298,118 @@ def test_installer_json_with_ascii_stdout(tmp_path: Path, name: str) -> None:
     assert Path(payload["backup"]).read_bytes() == b"contenido previo\n"
 
 
-@pytest.mark.parametrize("name", ["escritura.md", "visualizacion.md"])
-def test_export_rejects_divergent_optional_template(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str
-) -> None:
+@pytest.fixture
+def export_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     source = tmp_path / "source"
     for relative in FILES:
         destination = source / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, destination)
-    (source / "packages/aikit-installer/templates" / name).write_text(
-        "divergente", encoding="utf-8"
-    )
     monkeypatch.setattr(
         subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0)
     )
+    return source
+
+
+@pytest.mark.parametrize("name", ["escritura.md", "visualizacion.md"])
+def test_export_rejects_divergent_optional_template(
+    tmp_path: Path, export_source: Path, name: str
+) -> None:
+    (export_source / "packages/aikit-installer/templates" / name).write_text(
+        "divergente", encoding="utf-8"
+    )
     output = tmp_path / "output"
     with pytest.raises(ValueError, match="Plantilla del instalador desactualizada"):
-        export_aikit(source, output)
+        export_aikit(export_source, output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("name", ["director-de-ideas", "go"])
+def test_export_rejects_missing_inventory_entry(
+    tmp_path: Path, export_source: Path, name: str
+) -> None:
+    path = export_source / "packaging" / INVENTORY
+    entries = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(
+        json.dumps([entry for entry in entries if entry["id"] != name]),
+        encoding="utf-8",
+    )
+    output = tmp_path / "output"
+    with pytest.raises(ValueError, match=f"Cobertura del inventario.*{name}"):
+        export_aikit(export_source, output)
+    assert not output.exists()
+
+
+def test_export_rejects_invalid_inventory_reference(
+    tmp_path: Path, export_source: Path
+) -> None:
+    path = export_source / "packaging" / INVENTORY
+    entries = json.loads(path.read_text(encoding="utf-8"))
+    director = next(entry for entry in entries if entry["id"] == "director-de-ideas")
+    director["ruta"] = "no-existe.md"
+    path.write_text(json.dumps(entries), encoding="utf-8")
+    output = tmp_path / "output"
+    with pytest.raises(
+        ValueError, match="inválida en el inventario.*director-de-ideas"
+    ):
+        export_aikit(export_source, output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize(
+    ("reference", "error"),
+    [
+        ("[enlace](no-existe.md)", "Referencia"),
+        ('[enlace](no-existe.md "título")', "Referencia"),
+        ("[enlace][ref]\n\n[ref]: no-existe.md", "Referencia"),
+        ("[enlace][ref]\n\n[ref]:\n  no-existe.md", "Referencia"),
+        ("[enlace](#no-existe)", "Fragmento"),
+        ("```markdown\n# Ejemplo\n````\n\n[enlace](no-existe.md)", "Referencia"),
+    ],
+)
+def test_export_rejects_invalid_guided_reference(
+    tmp_path: Path, export_source: Path, reference: str, error: str
+) -> None:
+    path = export_source / "packaging/skills/aikit-setup/SKILL.md"
+    path.write_text(reference + "\n", encoding="utf-8")
+    output = tmp_path / "output"
+    with pytest.raises(
+        ValueError, match=f"{error} de setup o skill inexistente.*no-existe"
+    ):
+        export_aikit(export_source, output)
+    assert not output.exists()
+
+
+def test_export_rejects_skill_absent_from_package(
+    tmp_path: Path, export_source: Path
+) -> None:
+    skill = export_source / "packaging/skills/nueva/SKILL.md"
+    skill.parent.mkdir()
+    skill.write_text("# Skill nueva\n", encoding="utf-8")
+    output = tmp_path / "output"
+    with pytest.raises(ValueError, match="Cobertura del exportador.*nueva/SKILL.md"):
+        export_aikit(export_source, output)
+    assert not output.exists()
+
+
+def test_export_rejects_preference_absent_from_installer(
+    tmp_path: Path, export_source: Path
+) -> None:
+    path = export_source / "packages/aikit-installer/package.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    del manifest["aikitPreferences"]["go"]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    output = tmp_path / "output"
+    with pytest.raises(ValueError, match="Cobertura del instalador.*go.md"):
+        export_aikit(export_source, output)
+    assert not output.exists()
+
+
+def test_export_ignores_example_links_in_fenced_code(
+    tmp_path: Path, export_source: Path
+) -> None:
+    path = export_source / "packaging/skills/aikit-setup/SKILL.md"
+    with path.open("a", encoding="utf-8") as target:
+        target.write("\n```markdown\n[ejemplo](no-existe.md)\n```\n")
+    package = export_aikit(export_source, tmp_path / "output")
+    assert (package / "skills/aikit-setup/SKILL.md").read_bytes() == path.read_bytes()

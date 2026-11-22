@@ -1,0 +1,44 @@
+[
+  {
+    "id": "aikit-setup",
+    "tipo": "skill",
+    "proposito": "Descubrir las capacidades de AIKit y configurar las que elijas.",
+    "ruta": "skills/aikit-setup/SKILL.md"
+  },
+  {
+    "id": "go",
+    "tipo": "preferencia",
+    "proposito": "Proponer la próxima tarea e interpretar go según las reglas de autorización.",
+    "ruta": "installer/templates/go.md"
+  },
+  {
+    "id": "context7",
+    "tipo": "preferencia",
+    "proposito": "Priorizar Context7 cuando se necesita documentación actualizada. Su disponibilidad depende del cliente.",
+    "ruta": "installer/templates/context7.md"
+  },
+  {
+    "id": "investigacion",
+    "tipo": "preferencia",
+    "proposito": "Consultar documentación oficial y fuentes fiables antes de decidir cómo realizar una tarea.",
+    "ruta": "installer/templates/investigacion.md"
+  },
+  {
+    "id": "escritura",
+    "tipo": "preferencia",
+    "proposito": "Usar el estilo del usuario al escribir en su nombre para terceros. Aprovechar write-like-me si está disponible.",
+    "ruta": "installer/templates/escritura.md"
+  },
+  {
+    "id": "visualizacion",
+    "tipo": "preferencia",
+    "proposito": "Si se sugiere visualize sin petición previa, pedir autorización antes de usarlo. Si el usuario pide una visualización, su solicitud autoriza crearla dentro de ese alcance.",
+    "ruta": "installer/templates/visualizacion.md"
+  },
+  {
+    "id": "director-de-ideas",
+    "tipo": "skill",
+    "proposito": "Madurar una idea o aclarar decisiones relevantes antes de materializarla, cuando el usuario lo necesite.",
+    "ruta": "skills/director-de-ideas/SKILL.md"
+  }
+]

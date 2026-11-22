@@ -19,6 +19,21 @@ if (
   throw new Error('package.json sin version válida');
 }
 const version = metadata.version;
+if (
+  !('aikitPreferences' in metadata) ||
+  !metadata.aikitPreferences ||
+  typeof metadata.aikitPreferences !== 'object' ||
+  Array.isArray(metadata.aikitPreferences)
+) {
+  throw new Error('package.json sin preferencias AIKit válidas');
+}
+const preferences = new Map<string, boolean>();
+for (const [id, enabled] of Object.entries(metadata.aikitPreferences)) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || typeof enabled !== 'boolean') {
+    throw new Error(`Preferencia AIKit inválida: ${id}`);
+  }
+  preferences.set(id, enabled);
+}
 const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 function checkedPath(target: string): void {
@@ -50,14 +65,11 @@ function count(text: string, marker: string): number {
 }
 
 function validateCrossed(text: string): void {
-  const markers = [
-    ...text.matchAll(
-      /<!-- AIKIT:(GO|CONTEXT7|INVESTIGACION|ESCRITURA|VISUALIZACION):(BEGIN|END) -->/g,
-    ),
-  ];
+  const markers = text.matchAll(/<!-- AIKIT:([A-Z0-9-]+):(BEGIN|END) -->/g);
   let open = null;
   const seen = new Set<string>();
   for (const marker of markers) {
+    if (!preferences.has(marker[1].toLowerCase())) continue;
     if (marker[2] === 'BEGIN') {
       if (seen.has(marker[1])) throw new Error('Bloque AIKit duplicado');
       seen.add(marker[1]);
@@ -108,19 +120,12 @@ function main(args: string[]): void {
   let dry = false;
   const selected = new Set<string>();
   const removed = new Set<string>();
-  const optionNames: Record<string, string> = {
-    '--go': 'GO',
-    '--context7': 'CONTEXT7',
-    '--investigacion': 'INVESTIGACION',
-    '--escritura': 'ESCRITURA',
-    '--visualizacion': 'VISUALIZACION',
-  };
   while (args.length) {
     const arg = args.shift();
     if (arg === '--dry-run') dry = true;
-    else if (arg && optionNames[arg]) selected.add(optionNames[arg]);
-    else if (arg?.startsWith('--quitar-') && optionNames[`--${arg.slice(9)}`])
-      removed.add(optionNames[`--${arg.slice(9)}`]);
+    else if (arg?.startsWith('--') && preferences.has(arg.slice(2))) selected.add(arg.slice(2));
+    else if (arg?.startsWith('--quitar-') && preferences.has(arg.slice(9)))
+      removed.add(arg.slice(9));
     else if (arg === '--global' || arg === '--project') {
       if (scope) throw new Error('Indique un único ámbito: --global o --project');
       scope = arg === '--global' ? 'global' : 'project';
@@ -130,7 +135,8 @@ function main(args: string[]): void {
     } else throw new Error(`Opción inválida: ${arg}`);
   }
   for (const name of removed)
-    if (selected.has(name)) throw new Error(`No se puede activar y quitar ${name} a la vez`);
+    if (selected.has(name))
+      throw new Error(`No se puede activar y quitar ${name.toUpperCase()} a la vez`);
   if (scope === 'project' && explicitCodexHome)
     throw new Error('--codex-home solo es válido para el ámbito global');
   if (!scope && explicitCodexHome) scope = 'global'; // compatibilidad con perfiles ficticios y CLI anterior
@@ -180,15 +186,9 @@ function main(args: string[]): void {
   const before = original ? decoder.decode(original) : '';
   validateCrossed(before);
   let after = before;
-  const blocks = [
-    ['GO', 'go.md'],
-    ['CONTEXT7', 'context7.md'],
-    ['INVESTIGACION', 'investigacion.md'],
-    ['ESCRITURA', 'escritura.md'],
-    ['VISUALIZACION', 'visualizacion.md'],
-  ];
-  for (const [name, filename] of blocks) {
-    if (removed.has(name)) {
+  for (const [id, defaultEnabled] of preferences) {
+    const name = id.toUpperCase();
+    if (removed.has(id)) {
       const begin = `<!-- AIKIT:${name}:BEGIN -->`,
         end = `<!-- AIKIT:${name}:END -->`;
       const start = after.indexOf(begin);
@@ -196,16 +196,11 @@ function main(args: string[]): void {
         after = after.slice(0, start) + after.slice(after.indexOf(end, start) + end.length);
       continue;
     }
-    if (
-      selected.size || removed.size
-        ? !selected.has(name)
-        : ['ESCRITURA', 'VISUALIZACION'].includes(name)
-    )
-      continue;
+    if (selected.size || removed.size ? !selected.has(id) : !defaultEnabled) continue;
     after = merge(
       after,
       name,
-      decoder.decode(fs.readFileSync(path.join(root, 'templates', filename))),
+      decoder.decode(fs.readFileSync(path.join(root, 'templates', `${id}.md`))),
     );
   }
   const replacement = Buffer.from(after, 'utf8');

@@ -36,7 +36,7 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [021 — Chats, subagentes y relevo](021-coordinacion-chats-subagentes-relevo.md) | Implementación futura; criterios investigados | Elegir el medio de trabajo, distinguir pruebas y conservar el estado al relevar al coordinador. |
+| [039 — Setup como centro de activación](039-setup-centro-activacion-capacidades.md) | Integrada en fuentes; validación de interfaz pendiente | Inventariar capacidades propias, guiarlas desde setup y detectar automáticamente omisiones. |
 | [007 — Separar delegación de AIKit](007-separar-delegacion-de-aikit.md) | En planificación | AIKit instalado con setup explícito; la migración, convivencia y validación de la integración independiente siguen pendientes. |
 
 ## Implementada en fuentes; instalación pendiente
@@ -54,19 +54,12 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 
 | Nota | Estado | Idea |
 | --- | --- | --- |
-| [039 — Setup como centro de activación](039-setup-centro-activacion-capacidades.md) | Pendiente de debatir | Incorporar todas las preferencias y skills propias a aikit-setup y detectar automáticamente las omisiones de integración. |
 | [038 — Autonomía para Git y GitHub](038-autonomia-git-github-setup.md) | Pendiente de debatir | Configurar en aikit-setup autonomía global o local para operaciones técnicas de Git y GitHub, preservando información y consultando solo cuando sea estrictamente necesario. |
 | [037 — Captura de prácticas efectivas para AIKit](037-captura-practicas-efectivas-aikit.md) | Pendiente de debatir | Detectar configuraciones, preferencias y procedimientos que funcionan y registrarlos como candidatos para futuras preferencias o skills. |
 | [035 — aikit-help: guía de capacidades](035-aikit-help-guia-capacidades.md) | Pendiente de debatir | Explicar AIKit, orientar su uso en un repositorio y facilitar a ChatGPT el descubrimiento de las funcionalidades del complemento. |
 | [036 — Investigación antes de pruebas](036-reforzar-investigacion-antes-de-pruebas.md) | Pendiente de debatir | Revisar y reforzar la aplicación de la regla de consultar documentación oficial y fuentes especializadas antes de experimentar. |
 | [034 — Setup para Python y TypeScript](034-setup-preferencias-python-typescript.md) | Pendiente de debatir | Añadir preferencias para instalar y configurar herramientas de desarrollo y calidad adecuadas a cada lenguaje. |
-| [032 — Coordinador escritor mediante mensajes](032-coordinador-escritor-mensajes-tareas.md) | Integración guiada verificada; instrucciones en fuentes; activación pendiente | Las tareas comunican sus datos y el coordinador es el único escritor canónico, con acuse y recuperación. |
-| [031 — Aislamiento de trabajos sin Git](031-aislamiento-sin-git.md) | Decisión de secuenciación o Git por proyecto; detalles pendientes | El usuario elige secuenciar escrituras o habilitar Git y worktrees para paralelismo. |
 | [030 — Evaluar Impeccable y find-skills](030-evaluar-impeccable-find-skills.md) | Pendiente de debatir | Evaluar recursos de diseño de interfaces y descubrimiento de skills, su utilidad y su encaje con las herramientas existentes. |
-| [029 — Estado visible en el nombre del chat](029-estado-visible-nombre-chat.md) | En debate; responsabilidad del chat acordada | Mostrar el estado en el nombre y mantenerlo actualizado desde el chat de tarea. |
-| [027 — Automatización de la coordinación](027-automatizacion-coordinacion.md) | En debate; intención de automatización registrada | Revisar estados y ejecutar acciones de coordinación con una tarea programada. |
-| [026 — Archivado de chats coordinados](026-archivado-chats-coordinacion.md) | En debate; responsabilidad del coordinador acordada | Archivar chats de tareas terminadas y recuperarlos para continuar su trabajo. |
-| [025 — Coordinador global y chats autónomos](025-coordinador-global-chats-autonomos.md) | Roles 0.1.2 instalados; piloto real en AIKit completado; portabilidad pendiente de proyecto | Coordinar y reutilizar chats mediante avisos, revisión delegada, integración y cierre; archivado verificado, capacidades adicionales pendientes. |
 | [024 — Setup BMAD y patrón de integraciones](024-setup-bmad-patron-integraciones.md) | Pendiente de debatir | Configurar preferencias BMAD con ámbito local por defecto, confirmación global y descubrimiento e instalación explícita de adaptaciones. |
 | [002 — OpenCode como subagente acotado](002-opencode-como-subagente-acotado.md) | Pendiente de debatir | Investigar cómo Codex lanza, supervisa y recibe la finalización de sus subagentes para reproducir ese ciclo con OpenCode y tareas acotadas. |
 | [003 — Coste de delegación](003-heuristica-coste-delegacion.md) | Pendiente de debatir | Decidir con una heurística rápida cuándo ejecutar directamente en Codex y cuándo lanzar un subagente. |
@@ -83,9 +76,6 @@ nota y la evidencia antes de usarlos para decidir el siguiente trabajo.
 | --- | --- | --- |
 | [028 — Modernizar el tablero de notas](028-modernizacion-tablero-notas.md) | Verificada localmente; cierre completado | Diseño nuevo, diálogo y filtros; IMP-0002 finalizada, datos preservados y chat archivado. |
 | [043 — Ideas y tareas de implementación](043-separar-ideas-y-tareas-implementacion.md) | Verificada localmente; complemento 0.1.5 instalado y descubierto | Ideas y tickets conectados, registro previo y vistas separadas; entregas IMP-0001 e IMP-0005. |
-| [044 — Notificaciones por impacto y coste](044-notificaciones-por-impacto-y-coste.md) | Verificada; versión privada0.1.6 instalada y descubierta | Filtro por acción, decisión o riesgo; IMP-0006 e IMP-0007 finalizadas. |
-| [042 — Notificaciones proactivas del Coordinador](042-notificaciones-proactivas-coordinador.md) | Verificada; versión privada 0.1.4 instalada y descubierta | Notificar cambios relevantes a los chats afectados sin aprobación por cada aviso, conservando autorizaciones y pausas. |
-| [041 — Autonomía tras asignar una tarea](041-autonomia-chat-tarea-tras-asignacion.md) | Verificada; versión privada 0.1.3 instalada y descubierta | Conversación directa con el usuario y ejecución autónoma del encargo, con reportes relevantes y coordinación de dependencias e integración. |
 | [033 — Responsabilidades y calidad por lenguaje](033-responsabilidades-lenguajes-calidad.md) | Implementada y verificada; avisos npm resueltos | Responsabilidades y controles equivalentes de Python/TypeScript, integrados en la verificación conjunta. |
 | [012 — Referencia a BMAD en AGENTS.md](012-referencia-bmad-en-agents.md) | Implementada | Referencia breve de uso aprobada con go e incorporada a AGENTS.md, complementaria al descubrimiento de skills. |
 | [015 — Backlog de ideas compatible con BMAD](015-backlog-ideas-bmad.md) | Implementada | Organizar las notas y registrar ideas nuevas en un backlog trazable. |

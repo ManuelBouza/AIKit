@@ -7,7 +7,7 @@ import {
   readInventoryDirectory,
   updateRecord,
 } from './chat-inventory.js';
-import { checkedPath, decoder, readOptional, writeInstructions } from './project-files.js';
+import { checkedPath, decoder, readOptional } from './project-files.js';
 
 export const CHAT_BLOCK = 'RESPONSABILIDAD-CHATS';
 const begin = `<!-- AIKIT:${CHAT_BLOCK}:BEGIN -->`;
@@ -21,7 +21,7 @@ function absoluteRoot(root: string): boolean {
     : path.isAbsolute(root);
 }
 
-function projectDirectory(root: string): string {
+export function projectDirectory(root: string): string {
   if (!absoluteRoot(root)) throw new Error('Indique una raíz de proyecto absoluta');
   const directory = path.resolve(root);
   checkedPath(directory);
@@ -141,7 +141,7 @@ ficha como referencia de estado.
 ${end}`;
 }
 
-function inventoryAccess(root: string | null) {
+export function inventoryAccess(root: string | null) {
   if (!root) return {};
   const directory = inventoryPath(root);
   try {
@@ -161,7 +161,50 @@ function inventoryAccess(root: string | null) {
   }
 }
 
-export function runProjectChats(args: string[], validateMarkers: (text: string) => void): void {
+export function composeChatPreference(
+  before: string,
+  root: string,
+  selection: 'enable' | 'disable',
+  explicit: string | undefined,
+  validateMarkers: (text: string) => void,
+) {
+  const config = configuration(before);
+  const reference = config?.root ?? null;
+  if (selection === 'enable') {
+    const inventoryRoot = sharedDirectory(explicit ?? reference ?? root);
+    if (reference && path.relative(reference, inventoryRoot))
+      throw new Error('La regla local ya apunta a otra raíz compartida');
+    const principal = principalInventory(root, validateMarkers);
+    if (principal && path.relative(sharedDirectory(principal), inventoryRoot))
+      throw new Error('Use la raíz de inventario configurada en el checkout principal');
+    listRecords(inventoryPath(inventoryRoot));
+    const eol = before.includes('\r\n') || before.endsWith('\r') ? '\r\n' : '\n';
+    const block = instructions(reference ?? inventoryRoot).replaceAll('\n', eol);
+    const after = config
+      ? before.slice(0, config.from) + block + before.slice(config.to)
+      : before + (before ? eol : '') + block + eol;
+    return { after, inventoryRoot: reference ?? inventoryRoot };
+  }
+  if (!config) return { after: before, inventoryRoot: null };
+
+  const prefix = before.slice(0, config.from);
+  const suffix = before.slice(config.to);
+  const leadingEol = prefix.match(/\r?\n$/)?.[0] ?? '';
+  const trailingEol = suffix.match(/^\r?\n/)?.[0] ?? '';
+  const above = prefix.slice(0, prefix.length - leadingEol.length);
+  const below = suffix.slice(trailingEol.length);
+  const separator =
+    above && below && !above.endsWith('\n') && !/^\r?\n/.test(below)
+      ? leadingEol || trailingEol
+      : '';
+  return { after: above + separator + below, inventoryRoot: reference };
+}
+
+export function runProjectChats(
+  args: string[],
+  validateMarkers: (text: string) => void,
+  install: (args: string[]) => void,
+): void {
   const command = args.shift();
   if (!['status', 'enable', 'disable', 'list', 'upsert'].some((item) => item === command))
     throw new Error(usage);
@@ -178,8 +221,23 @@ export function runProjectChats(args: string[], validateMarkers: (text: string) 
     if (!value || value.startsWith('--')) throw new Error(`Falta valor para ${name}`);
     options.set(name, value);
   }
-  const root = projectDirectory(options.get('--root') ?? '');
+  const projectRoot = options.get('--root');
+  if (!projectRoot) throw new Error('Indique una raíz de proyecto absoluta');
   const dry = options.has('--dry-run');
+  if (command === 'enable' || command === 'disable') {
+    const inventoryRoot = options.get('--inventory-root');
+    install([
+      '--project',
+      command === 'enable' ? '--responsabilidad-chats' : '--quitar-responsabilidad-chats',
+      '--root',
+      projectRoot,
+      ...(inventoryRoot ? ['--inventory-root', inventoryRoot] : []),
+      ...(dry ? ['--dry-run'] : []),
+    ]);
+    return;
+  }
+
+  const root = projectDirectory(projectRoot);
   if (command === 'list' || command === 'upsert') {
     const directory = inventoryPath(sharedDirectory(root));
     if (command === 'list') {
@@ -208,74 +266,13 @@ export function runProjectChats(args: string[], validateMarkers: (text: string) 
   validateMarkers(before);
   const config = configuration(before);
   const reference = config?.root ?? null;
-  if (command === 'status') {
-    console.log(
-      JSON.stringify({
-        status: shadowed ? 'shadowed' : config ? 'enabled' : 'disabled',
-        path: target,
-        root,
-        inventoryRoot: reference,
-        ...inventoryAccess(reference),
-      }),
-    );
-    return;
-  }
-  if (shadowed && command === 'enable')
-    throw new Error('AGENTS.override.md no vacío; no se modificó ningún archivo');
-
-  let after = before;
-  let inventoryRoot = reference;
-  if (command === 'enable') {
-    const explicit = options.get('--inventory-root');
-    inventoryRoot = sharedDirectory(explicit ?? reference ?? root);
-    if (reference && path.relative(reference, inventoryRoot))
-      throw new Error('La regla local ya apunta a otra raíz compartida');
-    const principal = principalInventory(root, validateMarkers);
-    if (principal && path.relative(sharedDirectory(principal), inventoryRoot))
-      throw new Error('Use la raíz de inventario configurada en el checkout principal');
-    listRecords(inventoryPath(inventoryRoot));
-    const eol = before.includes('\r\n') || before.endsWith('\r') ? '\r\n' : '\n';
-    const block = instructions(inventoryRoot).replaceAll('\n', eol);
-    after = config
-      ? before.slice(0, config.from) + block + before.slice(config.to)
-      : before + (before ? eol : '') + block + eol;
-  } else if (config) {
-    const prefix = before.slice(0, config.from);
-    const suffix = before.slice(config.to);
-    const leadingEol = prefix.match(/\r?\n$/)?.[0] ?? '';
-    const trailingEol = suffix.match(/^\r?\n/)?.[0] ?? '';
-    const above = prefix.slice(0, prefix.length - leadingEol.length);
-    const below = suffix.slice(trailingEol.length);
-    const separator =
-      above && below && !above.endsWith('\n') && !/^\r?\n/.test(below)
-        ? leadingEol || trailingEol
-        : '';
-    after = above + separator + below;
-  }
-  const changed = before !== after;
-  const backupBase = path.join(root, '.aikit', 'instruction-backups');
-  const backups =
-    !dry && changed
-      ? writeInstructions(
-          root,
-          backupBase,
-          original,
-          original ? fs.statSync(target) : null,
-          Buffer.from(after),
-          command === 'disable' ? (overrideBytes ?? undefined) : undefined,
-        )
-      : {};
   console.log(
     JSON.stringify({
-      status: dry ? 'preview' : changed ? 'changed' : 'unchanged',
+      status: shadowed ? 'shadowed' : config ? 'enabled' : 'disabled',
       path: target,
       root,
-      inventoryRoot,
-      ...inventoryAccess(inventoryRoot),
-      ...backups,
-      backupBase: dry ? backupBase : undefined,
-      before: dry ? before : undefined,
-      after: dry ? after : undefined,
+      inventoryRoot: reference,
+      ...inventoryAccess(reference),
     }),
   );
 }

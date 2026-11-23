@@ -120,6 +120,11 @@ Sin instalación en el perfil habitual, publicación ni push en esta entrega.
   la entrega, normalizando finales de línea. El paquete combinado con las
   preferencias locales pasó las 29 pruebas del exportador. El renombrado y
   fork en chats nativos siguen pendientes de prueba.
+- Piloto posterior en Codex: el chat de prueba conservó el ID tras renombrarlo.
+  El fork recibió un ID propio, conservó el turno ficticio y quedó registrado
+  con el ID de origen. Se releyeron los títulos de ambos chats y se contrastaron
+  con el inventario. La carga automática de AGENTS.md desde esos chats y el
+  onboarding gráfico de setup no formaron parte del ensayo.
 
 ## Spec Change Log
 
@@ -164,3 +169,72 @@ verificarla. Un fork de chat no aísla por sí solo el checkout.
 - Probar desde un worktree real del proyecto ficticio y comprobar los casos
   de acceso completo, solo lectura y sin acceso. Identificar si la restricción
   se comprobó en el sandbox del cliente o se simuló en un control del instalador.
+
+## Revisión de la activación y retirada
+
+Estado: integrada en main; paquete verificado. Se añade a
+la entrega inicial de la 047 y conserva su evidencia de verificación.
+
+### Contrato de instalación
+
+- Activar con `install --project --responsabilidad-chats` y retirar con
+  `install --project --quitar-responsabilidad-chats`. Ambas opciones admiten
+  `--dry-run` y rechazan `--global` y la selección simultánea de alta y baja.
+  Ejecutar `install` sin selección conserva los valores históricos y no
+  activa esta preferencia.
+- Setup tramita la elección por esos parámetros. Si no puede identificar con
+  certeza la raíz del proyecto, pide una ruta local absoluta y la pasa con
+  `--root`. No exige Git para esta preferencia. En un worktree recupera o pide
+  la raíz compartida cuando haga falta y la pasa con `--inventory-root`.
+  La vista previa identifica el `AGENTS.md` local y el inventario compartido,
+  que pueden tener raíces distintas.
+- Una selección puede incluir otras preferencias del mismo ámbito. Validar
+  todos los argumentos antes de escribir y usar una única vista previa y
+  aplicación si todos apuntan al mismo `AGENTS.md`. Si los destinos difieren,
+  mostrarlos y tratarlos por separado. Conservar las restricciones de ámbito
+  de las demás preferencias.
+- Reutilizar la lógica de instalación existente de la 047. La baja solo
+  retira su bloque de `AGENTS.md` y conserva el inventario. Un bloque ya
+  instalado se reconoce por su marcador y conserva su raíz. No hay
+  migración de fichas. Mantener `project-chats enable|disable` como entradas
+  compatibles que reutilizan el mismo flujo. `project-chats status|list|upsert`
+  mantiene sus funciones actuales.
+
+### Aceptación de esta revisión
+
+- Con un proyecto sin Git, el instalador acepta la raíz explícita.
+  La consulta y vista previa conservan los bytes de `AGENTS.md`. Activar dos
+  veces deja un solo bloque; retirar conserva instrucciones ajenas y fichas.
+- Con un worktree, la vista previa y la aplicación apuntan al mismo inventario
+  que el principal y conservan la referencia existente. Una raíz incompatible
+  se rechaza sin escribir.
+- Con `--global`, una selección contradictoria o un destino ambiguo, no se
+  escribe. Una selección mixta en el mismo proyecto muestra ambas operaciones
+  y preserva los bloques no seleccionados.
+- El paquete exportado ofrece la preferencia y explica sus parámetros y su
+  alcance local. Verificar activación y baja desde setup con un proyecto
+  ficticio, distinguiendo prueba de CLI de prueba gráfica en Codex.
+
+### Ejecución de Build para la revisión
+
+Usar la copia limpia `.aikit/build-047/source`, con base
+`c39816eae298622494bc5f729f43b5b17469e31f`. Modificar solo los archivos de producto
+y pruebas de esta revisión en la copia. La ruta actual de `install` y la de
+`project-chats` deben compartir la composición del bloque, reutilizando
+`writeInstructions` y sus respaldos. Mantener separados los metadatos de
+preferencias con plantilla de la opción local que compone su bloque en tiempo
+de ejecución. Corregir la guía de setup y la referencia del flujo de la 047.
+Probar el instalador con `npm run verify` y el exportador con
+`pytest tests/test_build_aikit.py` en secuencia para evitar cruces de compilación.
+La copia tiene dependencias locales. El principal contiene cambios previos
+ajenos a esta revisión y no se modifica durante el desarrollo.
+
+Resultado en `dda3cb24cb488cb717915e2d6a30b1146cb43545`: 65 pruebas de Node
+aprobadas, cuatro omitidas por plataforma o permisos y 29 pruebas del
+exportador aprobadas. El ensayo manual confirmó la selección mixta idempotente,
+la referencia compartida desde un worktree real y la activación y retirada
+en un proyecto sin Git. La revisión independiente detectó y se corrigió el
+consumo de un flag como valor de `--codex-home`. El parche pasó `git apply
+--check --whitespace=error-all` en el principal. La integración pasó las 29
+pruebas del exportador sobre el árbol combinado. Queda por comprobar la opción
+desde la interfaz gráfica de Codex con un paquete que incluya esta revisión.

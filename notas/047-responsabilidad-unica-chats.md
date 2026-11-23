@@ -2,7 +2,25 @@
 
 Fecha: 2026-11-22.
 Estado inicial: Pendiente de debatir.
-Estado actual: Integrada en main; paquete verificado; prueba nativa pendiente.
+Estado actual: Revisión de activación integrada en main; paquete verificado; interfaz pendiente.
+
+El 2026-11-23 se preparó la candidata privada 0.1.10 a partir de `a97124a`.
+La actualización del catálogo 0.1.9 a 0.1.10 y la vista previa de activación
+se verificaron por CLI con un perfil y un proyecto ficticios. El perfil
+habitual y la versión del manifiesto en el repositorio se conservaron.
+La prueba de activación desde la interfaz sigue pendiente.
+
+Para la siguiente revisión se aplicará el [criterio de la nota 039](039-setup-centro-activacion-capacidades.md#criterio-para-clasificar-capacidades-en-setup):
+como esta opción escribe en el `AGENTS.md` local, su activación y retirada
+deben seguir `install --project`. El flujo guiado puede pedir la raíz
+compartida, y las operaciones del inventario siguen siendo independientes.
+
+En el perfil ficticio, el servidor de Codex descubrió `aikit-setup` 0.1.10
+habilitada y el manifiesto instalado apuntó a esa skill para iniciar setup.
+Tras activar por CLI en el proyecto ficticio, `codex debug prompt-input`
+mostró el bloque de responsabilidad única en el contexto del proyecto, donde
+antes no estaba. No se usó inferencia. La prueba gráfica sigue pendiente y
+no se cambió el perfil habitual.
 
 Cada chat tiene una responsabilidad única y consultable por los demás. Una
 petición fuera de ese alcance debe encaminarse al chat que ya cubre la materia,

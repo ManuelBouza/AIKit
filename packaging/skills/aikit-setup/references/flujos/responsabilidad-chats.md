@@ -8,26 +8,35 @@ absoluta con Node.js. En los ejemplos, `<cli>`, `<proyecto>` y
 ## Consultar y configurar
 
 1. Identifica la raíz local explícita del proyecto donde se aplicará el bloque
-   de `AGENTS.md`. Un proyecto puede carecer de Git. Usa
+   de `AGENTS.md`. Si no puedes identificarla con certeza, pide al usuario
+   la ruta local absoluta y pásala con `--root`. Un proyecto puede carecer de Git. Usa
    `node <cli> project-chats status --root <proyecto>` para consultar sin escribir.
    Si `status` devuelve `shadowed`, el cliente puede usar `AGENTS.override.md`.
    Explica el conflicto y conserva el archivo de sustitución.
 2. Usa la raíz explícita de inventario configurada para el proyecto. En un
    checkout principal o proyecto sin Git, las raíces local y de inventario
-   normalmente coinciden. En un worktree, confirma la raíz compartida con el
-   usuario o con la referencia ya configurada. Nunca la deduzcas del
-   directorio actual o de la rama. Ejecuta
+   normalmente coinciden. En un worktree, lee la referencia local con
+   `status`. Si falta y puedes identificar el checkout principal, consulta
+   allí con el mismo comando. Si no recuperas una referencia confirmada,
+   pide al usuario la raíz compartida. Pásala con `--inventory-root` al
+   activar. Nunca la deduzcas del directorio actual o de la rama. Ejecuta
    `node <cli> project-chats list --root <inventario>` desde esta sesión para
    verificar lectura. Una consulta fallida deja los destinos sin verificar.
 3. Previsualiza la activación con
-   `node <cli> project-chats enable --root <proyecto> --inventory-root <inventario> --dry-run`.
+   `node <cli> install --project --responsabilidad-chats --root <proyecto> --inventory-root <inventario> --dry-run`.
    Muestra la raíz de inventario, el destino `AGENTS.md`, el bloque y la
    ubicación del respaldo. Cuando el usuario haya autorizado explícitamente
    el cambio para ese proyecto, aplica el mismo comando sin `--dry-run`.
    Vuelve a consultar el estado y comprueba el resultado y el respaldo.
-4. Para la desactivación, usa `node <cli> project-chats disable --root <proyecto> --dry-run`
+4. Para la desactivación, usa `node <cli> install --project --quitar-responsabilidad-chats --root <proyecto> --dry-run`
    y el mismo comando sin `--dry-run` al contar con autorización. Solo se quita
    la regla local. Las fichas permanecen accesibles en la raíz de inventario.
+
+Ambas opciones de instalación son de proyecto y se elige una por destino.
+Puedes combinarlas con otras preferencias elegidas para el mismo
+`AGENTS.md` en la vista previa y aplicación de setup. Las preferencias con
+plantilla requieren su raíz Git. Si esa raíz y la de chats corresponden a
+archivos distintos, muestra ambos destinos y aplica una selección por archivo.
 
 La consulta verifica lectura. La escritura efectiva se comprueba al aplicar
 un cambio autorizado. Si falta permiso para actualizar la raíz compartida,

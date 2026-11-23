@@ -5,7 +5,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { checkedPath, decoder, readOptional, writeInstructions } from './project-files.js';
-import { CHAT_BLOCK, runProjectChats } from './project-chats.js';
+import {
+  CHAT_BLOCK,
+  composeChatPreference,
+  inventoryAccess,
+  projectDirectory,
+  runProjectChats,
+} from './project-chats.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const metadata: unknown = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -83,37 +89,73 @@ function merge(text: string, name: string, template: string): string {
   return text + (text.endsWith('\n') ? '' : '\n') + block + '\n';
 }
 
-function main(args: string[]): void {
-  const command = args.shift();
-  if (command === 'project-chats') {
-    runProjectChats(args, validateCrossed);
-    return;
-  }
-  if (command !== 'install' && command !== 'status')
-    throw new Error('Uso: aikit <install|status|project-chats>');
+function gitRoot(): string {
+  const result = spawnSync('git', ['rev-parse', '--show-toplevel'], {
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0 || !result.stdout.trim())
+    throw new Error('El directorio actual no pertenece a un repositorio Git');
+  return path.resolve(result.stdout.trim());
+}
+
+function gitBackupDirectory(directory: string): string {
+  const result = spawnSync(
+    'git',
+    ['rev-parse', '--path-format=absolute', '--git-path', 'aikit-backups'],
+    { cwd: directory, encoding: 'utf8', windowsHide: true },
+  );
+  if (result.error || result.status !== 0 || !result.stdout.trim())
+    throw new Error('No se pudo determinar la ubicación administrativa Git para respaldos');
+  return path.resolve(result.stdout.trim());
+}
+
+function installOrStatus(command: 'install' | 'status', args: string[], legacyChat = false): void {
   let targetDirectory = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
   let scope: 'global' | 'project' | undefined;
   let explicitCodexHome = false;
   let dry = false;
+  let chatSelection: 'enable' | 'disable' | undefined;
+  const roots = new Map<string, string>();
   const selected = new Set<string>();
   const removed = new Set<string>();
   while (args.length) {
     const arg = args.shift();
     if (arg === '--dry-run') dry = true;
-    else if (arg?.startsWith('--') && preferences.has(arg.slice(2))) selected.add(arg.slice(2));
+    else if (arg === '--responsabilidad-chats' || arg === '--quitar-responsabilidad-chats') {
+      const next = arg === '--responsabilidad-chats' ? 'enable' : 'disable';
+      if (chatSelection && chatSelection !== next)
+        throw new Error(`No se puede activar y quitar ${CHAT_BLOCK} a la vez`);
+      chatSelection = next;
+    } else if (arg === '--root' || arg === '--inventory-root') {
+      if (roots.has(arg)) throw new Error(`Opción duplicada: ${arg}`);
+      const value = args.shift();
+      if (!value || value.startsWith('--')) throw new Error(`Falta valor para ${arg}`);
+      roots.set(arg, value);
+    } else if (arg?.startsWith('--') && preferences.has(arg.slice(2))) selected.add(arg.slice(2));
     else if (arg?.startsWith('--quitar-') && preferences.has(arg.slice(9)))
       removed.add(arg.slice(9));
     else if (arg === '--global' || arg === '--project') {
       if (scope) throw new Error('Indique un único ámbito: --global o --project');
       scope = arg === '--global' ? 'global' : 'project';
-    } else if (arg === '--codex-home' && args.length && args[0]) {
-      targetDirectory = args.shift()!;
+    } else if (arg === '--codex-home') {
+      const value = args.shift();
+      if (!value || value.startsWith('--')) throw new Error('Falta valor para --codex-home');
+      targetDirectory = value;
       explicitCodexHome = true;
     } else throw new Error(`Opción inválida: ${arg}`);
   }
   for (const name of removed)
     if (selected.has(name))
       throw new Error(`No se puede activar y quitar ${name.toUpperCase()} a la vez`);
+  const explicitRoot = roots.get('--root');
+  const explicitInventory = roots.get('--inventory-root');
+  if (chatSelection && (command !== 'install' || scope !== 'project'))
+    throw new Error('La responsabilidad única requiere install --project');
+  if (explicitRoot && !chatSelection)
+    throw new Error('--root requiere una selección de responsabilidad de chats');
+  if (explicitInventory && chatSelection !== 'enable')
+    throw new Error('--inventory-root requiere --responsabilidad-chats');
   if (scope === 'project' && explicitCodexHome)
     throw new Error('--codex-home solo es válido para el ámbito global');
   if (!scope && explicitCodexHome) scope = 'global'; // compatibilidad con perfiles ficticios y CLI anterior
@@ -130,23 +172,24 @@ function main(args: string[]): void {
       throw new Error('Ámbito no reconocido; no se modificó ningún archivo');
     scope = selection === 'g' ? 'global' : 'project';
   }
+  const usesTemplates = !chatSelection || selected.size > 0 || removed.size > 0;
   let backupBase: string;
   if (scope === 'project') {
-    const gitRoot = spawnSync('git', ['rev-parse', '--show-toplevel'], {
-      encoding: 'utf8',
-      windowsHide: true,
-    });
-    if (gitRoot.error || gitRoot.status !== 0 || !gitRoot.stdout.trim())
-      throw new Error('El directorio actual no pertenece a un repositorio Git');
-    targetDirectory = path.resolve(gitRoot.stdout.trim());
-    const gitPath = spawnSync(
-      'git',
-      ['rev-parse', '--path-format=absolute', '--git-path', 'aikit-backups'],
-      { cwd: targetDirectory, encoding: 'utf8', windowsHide: true },
-    );
-    if (gitPath.error || gitPath.status !== 0 || !gitPath.stdout.trim())
-      throw new Error('No se pudo determinar la ubicación administrativa Git para respaldos');
-    backupBase = path.resolve(gitPath.stdout.trim());
+    if (chatSelection) {
+      targetDirectory = projectDirectory(explicitRoot ?? gitRoot());
+      if (usesTemplates) {
+        const templateRoot = gitRoot();
+        if (path.relative(fs.realpathSync(templateRoot), targetDirectory))
+          throw new Error(
+            `Los destinos difieren. Preferencias: ${path.join(templateRoot, 'AGENTS.md')}. Chats: ${path.join(targetDirectory, 'AGENTS.md')}. Use comandos separados`,
+          );
+      }
+    } else {
+      targetDirectory = gitRoot();
+    }
+    backupBase = usesTemplates
+      ? gitBackupDirectory(targetDirectory)
+      : path.join(targetDirectory, '.aikit', 'instruction-backups');
   } else {
     targetDirectory = path.resolve(targetDirectory);
     backupBase = path.join(targetDirectory, 'backups', 'aikit');
@@ -156,7 +199,8 @@ function main(args: string[]): void {
   checkedPath(target);
   checkedPath(override);
   const overrideBytes = readOptional(override);
-  if (overrideBytes?.length)
+  const onlyRemovingChats = chatSelection === 'disable' && !usesTemplates;
+  if (overrideBytes?.length && !onlyRemovingChats)
     throw new Error('AGENTS.override.md no vacío; no se modificó ningún archivo');
   const original = readOptional(target);
   const originalStat = original ? fs.statSync(target) : null;
@@ -173,12 +217,23 @@ function main(args: string[]): void {
         after = after.slice(0, start) + after.slice(after.indexOf(end, start) + end.length);
       continue;
     }
-    if (selected.size || removed.size ? !selected.has(id) : !defaultEnabled) continue;
+    if (chatSelection || selected.size || removed.size ? !selected.has(id) : !defaultEnabled)
+      continue;
     after = merge(
       after,
       name,
       decoder.decode(fs.readFileSync(path.join(root, 'templates', `${id}.md`))),
     );
+  }
+  let inventoryRoot: string | null = null;
+  if (chatSelection) {
+    ({ after, inventoryRoot } = composeChatPreference(
+      after,
+      targetDirectory,
+      chatSelection,
+      explicitInventory,
+      validateCrossed,
+    ));
   }
   const replacement = Buffer.from(after, 'utf8');
   const changed = original ? !original.equals(replacement) : replacement.length > 0;
@@ -200,22 +255,31 @@ function main(args: string[]): void {
   let backup: string | null = null;
   let windowsBackup: string | null = null;
   if (!dry && changed) {
-    process.stderr.write(`Destino ${scope}: ${target}\n`);
+    if (!legacyChat) process.stderr.write(`Destino ${scope}: ${target}\n`);
     ({ backup, windowsBackup } = writeInstructions(
       targetDirectory,
       backupBase,
       original,
       originalStat,
       replacement,
+      onlyRemovingChats ? (overrideBytes ?? undefined) : undefined,
     ));
   }
   console.log(
     JSON.stringify({
       status: dry ? 'preview' : changed ? 'changed' : 'unchanged',
       path: target,
-      version,
-      backup,
-      windowsBackup,
+      version: legacyChat ? undefined : version,
+      backup: legacyChat && (dry || !changed) ? undefined : backup,
+      windowsBackup: legacyChat && (dry || !changed) ? undefined : windowsBackup,
+      ...(chatSelection
+        ? {
+            root: targetDirectory,
+            inventoryRoot,
+            ...inventoryAccess(inventoryRoot),
+            backupBase: dry ? backupBase : undefined,
+          }
+        : {}),
       before: dry ? before : undefined,
       after: dry ? after : undefined,
     }),
@@ -223,7 +287,14 @@ function main(args: string[]): void {
 }
 
 try {
-  main(process.argv.slice(2));
+  const [, , command, ...args] = process.argv;
+  if (command === 'project-chats') {
+    runProjectChats(args, validateCrossed, (options) => installOrStatus('install', options, true));
+  } else if (command === 'install' || command === 'status') {
+    installOrStatus(command, args);
+  } else {
+    throw new Error('Uso: aikit <install|status|project-chats>');
+  }
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;

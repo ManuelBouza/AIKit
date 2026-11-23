@@ -39,8 +39,11 @@ conservarla o desactivarla, y en qué ámbito (global, proyecto o ambos).
 Reúne las decisiones en una sola consulta cuando sea posible. Conserva los
 bloques existentes si falta una decisión.
 
-El ámbito global usa `CODEX_HOME` o `~/.codex`. El ámbito de proyecto usa
-la raíz Git del directorio de trabajo actual. Si una preferencia está activa
+El ámbito global usa `CODEX_HOME` o `~/.codex`. Las preferencias con plantilla
+usan la raíz Git del directorio de trabajo actual para el ámbito de proyecto.
+La responsabilidad única de los chats acepta una raíz local sin Git. Aplica
+su [flujo de configuración](references/flujos/responsabilidad-chats.md)
+para resolver la raíz local y la del inventario compartido. Si una preferencia está activa
 en otro ámbito, indícalo cuando lo sepas. La retirada afecta solo al bloque
 gestionado del ámbito elegido. Las reglas equivalentes en otros archivos o
 ámbitos pueden seguir aplicándose.
@@ -48,17 +51,22 @@ gestionado del ámbito elegido. Las reglas equivalentes en otros archivos o
 Localiza la raíz del complemento instalado subiendo dos directorios desde
 esta skill. Ejecuta con Node.js el [instalador incluido](../../installer/dist/cli.js).
 Pasa la ruta del script como argumento separado y conserva el directorio de
-trabajo actual. Para cada ámbito con cambios elegidos, ejecuta `install --global
+trabajo actual. Para cada destino con cambios elegidos, ejecuta `install --global
 --dry-run` o `install --project --dry-run`. Añade solo `--<id>` para activar o
-actualizar y `--quitar-<id>` para retirar las preferencias elegidas. Omite ámbitos
-sin selecciones, pues sin argumentos de preferencia el instalador aplica los
-tres valores históricos. Comprueba el código de salida y el JSON. Muestra los
-destinos y cambios previstos y, si la vista previa falla, detente e informa.
+actualizar y `--quitar-<id>` para retirar las opciones elegidas. Incluye los
+argumentos de raíz que indique el flujo de chats. Agrupa las selecciones de
+un mismo ámbito en una invocación cuando apunten al mismo `AGENTS.md`. Si
+apuntan a archivos distintos, muestra ambos destinos y prepara un comando
+por archivo. Omite ámbitos sin selecciones, pues sin argumentos de
+preferencia el instalador aplica los tres valores históricos. Comprueba
+el código de salida y el JSON de todos los comandos de vista previa antes de
+aplicar cambios. Muestra los destinos y cambios previstos y, si una vista
+previa falla, detente e informa.
 
 Cuando el usuario haya autorizado aplicar la selección y los permisos lo
-permitan, ejecuta el mismo comando por ámbito sin `--dry-run`. Comprueba código
-de salida y JSON. Comunica destinos y respaldos. Cada ámbito se aplica por
-separado. Si falla uno, detente e informa de los ámbitos aplicados y de las
+permitan, ejecuta el mismo comando por destino sin `--dry-run`. Comprueba código
+de salida y JSON. Comunica destinos y respaldos. Si falla uno, detente e
+informa de los destinos aplicados y de las
 rutas de recuperación. Conserva los archivos y el estado del fallo.
 
 Para comprobar el estado, lee el `AGENTS.md` del ámbito y localiza el par de

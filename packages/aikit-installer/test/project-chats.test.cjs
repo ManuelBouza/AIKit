@@ -44,6 +44,95 @@ function update(root, revision, input, options = [], context = {}) {
   });
 }
 
+function install(cwd, options, succeeds = true) {
+  const result = spawnSync(process.execPath, [cli, 'install', ...options], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, GIT_CEILING_DIRECTORIES: os.tmpdir() },
+  });
+  assert.equal(result.status === 0, succeeds, result.stderr || result.error?.message);
+  return succeeds ? JSON.parse(result.stdout) : result.stderr;
+}
+
+test('install rechaza ámbito global, selecciones contradictorias y destinos ambiguos', (t) => {
+  const root = fixture(t);
+  const instructions = path.join(root, 'AGENTS.md');
+  const original = '# Instrucción ajena\r\n';
+  fs.writeFileSync(instructions, original);
+  const enable = '--responsabilidad-chats';
+  const disable = '--quitar-responsabilidad-chats';
+
+  for (const option of [enable, disable])
+    assert.match(
+      install(root, ['--global', '--codex-home', root, option], false),
+      /requiere install --project/u,
+    );
+  for (const next of [enable, disable, '--dry-run'])
+    assert.match(
+      install(root, ['--global', '--codex-home', next], false),
+      /Falta valor para --codex-home/u,
+    );
+  assert.match(install(root, ['--project', enable, disable, '--root', root], false), /a la vez/u);
+  assert.match(install(root, ['--project', enable], false), /repositorio Git/u);
+  assert.match(install(root, ['--project', enable, '--root', '.'], false), /absoluta/u);
+  assert.match(install(root, ['--project', enable, '--root', root, '--go'], false), /Git/u);
+  assert.match(
+    install(root, ['--project', disable, '--root', root, '--inventory-root', root], false),
+    /--inventory-root requiere/u,
+  );
+  assert.equal(fs.readFileSync(instructions, 'utf8'), original);
+  assert.deepEqual(fs.readdirSync(root), ['AGENTS.md']);
+});
+
+test('install combina cambios de chats y plantillas con un único destino y respaldo', (t) => {
+  const root = fixture(t);
+  git(root, 'init', '-q');
+  const nested = path.join(root, 'subdirectorio');
+  fs.mkdirSync(nested);
+  const options = ['--project'];
+  const instructions = path.join(root, 'AGENTS.md');
+  install(nested, options);
+  const original = fs.readFileSync(instructions, 'utf8');
+  assert.doesNotMatch(original, /AIKIT:RESPONSABILIDAD-CHATS/u);
+
+  const mixed = [...options, '--root', root, '--responsabilidad-chats', '--quitar-context7'];
+  const preview = install(nested, [...mixed, '--dry-run']);
+  assert.equal(preview.path, instructions);
+  assert.equal(preview.inventoryRoot, root);
+  assert.equal(preview.before, original);
+  assert.equal(fs.readFileSync(instructions, 'utf8'), original);
+  assert.match(preview.after, /AIKIT:RESPONSABILIDAD-CHATS:BEGIN/u);
+  assert.doesNotMatch(preview.after, /AIKIT:CONTEXT7/u);
+  for (const name of ['GO', 'INVESTIGACION']) {
+    const block = new RegExp(
+      `<!-- AIKIT:${name}:BEGIN -->[\\s\\S]*?<!-- AIKIT:${name}:END -->`,
+      'u',
+    );
+    assert.equal(preview.after.match(block)[0], original.match(block)[0]);
+  }
+
+  const backupDirectory = preview.backupBase;
+  const previousBackups = fs.readdirSync(backupDirectory).length;
+  const applied = install(nested, mixed);
+  assert.equal(applied.status, 'changed');
+  assert.equal(fs.readFileSync(applied.backup, 'utf8'), original);
+  assert.equal(fs.readdirSync(backupDirectory).length, previousBackups + 1);
+  assert.equal(fs.readFileSync(instructions, 'utf8'), preview.after);
+  assert.equal(install(nested, mixed).status, 'unchanged');
+
+  const otherRoot = fixture(t);
+  const error = install(
+    nested,
+    [...options, '--root', otherRoot, '--quitar-responsabilidad-chats', '--go'],
+    false,
+  );
+  assert.match(error, /Los destinos difieren/u);
+  assert.ok(error.includes(instructions));
+  assert.ok(error.includes(path.join(otherRoot, 'AGENTS.md')));
+  assert.deepEqual(fs.readdirSync(otherRoot), []);
+  assert.equal(fs.readFileSync(instructions, 'utf8'), preview.after);
+});
+
 test('consulta y vista previa sin escritura, alta idempotente y baja con instrucciones intactas', (t) => {
   const root = fixture(t);
   const instructions = path.join(root, 'AGENTS.md');
@@ -440,7 +529,21 @@ test('worktree real consulta y actualiza la raíz explícita incluso con permiso
   assert.equal(fs.existsSync(path.join(worktree, 'AGENTS.md')), false);
   assert.deepEqual(fs.readdirSync(unrelated), []);
   assert.match(run(worktree, 'enable', [], { succeeds: false }), /raíz de inventario compartida/u);
-  run(worktree, 'enable', ['--inventory-root', root], { cwd: worktree });
+  const activation = ['--project', '--responsabilidad-chats', '--inventory-root', root];
+  const preview = install(worktree, [...activation, '--dry-run']);
+  const target = path.join(worktree, 'AGENTS.md');
+  assert.equal(preview.path, target);
+  assert.equal(preview.inventoryRoot, root);
+  assert.equal(fs.existsSync(target), false);
+  const applied = install(worktree, activation);
+  assert.equal(applied.inventoryRoot, root);
+  assert.equal(fs.readFileSync(target, 'utf8'), preview.after);
+  assert.equal(install(worktree, activation.slice(0, 2)).status, 'unchanged');
+  assert.match(
+    install(worktree, [...activation.slice(0, 2), '--inventory-root', unrelated], false),
+    /regla local ya apunta a otra raíz compartida/u,
+  );
+  assert.equal(fs.readFileSync(target, 'utf8'), preview.after);
   assert.equal(run(worktree, 'status', [], { cwd: root }).inventoryRoot, root);
   update(root, 0, entry, [], { cwd: worktree });
   assert.equal(run(root, 'list', [], { cwd: root }).records[0].id, first);

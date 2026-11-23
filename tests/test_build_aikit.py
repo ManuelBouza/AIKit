@@ -349,8 +349,9 @@ def test_exported_setup_chat_flow_without_git(tmp_path: Path) -> None:
     entry = next(item for item in capabilities if item["id"] == "responsabilidad-chats")
     assert entry["tipo"] == "guiada"
     guide = (package / entry["ruta"]).read_text(encoding="utf-8")
-    assert "project-chats enable" in guide
-    assert "project-chats disable" in guide
+    assert "install --project --responsabilidad-chats --root" in guide
+    assert "install --project --quitar-responsabilidad-chats --root" in guide
+    assert "--inventory-root <inventario>" in guide
     project = tmp_path / "proyecto sin Git"
     project.mkdir()
     profile = tmp_path / "perfil ficticio"
@@ -361,12 +362,11 @@ def test_exported_setup_chat_flow_without_git(tmp_path: Path) -> None:
     original = b"# Proyecto ajeno\r\n"
     instructions.write_bytes(original)
 
-    def chats(*args: str, data: str | None = None) -> dict[str, object]:
+    def run(*args: str, data: str | None = None) -> dict[str, object]:
         result = subprocess.run(
             [
                 node,
                 str(package / "installer/dist/cli.js"),
-                "project-chats",
                 *args,
                 "--root",
                 str(project),
@@ -384,12 +384,18 @@ def test_exported_setup_chat_flow_without_git(tmp_path: Path) -> None:
         assert isinstance(response, dict)
         return response
 
-    assert chats("status")["status"] == "disabled"
-    assert chats("enable", "--dry-run")["status"] == "preview"
+    enable = ("install", "--project", "--responsabilidad-chats")
+    disable = ("install", "--project", "--quitar-responsabilidad-chats")
+    assert run("project-chats", "status")["status"] == "disabled"
+    preview = run(*enable, "--dry-run")
+    assert preview["status"] == "preview"
+    assert preview["path"] == str(instructions)
+    assert preview["inventoryRoot"] == str(project)
     assert list(project.iterdir()) == [instructions]
     assert instructions.read_bytes() == original
-    assert chats("enable")["status"] == "changed"
-    assert chats("status")["status"] == "enabled"
+    assert run(*enable)["status"] == "changed"
+    assert run(*enable)["status"] == "unchanged"
+    assert run("project-chats", "status")["status"] == "enabled"
     data = json.dumps(
         {
             "id": "00000000-0000-4000-8000-000000000001",
@@ -398,15 +404,16 @@ def test_exported_setup_chat_flow_without_git(tmp_path: Path) -> None:
             "state": "En curso",
         }
     )
-    assert chats("upsert", "--expected-revision", "0", data=data)["status"] == "changed"
-    records = chats("list")["records"]
+    inserted = run("project-chats", "upsert", "--expected-revision", "0", data=data)
+    assert inserted["status"] == "changed"
+    records = run("project-chats", "list")["records"]
     assert isinstance(records, list)
     assert len(records) == 1
     assert records[0]["title"] == "[En curso] Ejemplo · Preparar pruebas"
-    assert chats("disable", "--dry-run")["status"] == "preview"
-    assert chats("disable")["status"] == "changed"
+    assert run(*disable, "--dry-run")["status"] == "preview"
+    assert run(*disable)["status"] == "changed"
     assert instructions.read_bytes() == original
-    assert chats("list")["records"] == records
+    assert run("project-chats", "list")["records"] == records
     assert global_instructions.read_bytes() == b"# Perfil ajeno\n"
 
 

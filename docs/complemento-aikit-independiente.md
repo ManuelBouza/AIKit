@@ -66,11 +66,25 @@ La evidencia de CLI previa está en el repositorio fuente, en
 Pide a `aikit-setup` consultar, activar o desactivar la responsabilidad única
 de los chats de un proyecto. La configuración usa su raíz local absoluta y
 también funciona en proyectos sin Git. La vista previa muestra la regla y el
-destino local antes de aplicar el cambio autorizado. Desactivar retira el
+destino local junto al inventario compartido. Desactivar retira el
 bloque de `AGENTS.md` y conserva las fichas y las instrucciones ajenas.
 
+Setup usa estos parámetros del instalador incluido:
+
+```powershell
+node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --project --responsabilidad-chats --root <raíz-local-absoluta> --dry-run
+node "$catalogo/aikit-preferencias/installer/dist/cli.js" install --project --quitar-responsabilidad-chats --root <raíz-local-absoluta> --dry-run
+```
+
+Aplica la selección autorizada con el mismo comando sin `--dry-run`.
+Elige solo una de las dos opciones de chats por invocación. Setup puede
+combinarla con preferencias del mismo `AGENTS.md`. Las preferencias con
+plantilla conservan su destino en la raíz Git. Las entradas anteriores
+`project-chats enable` y `project-chats disable` siguen disponibles.
+
 El inventario vive en `.aikit/chats/` bajo la raíz compartida del proyecto.
-En un worktree, configura o reutiliza la referencia a esa misma raíz. Una
+En un worktree, configura o reutiliza la referencia a esa misma raíz y usa
+`--inventory-root <raíz-compartida-absoluta>` al activar. Una
 sesión necesita permiso para consultarla y para efectuar las actualizaciones
 autorizadas. Si el acceso impide una acción, informa del estado y usa el
 traslado manual cuando proceda. Usa los mecanismos de exclusión de tu

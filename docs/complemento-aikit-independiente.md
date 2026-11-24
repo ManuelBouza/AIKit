@@ -126,8 +126,8 @@ actualizarse y ejecutar setup para aplicar el nuevo bloque.
 
 ## Preferencias opcionales de comunicación
 
-Al ejecutar `aikit-setup`, el usuario elige para cada preferencia si se aplica
-globalmente, al proyecto, a ambos o a ninguno. Las opciones son `--go`,
+Al ejecutar `aikit-setup`, el usuario elige para las preferencias de esta
+sección si se aplican globalmente, al proyecto, a ambos o a ninguno. Las opciones son `--go`,
 `--context7`, `--investigacion`, `--escritura` y `--visualizacion`. El
 instalador acepta una selección por invocación y ámbito; setup ejecuta una por
 ámbito con selecciones. Usa `--dry-run` para revisar los cambios. Por
@@ -155,3 +155,36 @@ divergencias. Se esperaba preservar el contenido ajeno y las opciones no elegida
 rechazar marcadores inválidos y evitar respaldo al repetir; así se observó. No
 se ha probado el comportamiento conversacional ni la aplicación efectiva de las
 instrucciones en clientes; no se modificó el perfil real.
+
+## Conocimiento del proyecto en ChatGPT Space
+
+En `aikit-setup`, elige **Space** y la página raíz del Space del proyecto.
+Durante la activación, setup verifica o prepara las cuatro entradas de la
+portada: **Ideas y notas de trabajo**, **Investigaciones**, **Decisiones** y
+**Aprendizajes**. Reutiliza las páginas equivalentes, crea las que falten y
+añade sus enlaces. También enlaza el registro **Tareas** desde la portada.
+Si el Space ya tiene un registro, setup lo reutiliza. Si falta, prepara una
+tabla editable con el resultado, el estado, el bloqueo o siguiente paso y
+la evidencia de cada tarea. Cuando comprueba la estructura, registra en `AGENTS.md`
+el enlace de la raíz y cómo usarla como memoria de trabajo. Si Pages no
+permite verificar o preparar la estructura, la activación queda pendiente.
+
+Con la preferencia activa, el chat que confirma un cambio de estado de una
+entrega o un bloqueo relevante actualiza la portada durante ese turno. Usa la
+evidencia del proyecto y conserva los accesos a las notas. La actualización
+depende de tener acceso a Pages en el chat que realiza el trabajo.
+
+El comando `install --project --space <URL-raíz> --dry-run` previsualiza
+el cambio local. Al ejecutarlo directamente sin `--dry-run`, solo aplica
+el bloque de `AGENTS.md`. Usa `aikit-setup` para preparar la estructura en
+Space durante la activación.
+Usa `status --project --space <URL-raíz>` para comparar la configuración y
+`install --project --quitar-space` para retirar el bloque.
+El instalador valida el formato del enlace y compara el bloque local. Usa
+Pages para comprobar que el enlace identifica la raíz y que la cuenta tiene acceso.
+
+Space es opcional y su disponibilidad depende del cliente. La preferencia usa
+Pages para consultar y guardar conocimiento cuando corresponde, y conserva
+las instrucciones operativas junto al proyecto. El instalador respalda el
+`AGENTS.md` anterior al cambiarlo. Quien pueda leer el archivo o un respaldo
+podrá ver el enlace que contenga. Los permisos de acceso se gestionan en Space.

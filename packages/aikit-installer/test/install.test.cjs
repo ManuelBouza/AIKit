@@ -35,6 +35,7 @@ test('las plantillas empaquetadas coinciden con las fuentes canónicas', () => {
     'investigacion.md',
     'escritura.md',
     'visualizacion.md',
+    'space.md',
   ]) {
     assert.deepEqual(
       fs.readFileSync(path.join(packageRoot, 'templates', name)),
@@ -337,7 +338,7 @@ test('sin selección conserva las tres preferencias históricas', (t) => {
   const after = JSON.parse(preview.stdout).after;
   for (const name of ['GO', 'CONTEXT7', 'INVESTIGACION'])
     assert.match(after, new RegExp(`AIKIT:${name}:BEGIN`));
-  for (const name of ['ESCRITURA', 'VISUALIZACION'])
+  for (const name of ['ESCRITURA', 'VISUALIZACION', 'SPACE'])
     assert.doesNotMatch(after, new RegExp(`AIKIT:${name}:BEGIN`));
 });
 

@@ -116,6 +116,7 @@ function installOrStatus(command: 'install' | 'status', args: string[], legacyCh
   let explicitCodexHome = false;
   let dry = false;
   let chatSelection: 'enable' | 'disable' | undefined;
+  let spaceUrl: string | undefined;
   const roots = new Map<string, string>();
   const selected = new Set<string>();
   const removed = new Set<string>();
@@ -132,6 +133,13 @@ function installOrStatus(command: 'install' | 'status', args: string[], legacyCh
       const value = args.shift();
       if (!value || value.startsWith('--')) throw new Error(`Falta valor para ${arg}`);
       roots.set(arg, value);
+    } else if (arg === '--space') {
+      if (spaceUrl) throw new Error('Opción duplicada: --space');
+      const value = args.shift();
+      if (!value || !/^https:\/\/chatgpt\.com\/space\/page_[a-f0-9]{32}$/.test(value))
+        throw new Error('--space requiere el enlace canónico de la página raíz de ChatGPT Space');
+      spaceUrl = value;
+      selected.add('space');
     } else if (arg?.startsWith('--') && preferences.has(arg.slice(2))) selected.add(arg.slice(2));
     else if (arg?.startsWith('--quitar-') && preferences.has(arg.slice(9)))
       removed.add(arg.slice(9));
@@ -159,6 +167,8 @@ function installOrStatus(command: 'install' | 'status', args: string[], legacyCh
   if (scope === 'project' && explicitCodexHome)
     throw new Error('--codex-home solo es válido para el ámbito global');
   if (!scope && explicitCodexHome) scope = 'global'; // compatibilidad con perfiles ficticios y CLI anterior
+  if ((spaceUrl || removed.has('space')) && scope !== 'project')
+    throw new Error('La preferencia Space requiere --project');
   if (!scope) {
     if (!process.stdin.isTTY) throw new Error('Indique el ámbito mediante --global o --project');
     process.stderr.write('Ámbito de AIKit: global (g) o proyecto (p): ');
@@ -213,17 +223,18 @@ function installOrStatus(command: 'install' | 'status', args: string[], legacyCh
       const begin = `<!-- AIKIT:${name}:BEGIN -->`,
         end = `<!-- AIKIT:${name}:END -->`;
       const start = after.indexOf(begin);
-      if (start !== -1)
-        after = after.slice(0, start) + after.slice(after.indexOf(end, start) + end.length);
+      if (start !== -1) {
+        let remainder = after.slice(after.indexOf(end, start) + end.length);
+        if (id === 'space') remainder = remainder.replace(/^\r?\n/, '');
+        after = after.slice(0, start) + remainder;
+      }
       continue;
     }
     if (chatSelection || selected.size || removed.size ? !selected.has(id) : !defaultEnabled)
       continue;
-    after = merge(
-      after,
-      name,
-      decoder.decode(fs.readFileSync(path.join(root, 'templates', `${id}.md`))),
-    );
+    let template = decoder.decode(fs.readFileSync(path.join(root, 'templates', `${id}.md`)));
+    if (id === 'space' && spaceUrl) template = template.replace('{{SPACE_URL}}', spaceUrl);
+    after = merge(after, name, template);
   }
   let inventoryRoot: string | null = null;
   if (chatSelection) {

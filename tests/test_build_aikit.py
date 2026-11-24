@@ -155,7 +155,11 @@ def test_packaged_node_installer_runs_without_source_checkout(tmp_path: Path) ->
     agents = profile / "AGENTS.md"
     agents.write_text("Instrucción ajena\n", encoding="utf-8")
     inventory = json.loads((package / INVENTORY).read_text(encoding="utf-8"))
-    names = [entry["id"] for entry in inventory if entry["tipo"] == "preferencia"]
+    names = [
+        entry["id"]
+        for entry in inventory
+        if entry["tipo"] == "preferencia" and entry.get("ambito") != "proyecto"
+    ]
     options = [f"--{name}" for name in names]
     original = agents.read_bytes()
     assert {path.name for path in profile.iterdir()} == {"AGENTS.md"}
@@ -231,6 +235,65 @@ def test_packaged_node_installer_runs_without_source_checkout(tmp_path: Path) ->
     assert b"AIKIT:VISUALIZACION:BEGIN" in project_agents.read_bytes()
     assert b"AIKIT:GO:BEGIN" not in project_agents.read_bytes()
     assert agents.read_bytes() == remaining
+
+    space = next(entry for entry in inventory if entry["id"] == "space")
+    assert space["ambito"] == "proyecto"
+    space_url = "https://chatgpt.com/space/page_" + "a" * 32
+    project_before_space = project_agents.read_bytes()
+    run("install", "--global", "--space", space_url, success=False)
+    run("install", "--global", "--quitar-space", success=False)
+    run("install", "--project", "--space", success=False, cwd=workdir)
+    run(
+        "install",
+        "--project",
+        "--space",
+        "https://example.com",
+        success=False,
+        cwd=workdir,
+    )
+    run(
+        "install",
+        "--project",
+        "--space",
+        space_url,
+        "--quitar-space",
+        success=False,
+        cwd=workdir,
+    )
+    space_preview = json.loads(
+        run(
+            "install", "--project", "--dry-run", "--space", space_url, cwd=workdir
+        ).stdout
+    )
+    assert project_agents.read_bytes() == project_before_space
+    assert space_url in space_preview["after"]
+    assert "{{SPACE_URL}}" not in space_preview["after"]
+    for section in (
+        "Ideas y notas de trabajo",
+        "Investigaciones",
+        "Decisiones",
+        "Aprendizajes",
+    ):
+        assert f"**{section}**" in space_preview["after"]
+    assert "### Estado del proyecto en la portada" in space_preview["after"]
+    assert "resuelvas un bloqueo relevante" in space_preview["after"]
+    run("install", "--project", "--space", space_url, cwd=workdir)
+    assert project_agents.read_bytes() == space_preview["after"].encode("utf-8")
+    checked = run("status", "--project", "--space", space_url, cwd=workdir)
+    assert json.loads(checked.stdout)["status"] == "current"
+    new_url = "https://chatgpt.com/space/page_" + "b" * 32
+    run("install", "--project", "--space", new_url, cwd=workdir)
+    project_text = project_agents.read_text(encoding="utf-8")
+    assert space_url not in project_text
+    assert new_url in project_text
+    assert project_text.count("AIKIT:SPACE:BEGIN") == 1
+    outdated = run("status", "--project", "--space", space_url, cwd=workdir)
+    assert json.loads(outdated.stdout)["status"] == "different"
+    assert project_agents.read_text(encoding="utf-8") == project_text
+    run("install", "--project", "--quitar-space", cwd=workdir)
+    remaining_project = project_agents.read_bytes()
+    assert b"AIKIT:SPACE:" not in remaining_project
+    assert remaining_project == project_before_space
 
     (profile / "AGENTS.override.md").write_bytes(b"instrucciones prioritarias\n")
     run("install", "--global", "--dry-run", "--visualizacion", success=False)
@@ -311,7 +374,7 @@ def export_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return source
 
 
-@pytest.mark.parametrize("name", ["escritura.md", "visualizacion.md"])
+@pytest.mark.parametrize("name", ["escritura.md", "visualizacion.md", "space.md"])
 def test_export_rejects_divergent_optional_template(
     tmp_path: Path, export_source: Path, name: str
 ) -> None:

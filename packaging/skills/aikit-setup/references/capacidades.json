@@ -36,6 +36,13 @@
     "ruta": "installer/templates/visualizacion.md"
   },
   {
+    "id": "space",
+    "tipo": "preferencia",
+    "ambito": "proyecto",
+    "proposito": "Preparar las notas, la memoria y el registro de tareas en el ChatGPT Space asociado al proyecto. Requiere elegir su página raíz.",
+    "ruta": "installer/templates/space.md"
+  },
+  {
     "id": "responsabilidad-chats",
     "tipo": "guiada",
     "proposito": "Registrar la responsabilidad de cada chat y recomendar el destino de las solicitudes del proyecto.",

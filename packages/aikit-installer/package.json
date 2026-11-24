@@ -15,7 +15,8 @@
     "context7": true,
     "investigacion": true,
     "escritura": false,
-    "visualizacion": false
+    "visualizacion": false,
+    "space": false
   },
   "bin": {
     "aikit": "./dist/cli.js"
